@@ -4,33 +4,21 @@
   <meta charset="UTF-8" />
   <title>Code and Iron Test</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-
-  <!-- FONT -->
   <style>
-    @font-face {
-      font-family: "CodeAndIron";
-      src: url("fonts/CodeAndIron.ttf") format("truetype");
-      font-weight: normal;
-      font-style: normal;
-    }
-
     :root {
-      --bg: #050506;
-      --card: #111115;
-      --card-inner: #18181f;
-      --card-innermost: #1f1f27;
-      --accent-blue: #0b82ff;
-      --accent-red: #e03b34;
-      --accent-gold: #ffb53a;
-      --text-main: #f5f5ff;
-      --text-muted: #a0a0b2;
-      --input-bg: #050506;
-      --input-border: #2a2a33;
-      --radius-xl: 32px;
-      --radius-lg: 24px;
-      --radius-md: 16px;
+      --bg: #000;
+      --card: #121212;
+      --card-inner: #1a1a1a;
+      --text-main: #fff;
+      --text-muted: #bbbbbb;
+      --accent: #0a84ff;
+      --accent-soft: #005fd1;
+      --danger: #d93030;
+      --danger-soft: #a52424;
+      --border-soft: #2a2a2a;
+      --radius-card: 24px;
       --radius-pill: 999px;
-      --shadow-soft: 0 18px 45px rgba(0, 0, 0, 0.7);
+      --shadow-soft: 0 10px 30px rgba(0, 0, 0, 0.7);
     }
 
     * {
@@ -39,752 +27,834 @@
 
     body {
       margin: 0;
-      min-height: 100vh;
-      background: radial-gradient(circle at top left, #151521 0, #050506 55%);
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text",
+        "Segoe UI", Roboto, sans-serif;
+      background-color: var(--bg);
       color: var(--text-main);
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
-        "Helvetica Neue", sans-serif;
-      -webkit-font-smoothing: antialiased;
     }
 
-    .app {
-      max-width: 480px;               /* tighter width like screenshot 1 */
-      margin: 0 auto;
-      padding: 20px 16px 40px;
+    .app-wrapper {
+      min-height: 100vh;
+      padding: 12px 12px 32px;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
     }
 
-    /* HEADER / TITLE + MENU */
     .app-header {
       display: flex;
-      justify-content: space-between;
       align-items: center;
-      margin-bottom: 18px;
+      justify-content: space-between;
+      margin: 8px 4px 16px;
     }
 
-    .app-title {
-      font-family: "CodeAndIron", system-ui, sans-serif;
-      font-size: 32px;
-      letter-spacing: 0.03em;
+    .app-header h1 {
+      font-size: 26px;
+      font-weight: 800;
       margin: 0;
-      line-height: 1.15;
+      letter-spacing: 0.5px;
     }
 
-    .menu-toggle {
-      width: 48px;
-      height: 48px;
-      border-radius: 18px;
-      border: none;
-      background: rgba(15, 15, 20, 0.95);
-      display: inline-flex;
+    .menu-button {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      border: 1px solid #333;
+      background-color: #111;
+      display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 14px 30px rgba(0, 0, 0, 0.7);
       padding: 0;
     }
 
-    .menu-toggle span {
+    .menu-button:active {
+      background-color: #222;
+    }
+
+    .menu-icon {
+      width: 18px;
+      height: 18px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .menu-icon span {
       display: block;
-      width: 22px;
-      height: 2px;
+      height: 3px;
       border-radius: 999px;
-      background: #f7f7ff;
-      position: relative;
+      background-color: #fff;
     }
 
-    .menu-toggle span::before,
-    .menu-toggle span::after {
-      content: "";
+    .menu-dropdown {
       position: absolute;
-      left: 0;
-      width: 22px;
-      height: 2px;
-      border-radius: 999px;
-      background: #f7f7ff;
+      right: 16px;
+      top: 64px;
+      background-color: #111;
+      border-radius: 16px;
+      box-shadow: var(--shadow-soft);
+      overflow: hidden;
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(-8px);
+      transition: opacity 0.18s ease, transform 0.18s ease;
+      min-width: 220px;
+      z-index: 20;
     }
 
-    .menu-toggle span::before {
-      top: -6px;
-    }
-    .menu-toggle span::after {
-      top: 6px;
-    }
-
-    /* DROPDOWN MENU */
-    .menu {
-      position: absolute;
-      right: 20px;
-      top: 70px;
-      background: rgba(11, 11, 15, 0.97);
-      border-radius: 20px;
-      padding: 10px 0;
-      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.85);
-      min-width: 170px;
-      display: none;
-      z-index: 40;
-    }
-
-    .menu.open {
-      display: block;
+    .menu-dropdown.open {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateY(0);
     }
 
     .menu-item {
-      width: 100%;
-      padding: 10px 18px;
-      text-align: left;
-      background: transparent;
-      color: var(--text-main);
-      border: none;
+      padding: 14px 18px;
       font-size: 16px;
-      font-weight: 500;
+      border-bottom: 1px solid #222;
     }
 
-    .menu-item:hover {
-      background: rgba(255, 255, 255, 0.06);
+    .menu-item:last-child {
+      border-bottom: none;
     }
 
-    /* PAGES */
-    .page {
+    .menu-item:active {
+      background-color: #1f1f1f;
+    }
+
+    main.screen {
       display: none;
+      flex: 1;
     }
-    .page.active {
+
+    main.screen.active {
       display: block;
     }
 
-    /* OUTER CARD STACK */
-    .card-outer {
-      background: rgba(8, 8, 12, 0.9);
-      border-radius: var(--radius-xl);
-      padding: 18px 18px 26px;
+    .card {
+      max-width: 480px;
+      margin: 0 auto;
+      background-color: var(--card);
+      border-radius: var(--radius-card);
+      padding: 18px 14px 20px;
       box-shadow: var(--shadow-soft);
     }
 
-    .card-mid {
-      background: rgba(22, 22, 30, 0.9);
-      border-radius: 28px;
-      padding: 16px;
-      border: 1px solid rgba(255, 255, 255, 0.02);
-    }
-
-    .card-inner {
-      background: rgba(16, 16, 24, 0.96);
-      border-radius: 24px;
-      padding: 18px 16px 20px;
-      border: 1px solid rgba(255, 255, 255, 0.03);
-    }
-
-    .section-title {
-      font-size: 26px;
-      margin: 0 0 14px;
+    .card-title {
+      font-size: 20px;
       font-weight: 700;
-      letter-spacing: 0.03em;
+      margin: 4px 4px 8px;
     }
 
-    .section-title span {
-      font-family: "CodeAndIron", system-ui, sans-serif;
+    .card-subtitle {
+      font-size: 14px;
+      color: var(--text-muted);
+      margin: 0 4px 16px;
+      line-height: 1.4;
     }
 
-    /* TODAY LAYOUT */
-    .exercise-card {
+    .input-label {
+      display: block;
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+
+    .text-input {
+      width: 100%;
+      padding: 8px 10px;
+      border-radius: 14px;
+      border: 1px solid #333;
+      background-color: #000;
+      color: var(--text-main);
+      font-size: 15px;
+    }
+
+    .text-input::placeholder {
+      color: #666;
+    }
+
+    .exercises-container {
       display: flex;
       flex-direction: column;
-      gap: 14px;
+      gap: 10px;
+      margin-top: 4px;
+      margin-bottom: 12px;
     }
 
-    .exercise-row {
+    .exercise-card {
+      background-color: var(--card-inner);
+      border-radius: 18px;
+      padding: 10px 10px 12px;
+      border: 1px solid var(--border-soft);
+    }
+
+    /* Exercise header row on ONE line */
+    .exercise-header {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 6px;
+      margin-bottom: 6px;
     }
 
-    .exercise-input {
+    .exercise-name {
       flex: 1;
-      padding: 10px 18px;
-      border-radius: 999px;
-      border: 1px solid var(--input-border);
-      background: var(--input-bg);
+      padding: 6px 8px;
+      border-radius: 10px;
+      border: 1px solid #333;
+      background-color: #000;
       color: var(--text-main);
-      font-size: 16px;
+      font-size: 14px;
     }
 
-    .exercise-input::placeholder {
-      color: var(--text-muted);
+    .exercise-name::placeholder {
+      color: #666;
     }
 
-    .exercise-actions {
-      display: flex;
-      gap: 8px;
-    }
-
-    .icon-circle {
-      width: 64px;
-      height: 64px;
+    .icon-btn {
+      width: 28px;
+      height: 28px;
       border-radius: 999px;
       border: none;
-      display: inline-flex;
+      background-color: #272727;
+      color: #fff;
+      font-size: 18px;
+      line-height: 1;
+      display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 28px;
-      font-weight: 600;
-      color: #fff;
-      box-shadow: 0 14px 35px rgba(0, 0, 0, 0.7);
+      padding: 0;
     }
 
-    .icon-circle.red {
-      background: var(--accent-red);
+    .icon-btn:active {
+      background-color: #3a3a3a;
     }
 
-    .icon-circle.blue {
-      background: var(--accent-blue);
+    .icon-btn.negative {
+      background-color: #802121;
     }
 
-    /* SET ROW */
-    .set-row {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-top: 2px;
+    .icon-btn.negative:active {
+      background-color: #5c1818;
     }
 
-    .set-label {
-      font-family: "CodeAndIron", system-ui, sans-serif;
-      font-size: 20px;
-      color: var(--accent-gold);
-      min-width: 62px;
-    }
-
-    .set-fields {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      flex: 1;
-      justify-content: flex-start;
-    }
-
-    .chip-field {
+    .sets-wrapper {
+      margin-top: 4px;
       display: flex;
       flex-direction: column;
       gap: 4px;
-      align-items: center;
     }
 
-    .chip-label {
-      font-family: "CodeAndIron", system-ui, sans-serif;
-      letter-spacing: 0.05em;
-      font-size: 14px;
-      color: var(--text-muted);
-    }
-
-    .chip-input {
-      width: 70px;
-      height: 70px;
-      border-radius: 999px;
-      border: 1px solid var(--input-border);
-      background: var(--input-bg);
-      color: var(--text-main);
-      text-align: center;
-      font-size: 18px;
-      font-weight: 600;
-    }
-
-    .chip-input::placeholder {
-      color: var(--text-muted);
-    }
-
-    .set-actions {
+    /* Set row all in ONE line */
+    .set-row {
       display: flex;
-      gap: 8px;
-      margin-left: auto;
+      align-items: center;
+      gap: 6px;
     }
 
-    .icon-circle.small {
-      width: 56px;
-      height: 56px;
-      font-size: 24px;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.7);
+    .set-label-small {
+      font-size: 12px;
+      color: #ffb74d;
+      min-width: 46px;
     }
 
-    /* ROUTINES PAGE */
-    .routines-card {
-      margin-top: 18px;
-    }
-
-    .routines-header {
-      margin-bottom: 14px;
-    }
-
-    .routines-title {
-      font-size: 26px;
-      margin: 0 0 6px;
-      font-family: "CodeAndIron", system-ui, sans-serif;
-    }
-
-    .routines-subtitle {
-      margin: 0;
+    .set-input {
+      flex: 1;
+      padding: 6px 8px;
+      border-radius: 10px;
+      background-color: #000;
+      border: 1px solid #333;
+      color: #fff;
       font-size: 14px;
-      color: var(--text-muted);
     }
 
-    .routine-name-input {
+    .set-input::placeholder {
+      color: #666;
+    }
+
+    .primary-btn,
+    .danger-btn {
       width: 100%;
-      padding: 12px 18px;
-      margin: 14px 0 10px;
-      border-radius: 999px;
-      border: 1px solid var(--input-border);
-      background: var(--input-bg);
-      color: var(--text-main);
+      border-radius: var(--radius-pill);
+      padding: 10px 14px;
       font-size: 16px;
-    }
-
-    .routine-name-input::placeholder {
-      color: var(--text-muted);
+      font-weight: 600;
+      border: none;
+      color: #fff;
     }
 
     .primary-btn {
-      width: 100%;
-      padding: 13px 16px;
-      border-radius: 999px;
-      border: none;
-      background: var(--accent-blue);
-      color: #fff;
-      font-size: 18px;
-      font-weight: 600;
-      margin-bottom: 18px;
-      box-shadow: 0 16px 38px rgba(0, 112, 255, 0.6);
+      background-color: var(--accent);
+      margin-top: 6px;
     }
 
-    .saved-routines {
+    .primary-btn:active {
+      background-color: var(--accent-soft);
+    }
+
+    .danger-btn {
+      background-color: var(--danger);
+      margin-top: 6px;
+    }
+
+    .danger-btn:active {
+      background-color: var(--danger-soft);
+    }
+
+    /* Saved routines list */
+    .saved-list {
+      margin-top: 12px;
       display: flex;
       flex-direction: column;
-      gap: 16px;
-    }
-
-    .routine-block {
-      background: rgba(16, 16, 24, 0.96);
-      border-radius: 24px;
-      padding: 14px 14px 16px;
-      border: 1px solid rgba(255, 255, 255, 0.04);
-    }
-
-    .routine-header-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 10px;
-    }
-
-    .routine-name {
-      font-size: 18px;
-      font-weight: 600;
-    }
-
-    .routine-actions {
-      display: flex;
       gap: 8px;
     }
 
-    .pill-btn {
-      border-radius: 999px;
-      padding: 6px 13px;
+    .saved-wrapper {
+      background-color: #151515;
+      border-radius: 14px;
+      border: 1px solid #262626;
+      padding: 8px 10px;
+    }
+
+    .saved-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+    }
+
+    .saved-name {
+      flex: 1;
+      font-size: 15px;
+    }
+
+    .saved-buttons {
+      display: flex;
+      gap: 6px;
+    }
+
+    .small-btn {
+      border-radius: var(--radius-pill);
       border: none;
-      font-size: 14px;
+      padding: 5px 9px;
+      font-size: 12px;
       font-weight: 600;
       color: #fff;
+      min-width: 54px;
     }
 
-    .pill-btn.green {
-      background: #21a45b;
+    .small-btn.load {
+      background-color: #198754; /* green */
     }
 
-    .pill-btn.blue {
-      background: #0b82ff;
+    .small-btn.load:active {
+      background-color: #146c43;
     }
 
-    .pill-btn.red {
-      background: #e03b34;
+    .small-btn.open {
+      background-color: #0d6efd; /* blue */
     }
 
-    .back-link {
-      margin: 22px 4px 0;
-      color: var(--text-main);
-      text-decoration: none;
-      font-size: 16px;
+    .small-btn.open:active {
+      background-color: #0b5ed7;
+    }
+
+    .small-btn.delete {
+      background-color: #5b1a1a;
+    }
+
+    .small-btn.delete:active {
+      background-color: #3e1010;
+    }
+
+    .open-panel {
+      margin-top: 6px;
+      padding-top: 6px;
+      border-top: 1px solid #262626;
+      display: none;
+    }
+
+    .open-panel.open {
+      display: block;
+    }
+
+    .link-back {
+      margin-top: 16px;
+      font-size: 15px;
+      color: var(--text-muted);
       display: inline-flex;
       align-items: center;
       gap: 6px;
     }
 
-    .back-link span {
-      font-size: 20px;
+    .link-back span {
+      font-size: 18px;
       line-height: 1;
     }
 
-    /* UTILITIES */
-    button {
-      font-family: inherit;
+    .link-back:active {
+      color: #ffffff;
     }
 
-    button:active {
-      transform: translateY(1px);
+    .input-group {
+      margin: 6px 0 10px;
     }
 
-    input {
-      outline: none;
+    @media (min-width: 500px) {
+      .app-wrapper {
+        align-items: center;
+      }
+      .card {
+        width: 430px;
+      }
     }
   </style>
 </head>
 <body>
-  <div class="app">
-    <!-- HEADER -->
+  <div class="app-wrapper">
     <header class="app-header">
-      <h1 class="app-title">Code and Iron Test</h1>
-      <button id="menuToggle" class="menu-toggle" aria-label="Menu">
-        <span></span>
+      <h1>Code and Iron Test</h1>
+      <button class="menu-button" id="menuButton" aria-label="Open menu">
+        <div class="menu-icon">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
       </button>
-
-      <div id="menu" class="menu">
-        <!-- NOTE: only Routines; Today/Home removed -->
-        <button class="menu-item" data-target="routines">Routines</button>
-      </div>
     </header>
 
-    <!-- TODAY PAGE -->
-    <main>
-      <section id="todayPage" class="page active">
-        <div class="card-outer">
-          <div class="card-mid">
-            <div class="card-inner">
-              <h2 class="section-title"><span>Today</span></h2>
-              <div id="exerciseList"></div>
-            </div>
-          </div>
-        </div>
+    <!-- Menu -->
+    <div class="menu-dropdown" id="menuDropdown">
+      <div class="menu-item" data-nav="home">Home</div>
+      <div class="menu-item" data-nav="routines">Routines</div>
+    </div>
+
+    <!-- HOME / LOGGER SCREEN -->
+    <main id="homeScreen" class="screen active">
+      <section class="card">
+        <h2 class="card-title">Today</h2>
+        <div id="exercisesContainer" class="exercises-container"></div>
       </section>
+    </main>
 
-      <!-- ROUTINES PAGE -->
-      <section id="routinesPage" class="page">
-        <div class="card-outer routines-card">
-          <div class="card-mid">
-            <div class="card-inner">
-              <div class="routines-header">
-                <h2 class="routines-title">Routines</h2>
-                <p class="routines-subtitle">
-                  Save exercise groups you can quickly load into Today.
-                </p>
-              </div>
+    <!-- ROUTINES SCREEN -->
+    <main id="routinesScreen" class="screen">
+      <section class="card">
+        <h2 class="card-title">Routines</h2>
+        <div class="input-group">
+          <label class="input-label" for="routineNameInput">
+            New routine name
+          </label>
+          <input
+            id="routineNameInput"
+            class="text-input"
+            placeholder="e.g. Push Day, Legs, Back & Biceps"
+          />
+        </div>
+        <button id="saveRoutineBtn" class="primary-btn">Save routine</button>
 
-              <input
-                id="newRoutineName"
-                class="routine-name-input"
-                type="text"
-                placeholder="e.g. Push Day, Legs, Back &amp; Biceps"
-              />
-              <button id="saveRoutineBtn" class="primary-btn">
-                Save routine
-              </button>
+        <div id="savedRoutinesList" class="saved-list"></div>
 
-              <div id="savedRoutines" class="saved-routines"></div>
-
-              <a href="#" id="backToToday" class="back-link">
-                <span>←</span> Back to logger
-              </a>
-            </div>
-          </div>
+        <div class="link-back" id="backToHome">
+          <span>←</span> Back to logger
         </div>
       </section>
     </main>
   </div>
 
-  <!-- SCRIPT -->
   <script>
-    // ===== BASIC HELPERS =====
-    const todayPage = document.getElementById("todayPage");
-    const routinesPage = document.getElementById("routinesPage");
-    const exerciseList = document.getElementById("exerciseList");
+    // --------- Helpers: create set row & exercise card ---------
 
-    // ===== NAV MENU =====
-    const menuToggle = document.getElementById("menuToggle");
-    const menu = document.getElementById("menu");
-    const backToToday = document.getElementById("backToToday");
-
-    menuToggle.addEventListener("click", () => {
-      menu.classList.toggle("open");
-    });
-
-    document.addEventListener("click", (e) => {
-      if (
-        !menu.contains(e.target) &&
-        !menuToggle.contains(e.target)
-      ) {
-        menu.classList.remove("open");
-      }
-    });
-
-    menu.addEventListener("click", (e) => {
-      const btn = e.target.closest(".menu-item");
-      if (!btn) return;
-
-      const target = btn.dataset.target;
-      if (target === "routines") {
-        showRoutines();
-      }
-      menu.classList.remove("open");
-    });
-
-    backToToday.addEventListener("click", (e) => {
-      e.preventDefault();
-      showToday();
-    });
-
-    function showToday() {
-      todayPage.classList.add("active");
-      routinesPage.classList.remove("active");
+    function renumberSets(setsWrapper) {
+      const rows = setsWrapper.querySelectorAll(".set-row");
+      rows.forEach((row, index) => {
+        const label = row.querySelector(".set-label-small");
+        if (label) label.textContent = "Set " + (index + 1);
+      });
     }
 
-    function showRoutines() {
-      routinesPage.classList.add("active");
-      todayPage.classList.remove("active");
-      renderSavedRoutines();
+    function createSetRow(setsWrapper, setData) {
+      const row = document.createElement("div");
+      row.className = "set-row";
+
+      const label = document.createElement("div");
+      label.className = "set-label-small";
+      label.textContent = "Set 1";
+      row.appendChild(label);
+
+      const weightInput = document.createElement("input");
+      weightInput.className = "set-input";
+      weightInput.type = "text";
+      weightInput.placeholder = "Weight";
+      if (setData && setData.weight != null) {
+        weightInput.value = setData.weight;
+      }
+      row.appendChild(weightInput);
+
+      const repsInput = document.createElement("input");
+      repsInput.className = "set-input";
+      repsInput.type = "number";
+      repsInput.min = "0";
+      repsInput.placeholder = "Reps";
+      if (setData && setData.reps != null) {
+        repsInput.value = setData.reps;
+      }
+      row.appendChild(repsInput);
+
+      const removeBtn = document.createElement("button");
+      removeBtn.className = "icon-btn negative";
+      removeBtn.textContent = "−";
+      removeBtn.addEventListener("click", () => {
+        const rows = setsWrapper.querySelectorAll(".set-row");
+        if (rows.length > 1) {
+          row.remove();
+          renumberSets(setsWrapper);
+        }
+      });
+      row.appendChild(removeBtn);
+
+      const addBtn = document.createElement("button");
+      addBtn.className = "icon-btn";
+      addBtn.textContent = "+";
+      addBtn.addEventListener("click", () => {
+        const newRow = createSetRow(setsWrapper);
+        setsWrapper.insertBefore(newRow, row.nextSibling);
+        renumberSets(setsWrapper);
+      });
+      row.appendChild(addBtn);
+
+      setsWrapper.appendChild(row);
+      renumberSets(setsWrapper);
+      return row;
     }
 
-    // ===== TODAY LOGIC =====
-    function createExerciseCard() {
+    function createExerciseCard(parent, exerciseData) {
       const card = document.createElement("div");
       card.className = "exercise-card";
 
-      card.innerHTML = `
-        <div class="exercise-row">
-          <input type="text" class="exercise-input" placeholder="Exercise name" />
-          <div class="exercise-actions">
-            <button class="icon-circle red remove-exercise" type="button">−</button>
-            <button class="icon-circle blue add-exercise" type="button">+</button>
-          </div>
-        </div>
-        <div class="set-row">
-          <span class="set-label">Set 1</span>
-          <div class="set-fields">
-            <div class="chip-field">
-              <span class="chip-label">Weight</span>
-              <input type="number" class="chip-input set-weight" placeholder="W" />
-            </div>
-            <div class="chip-field">
-              <span class="chip-label">Reps</span>
-              <input type="number" class="chip-input set-reps" placeholder="R" />
-            </div>
-            <div class="set-actions">
-              <button class="icon-circle red small remove-set" type="button">−</button>
-              <button class="icon-circle blue small add-set" type="button">+</button>
-            </div>
-          </div>
-        </div>
-      `;
+      // header row: exercise name + - +
+      const header = document.createElement("div");
+      header.className = "exercise-header";
 
-      attachExerciseHandlers(card);
+      const nameInput = document.createElement("input");
+      nameInput.className = "exercise-name";
+      nameInput.placeholder = "Exercise name";
+      if (exerciseData && exerciseData.name) {
+        nameInput.value = exerciseData.name;
+      }
+      header.appendChild(nameInput);
+
+      const removeExerciseBtn = document.createElement("button");
+      removeExerciseBtn.className = "icon-btn negative";
+      removeExerciseBtn.textContent = "−";
+      removeExerciseBtn.addEventListener("click", () => {
+        card.remove();
+      });
+      header.appendChild(removeExerciseBtn);
+
+      const addExerciseBtn = document.createElement("button");
+      addExerciseBtn.className = "icon-btn";
+      addExerciseBtn.textContent = "+";
+      addExerciseBtn.addEventListener("click", () => {
+        // add a new exercise card BELOW this one
+        const newCard = createExerciseCard(parent, {
+          name: "",
+          sets: [{ weight: "", reps: "" }],
+        });
+        parent.insertBefore(newCard, card.nextSibling);
+      });
+      header.appendChild(addExerciseBtn);
+
+      card.appendChild(header);
+
+      const setsWrapper = document.createElement("div");
+      setsWrapper.className = "sets-wrapper";
+      card.appendChild(setsWrapper);
+
+      const setsData =
+        exerciseData && Array.isArray(exerciseData.sets) && exerciseData.sets.length
+          ? exerciseData.sets
+          : [{ weight: "", reps: "" }];
+
+      setsData.forEach((set) => createSetRow(setsWrapper, set));
+
+      parent.appendChild(card);
       return card;
     }
 
-    function attachExerciseHandlers(card) {
-      const removeExerciseBtn = card.querySelector(".remove-exercise");
-      const addExerciseBtn = card.querySelector(".add-exercise");
+    // --------- Screens & navigation ---------
 
-      removeExerciseBtn.addEventListener("click", () => {
-        const all = exerciseList.querySelectorAll(".exercise-card");
-        if (all.length === 1) {
-          // If it's the last one, just clear fields
-          const nameInput = card.querySelector(".exercise-input");
-          nameInput.value = "";
-          const weights = card.querySelectorAll(".set-weight");
-          const reps = card.querySelectorAll(".set-reps");
-          weights.forEach((w) => (w.value = ""));
-          reps.forEach((r) => (r.value = ""));
-        } else {
-          card.remove();
-        }
-      });
+    const menuButton = document.getElementById("menuButton");
+    const menuDropdown = document.getElementById("menuDropdown");
+    const homeScreen = document.getElementById("homeScreen");
+    const routinesScreen = document.getElementById("routinesScreen");
+    const backToHome = document.getElementById("backToHome");
 
-      addExerciseBtn.addEventListener("click", () => {
-        const newCard = createExerciseCard();
-        exerciseList.appendChild(newCard);
-      });
-
-      card.addEventListener("click", (e) => {
-        if (e.target.closest(".add-set")) {
-          addSet(card);
-        } else if (e.target.closest(".remove-set")) {
-          removeSet(card);
-        }
-      });
+    function closeMenu() {
+      menuDropdown.classList.remove("open");
     }
 
-    function addSet(card) {
-      const setRows = card.querySelectorAll(".set-row");
-      const newIndex = setRows.length + 1;
+    menuButton.addEventListener("click", () => {
+      menuDropdown.classList.toggle("open");
+    });
 
-      const template = setRows[0];
-      const clone = template.cloneNode(true);
+    document.addEventListener("click", (e) => {
+      if (!menuButton.contains(e.target) && !menuDropdown.contains(e.target)) {
+        closeMenu();
+      }
+    });
 
-      // reset inputs and label
-      clone.querySelector(".set-label").textContent = "Set " + newIndex;
-      clone.querySelector(".set-weight").value = "";
-      clone.querySelector(".set-reps").value = "";
+    document.querySelectorAll(".menu-item").forEach((item) => {
+      item.addEventListener("click", () => {
+        const nav = item.dataset.nav;
+        if (nav === "home") {
+          showScreen("home");
+        } else if (nav === "routines") {
+          showScreen("routines");
+        }
+        closeMenu();
+      });
+    });
 
-      card.appendChild(clone);
+    function showScreen(which) {
+      if (which === "home") {
+        homeScreen.classList.add("active");
+        routinesScreen.classList.remove("active");
+      } else if (which === "routines") {
+        homeScreen.classList.remove("active");
+        routinesScreen.classList.add("active");
+      }
     }
 
-    function removeSet(card) {
-      const setRows = card.querySelectorAll(".set-row");
-      if (setRows.length <= 1) {
-        // always keep at least one set
-        const first = setRows[0];
-        first.querySelector(".set-weight").value = "";
-        first.querySelector(".set-reps").value = "";
+    backToHome.addEventListener("click", () => {
+      showScreen("home");
+    });
+
+    // --------- Logger (home) ---------
+
+    const exercisesContainer = document.getElementById("exercisesContainer");
+
+    function getCurrentLayoutFromHome() {
+      const cards = exercisesContainer.querySelectorAll(".exercise-card");
+      const exercises = [];
+
+      cards.forEach((card) => {
+        const nameInput = card.querySelector(".exercise-name");
+        const setsWrapper = card.querySelector(".sets-wrapper");
+        const sets = [];
+        setsWrapper.querySelectorAll(".set-row").forEach((row) => {
+          const inputs = row.querySelectorAll(".set-input");
+          sets.push({
+            weight: inputs[0] ? inputs[0].value : "",
+            reps: inputs[1] ? inputs[1].value : "",
+          });
+        });
+        exercises.push({
+          name: nameInput ? nameInput.value : "",
+          sets,
+        });
+      });
+
+      return exercises;
+    }
+
+    function applyRoutineToHome(exerciseArray) {
+      exercisesContainer.innerHTML = "";
+      if (!exerciseArray || !exerciseArray.length) {
+        createExerciseCard(exercisesContainer, {
+          name: "",
+          sets: [{ weight: "", reps: "" }],
+        });
         return;
       }
-      setRows[setRows.length - 1].remove();
+      exerciseArray.forEach((ex) => {
+        createExerciseCard(exercisesContainer, ex);
+      });
     }
 
-    // ===== ROUTINES (LOCAL STORAGE) =====
-    const STORAGE_KEY = "code_and_iron_test_routines";
-    const saveRoutineBtn = document.getElementById("saveRoutineBtn");
-    const newRoutineNameInput = document.getElementById("newRoutineName");
-    const savedRoutinesContainer = document.getElementById("savedRoutines");
+    // --------- Routines (templates) ---------
 
-    function getRoutines() {
+    const routineNameInput = document.getElementById("routineNameInput");
+    const saveRoutineBtn = document.getElementById("saveRoutineBtn");
+    const savedRoutinesList = document.getElementById("savedRoutinesList");
+
+    const STORAGE_KEY = "codeAndIronTestRoutines_v1";
+
+    function loadRoutines() {
       try {
         const raw = localStorage.getItem(STORAGE_KEY);
-        return raw ? JSON.parse(raw) : [];
-      } catch {
+        if (!raw) return [];
+        const parsed = JSON.parse(raw);
+        if (!Array.isArray(parsed)) return [];
+        return parsed;
+      } catch (e) {
+        console.error("Error loading routines", e);
         return [];
       }
     }
 
-    function setRoutines(list) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
-    }
-
-    function serializeTodayLayout() {
-      const exercises = [];
-      const cards = exerciseList.querySelectorAll(".exercise-card");
-
-      cards.forEach((card) => {
-        const name = card.querySelector(".exercise-input").value || "";
-        const sets = [];
-        const setRows = card.querySelectorAll(".set-row");
-        setRows.forEach((row) => {
-          sets.push({
-            weight: row.querySelector(".set-weight").value || "",
-            reps: row.querySelector(".set-reps").value || "",
-          });
-        });
-        exercises.push({ name, sets });
-      });
-
-      return { exercises };
-    }
-
-    function restoreTodayLayout(data) {
-      exerciseList.innerHTML = "";
-      (data.exercises || []).forEach((ex) => {
-        const card = createExerciseCard();
-        const nameInput = card.querySelector(".exercise-input");
-        nameInput.value = ex.name || "";
-
-        // remove default extra sets if any
-        const existingSets = card.querySelectorAll(".set-row");
-        existingSets.forEach((row, idx) => {
-          if (idx > 0) row.remove();
-        });
-
-        (ex.sets || [{ weight: "", reps: "" }]).forEach((set, idx) => {
-          if (idx === 0) {
-            const row = card.querySelector(".set-row");
-            row.querySelector(".set-weight").value = set.weight || "";
-            row.querySelector(".set-reps").value = set.reps || "";
-          } else {
-            addSet(card);
-            const rows = card.querySelectorAll(".set-row");
-            const row = rows[rows.length - 1];
-            row.querySelector(".set-weight").value = set.weight || "";
-            row.querySelector(".set-reps").value = set.reps || "";
-          }
-        });
-
-        exerciseList.appendChild(card);
-      });
-
-      if (!exerciseList.children.length) {
-        exerciseList.appendChild(createExerciseCard());
+    function saveRoutines(routines) {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(routines));
+      } catch (e) {
+        console.error("Error saving routines", e);
       }
     }
 
+    let routines = loadRoutines();
+
+    function renderRoutinesList() {
+      savedRoutinesList.innerHTML = "";
+      if (!routines.length) return;
+
+      routines.forEach((rt, index) => {
+        const wrapper = document.createElement("div");
+        wrapper.className = "saved-wrapper";
+
+        const row = document.createElement("div");
+        row.className = "saved-item";
+
+        const name = document.createElement("div");
+        name.className = "saved-name";
+        name.textContent = rt.name || "Untitled routine";
+        row.appendChild(name);
+
+        const btnWrap = document.createElement("div");
+        btnWrap.className = "saved-buttons";
+
+        // LOAD (green) - replace home layout
+        const loadBtn = document.createElement("button");
+        loadBtn.className = "small-btn load";
+        loadBtn.textContent = "Load";
+        loadBtn.addEventListener("click", () => {
+          applyRoutineToHome(rt.exercises || []);
+          showScreen("home");
+        });
+        btnWrap.appendChild(loadBtn);
+
+        // OPEN (blue) - dropdown editor preview
+        const openBtn = document.createElement("button");
+        openBtn.className = "small-btn open";
+        openBtn.textContent = "Open";
+        btnWrap.appendChild(openBtn);
+
+        // DELETE (red)
+        const delBtn = document.createElement("button");
+        delBtn.className = "small-btn delete";
+        delBtn.textContent = "Delete";
+        delBtn.addEventListener("click", () => {
+          routines.splice(index, 1);
+          saveRoutines(routines);
+          renderRoutinesList();
+        });
+        btnWrap.appendChild(delBtn);
+
+        row.appendChild(btnWrap);
+        wrapper.appendChild(row);
+
+        // dropdown panel
+        const panel = document.createElement("div");
+        panel.className = "open-panel";
+        wrapper.appendChild(panel);
+
+        // Open button logic
+        openBtn.addEventListener("click", () => {
+          const isOpen = panel.classList.contains("open");
+
+          if (isOpen) {
+            // close but DO NOT wipe content
+            panel.classList.remove("open");
+            openBtn.textContent = "Open";
+            return;
+          }
+
+          // close any other open panels
+          document.querySelectorAll(".open-panel.open").forEach((p) => {
+            p.classList.remove("open");
+          });
+          document.querySelectorAll(".small-btn.open").forEach((b) => {
+            b.textContent = "Open";
+          });
+
+          // if first time opened, build content
+          if (!panel.hasChildNodes()) {
+            const innerContainer = document.createElement("div");
+            innerContainer.className = "exercises-container";
+            panel.appendChild(innerContainer);
+
+            const data = rt.exercises || [];
+            if (!data.length) {
+              createExerciseCard(innerContainer, {
+                name: "",
+                sets: [{ weight: "", reps: "" }],
+              });
+            } else {
+              data.forEach((ex) => createExerciseCard(innerContainer, ex));
+            }
+
+            const addExBtn = document.createElement("button");
+            addExBtn.className = "primary-btn";
+            addExBtn.textContent = "Add exercise";
+            addExBtn.style.marginTop = "8px";
+            addExBtn.addEventListener("click", () => {
+              createExerciseCard(innerContainer, {
+                name: "",
+                sets: [{ weight: "", reps: "" }],
+              });
+            });
+            panel.appendChild(addExBtn);
+
+            const note = document.createElement("p");
+            note.className = "card-subtitle";
+            note.style.marginTop = "8px";
+            note.textContent =
+              "You’re viewing this routine’s layout. Edits here are just for reference and won’t overwrite the saved routine.";
+            panel.appendChild(note);
+          }
+
+          panel.classList.add("open");
+          openBtn.textContent = "Close";
+        });
+
+        savedRoutinesList.appendChild(wrapper);
+      });
+    }
+
     saveRoutineBtn.addEventListener("click", () => {
-      const name = newRoutineNameInput.value.trim();
+      const name = routineNameInput.value.trim();
       if (!name) {
         alert("Give this routine a name first.");
         return;
       }
 
-      const layout = serializeTodayLayout();
-      const routines = getRoutines();
-      const existing = routines.find((r) => r.name === name);
-
-      if (existing) {
-        existing.layout = layout;
-      } else {
-        routines.push({ id: Date.now(), name, layout });
+      const exercisesData = getCurrentLayoutFromHome();
+      if (!exercisesData.length) {
+        alert("Create at least one exercise on the Home page first.");
+        return;
       }
 
-      setRoutines(routines);
-      newRoutineNameInput.value = "";
-      renderSavedRoutines();
+      routines.push({
+        id: Date.now(),
+        name,
+        exercises: exercisesData,
+      });
+      saveRoutines(routines);
+      renderRoutinesList();
+      routineNameInput.value = "";
     });
 
-    function renderSavedRoutines() {
-      const routines = getRoutines();
-      savedRoutinesContainer.innerHTML = "";
+    // --------- Init ---------
 
-      if (!routines.length) return;
-
-      routines.forEach((r) => {
-        const block = document.createElement("div");
-        block.className = "routine-block";
-        block.innerHTML = `
-          <div class="routine-header-row">
-            <div class="routine-name">${r.name}</div>
-            <div class="routine-actions">
-              <button class="pill-btn green" data-action="load">Load</button>
-              <button class="pill-btn blue" data-action="close">Close</button>
-              <button class="pill-btn red" data-action="delete">Delete</button>
-            </div>
-          </div>
-        `;
-
-        block.addEventListener("click", (e) => {
-          const btn = e.target.closest("button");
-          if (!btn) return;
-          const action = btn.dataset.action;
-
-          if (action === "load") {
-            restoreTodayLayout(r.layout);
-            showToday();
-          } else if (action === "delete") {
-            const remaining = getRoutines().filter(
-              (x) => x.name !== r.name
-            );
-            setRoutines(remaining);
-            renderSavedRoutines();
-          } else if (action === "close") {
-            // Just hide routines and go back
-            showToday();
-          }
-        });
-
-        savedRoutinesContainer.appendChild(block);
-      });
+    function init() {
+      // one empty exercise by default on home
+      applyRoutineToHome([
+        { name: "", sets: [{ weight: "", reps: "" }] }
+      ]);
+      renderRoutinesList();
     }
 
-    // ===== INIT =====
-    // Start with one exercise card
-    exerciseList.appendChild(createExerciseCard());
+    init();
   </script>
 </body>
 </html>
