@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Code and Iron</title>
+  <title>Code and Iron Test</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <!-- Germania One font -->
@@ -412,7 +412,7 @@
 <body>
   <div class="app-wrapper">
     <header class="app-header">
-      <h1>Code and Iron</h1>
+      <h1>Code and Iron Test</h1>
       <button class="menu-button" id="menuButton" aria-label="Open menu">
         <div class="menu-icon">
           <span></span>
@@ -431,7 +431,7 @@
     <main id="homeScreen" class="screen active">
       <section class="card">
         <div id="workoutsContainer" class="workouts-container"></div>
-        <button id="addWorkoutBtn" class="primary-btn footer-btn">
+        <button id="addWorkoutBtn" class="primary-btn footer-btn">+</button>
           Add exercise
         </button>
       </section>
@@ -525,7 +525,7 @@
 
       const removeSetBtn = document.createElement("button");
       removeSetBtn.className = "remove-set-btn";
-      removeSetBtn.textContent = "Remove set";
+      removeSetBtn.textContent = "-";
       removeSetBtn.addEventListener("click", () => {
         const allSets = card.querySelectorAll(".set-box");
         if (allSets.length > 1) {
@@ -557,7 +557,7 @@
 
       const removeWorkoutBtn = document.createElement("button");
       removeWorkoutBtn.className = "danger-btn";
-      removeWorkoutBtn.textContent = "Remove exercise";
+      removeWorkoutBtn.textContent = "-";
       removeWorkoutBtn.addEventListener("click", () => {
         card.remove();
       });
@@ -580,7 +580,7 @@
 
       const addSetBtn = document.createElement("button");
       addSetBtn.className = "primary-btn";
-      addSetBtn.textContent = "Add set";
+      addSetBtn.textContent = "+";
       addSetBtn.addEventListener("click", () => {
         const newSetBox = createSetBox(card);
         setsWrapper.appendChild(newSetBox);
@@ -730,7 +730,7 @@
       // Add exercise button inside panel
       const addExerciseBtn = document.createElement("button");
       addExerciseBtn.className = "primary-btn footer-btn";
-      addExerciseBtn.textContent = "Add exercise";
+      addExerciseBtn.textContent = "+";
       addExerciseBtn.addEventListener("click", () => {
         createWorkoutCard(innerContainer);
       });
