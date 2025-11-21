@@ -5,331 +5,314 @@
   <title>Code and Iron Test</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <!-- Germania One font -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Germania+One&display=swap" rel="stylesheet">
-
+  <!-- Brand font (will use whatever matching file you have in /fonts) -->
   <style>
+    @font-face {
+      font-family: "CodeAndIron";
+      src:
+        url("fonts/CodeAndIron-Regular.woff2") format("woff2"),
+        url("fonts/CodeAndIron-Regular.woff") format("woff"),
+        url("fonts/CodeAndIron.woff2") format("woff2"),
+        url("fonts/CodeAndIron.ttf") format("truetype");
+      font-weight: normal;
+      font-style: normal;
+    }
+
     :root {
-      --bg: #000000;
-      --card: #101010;
-      --card-inner: #171717;
-      --border: #2b2b2b;
-      --accent-blue: #0b84ff;
-      --accent-red: #e23b3b;
-      --accent-green: #23b25b;
-      --accent-gold: #ffb43b;
-      --text-main: #ffffff;
-      --text-muted: #b0b0b0;
-      --input-bg: #050505;
-      --input-border: #2e2e2e;
-      --shadow-soft: 0 16px 40px rgba(0, 0, 0, 0.55);
-      --radius-lg: 26px;
-      --radius-md: 18px;
-      --radius-pill: 999px;
+      --bg: #050505;
+      --card: #111215;
+      --card-soft: #17181b;
+      --accent-blue: #0b82ff;
+      --accent-red: #e43b33;
+      --accent-green: #16a34a;
+      --accent-text: #ffb020;
+      --outline: rgba(255, 255, 255, 0.08);
+      --text-main: #f9fafb;
+      --text-subtle: #9ca3af;
+      --radius-xl: 28px;
+      --radius-lg: 22px;
+      --radius-md: 16px;
+      --shadow-soft: 0 18px 45px rgba(0, 0, 0, 0.65);
     }
 
     * {
       box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    html, body {
-      height: 100%;
     }
 
     body {
-      font-family: "Germania One", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: radial-gradient(circle at top left, #181818 0, #000 55%);
+      margin: 0;
+      min-height: 100vh;
+      background: radial-gradient(circle at top left, #16181d 0, #050506 42%, #000 80%);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       color: var(--text-main);
       -webkit-font-smoothing: antialiased;
     }
 
-    .app-shell {
-      max-width: 480px;
+    .app {
+      max-width: 768px;
       margin: 0 auto;
-      min-height: 100vh;
-      padding: 20px 18px 40px;
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
+      padding: 18px 16px 40px;
     }
 
-    header {
+    /* Top bar */
+
+    .top-bar {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding-top: 10px;
+      margin-bottom: 16px;
     }
 
     .brand-title {
-      font-size: 32px;
-      letter-spacing: 0.03em;
-      text-shadow: 0 0 18px rgba(0, 0, 0, 0.9);
+      font-family: "CodeAndIron", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 28px;
+      letter-spacing: 0.04em;
+      color: #fff;
     }
 
-    .menu-button {
+    @media (min-width: 420px) {
+      .brand-title {
+        font-size: 32px;
+      }
+    }
+
+    .menu-toggle {
       width: 48px;
       height: 48px;
       border-radius: 18px;
-      border: 1px solid #333;
-      background: linear-gradient(145deg, #171717, #101010);
-      display: flex;
+      border: none;
+      background: #111214;
+      display: inline-flex;
       align-items: center;
       justify-content: center;
-      box-shadow: var(--shadow-soft);
-      cursor: pointer;
-    }
-
-    .menu-icon {
-      width: 22px;
-      height: 16px;
-      display: flex;
+      gap: 6px;
       flex-direction: column;
-      justify-content: space-between;
+      padding: 0;
+      cursor: pointer;
+      box-shadow: var(--shadow-soft);
     }
 
-    .menu-icon span {
-      display: block;
+    .menu-toggle span {
+      width: 22px;
       height: 3px;
       border-radius: 999px;
-      background: #f5f5f5;
+      background: #ffffff;
     }
 
-    .dropdown-menu {
+    .menu {
       position: absolute;
-      top: 80px;
-      right: 24px;
-      width: 210px;
-      border-radius: 24px;
-      padding: 10px 0;
-      background: rgba(10, 10, 10, 0.97);
-      border: 1px solid #333;
-      box-shadow: var(--shadow-soft);
-      backdrop-filter: blur(16px);
+      right: 20px;
+      top: 72px;
+      background: #111214;
+      border-radius: 18px;
+      padding: 8px 0;
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.9);
       display: none;
-      z-index: 20;
+      z-index: 30;
+      min-width: 170px;
     }
 
-    .dropdown-menu.open {
+    .menu.open {
       display: block;
     }
 
-    .dropdown-item {
-      padding: 12px 20px;
-      font-size: 18px;
-      color: var(--text-main);
+    .menu button {
+      width: 100%;
+      padding: 10px 18px;
+      background: transparent;
+      border: none;
+      color: #f9fafb;
+      font-size: 16px;
+      text-align: left;
       cursor: pointer;
     }
 
-    .dropdown-item:hover {
-      background: #1b1b1b;
+    .menu button:hover {
+      background: #1f2933;
     }
+
+    /* Sections */
 
     main {
-      flex: 1;
+      margin-top: 12px;
+    }
+
+    .section {
+      display: none;
+    }
+
+    .section.section-active {
+      display: block;
+    }
+
+    .card {
+      background: radial-gradient(circle at top left, #1d1f26 0, #0e0f12 48%, #06070a 100%);
+      border-radius: var(--radius-xl);
+      padding: 18px 16px 22px;
+      box-shadow: var(--shadow-soft);
+      border: 1px solid var(--outline);
+    }
+
+    .card-nested {
+      background: #101114;
+      border-radius: 24px;
+      padding: 16px 14px 18px;
+      border: 1px solid var(--outline);
+    }
+
+    .section-title {
+      font-size: 26px;
+      margin: 0 0 16px;
+      font-weight: 700;
+    }
+
+    /* TODAY / EXERCISES */
+
+    #todayExercises {
       display: flex;
       flex-direction: column;
-      gap: 18px;
+      gap: 14px;
     }
 
-    .panel {
-      background: radial-gradient(circle at top left, #191919 0, #080808 55%);
-      border-radius: 34px;
-      padding: 22px 18px 24px;
-      border: 1px solid #252525;
-      box-shadow: var(--shadow-soft);
+    .exercise {
+      border-radius: 24px;
+      background: #111215;
+      padding: 14px 14px 16px;
+      border: 1px solid var(--outline);
     }
 
-    .panel-inner {
-      background: #111111;
-      border-radius: 28px;
-      padding: 16px 14px 18px;
-      border: 1px solid #222222;
-    }
-
-    .panel-header-row {
+    .exercise-header {
       display: flex;
       align-items: center;
-      justify-content: space-between;
+      gap: 12px;
       margin-bottom: 12px;
     }
 
-    .panel-title {
-      font-size: 32px;
+    .exercise-name {
+      flex: 1 1 auto;
+      min-width: 0;
     }
 
-    .muted {
-      color: var(--text-muted);
-      font-size: 16px;
-      margin-top: 4px;
-    }
-
-    .field-label {
-      font-size: 17px;
-      margin-bottom: 6px;
-    }
-
-    .input-shell {
+    .pill-input {
       width: 100%;
+      padding: 11px 16px;
       border-radius: 999px;
-      background: var(--input-bg);
-      border: 1px solid var(--input-border);
-      padding: 0 18px;
-      height: 54px;
-      display: flex;
-      align-items: center;
-    }
-
-    .input-shell input {
-      border: none;
-      outline: none;
-      background: transparent;
+      border: 1px solid var(--outline);
+      background: #050608;
       color: var(--text-main);
-      font-size: 18px;
-      width: 100%;
+      font-size: 16px;
     }
 
-    .input-shell input::placeholder {
-      color: #666;
+    .pill-input::placeholder {
+      color: var(--text-subtle);
     }
 
-    .exercise-card {
-      margin-top: 18px;
-      padding: 16px 14px 14px;
-      border-radius: 26px;
-      background: #141414;
-      border: 1px solid #262626;
-    }
-
-    .exercise-header-row {
-      display: flex;
+    .circle-btn {
+      width: 48px;
+      height: 48px;
+      border-radius: 999px;
+      border: none;
+      display: inline-flex;
       align-items: center;
-      gap: 10px;
-      margin-bottom: 12px;
+      justify-content: center;
+      font-size: 26px;
+      line-height: 1;
+      color: #ffffff;
+      cursor: pointer;
+      box-shadow: var(--shadow-soft);
+      flex: 0 0 auto;
     }
 
-    .exercise-header-row .input-shell {
-      flex: 1;
-      height: 50px;
+    .circle-btn--red {
+      background: var(--accent-red);
+    }
+
+    .circle-btn--blue {
+      background: var(--accent-blue);
     }
 
     .exercise-actions {
       display: flex;
       gap: 8px;
+      flex: 0 0 auto;
     }
 
-    .round-btn {
-      width: 52px;
-      height: 52px;
-      border-radius: 50%;
-      border: none;
-      color: #fff;
-      font-size: 28px;
+    /* Sets row */
+
+    .sets {
       display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      box-shadow: var(--shadow-soft);
-    }
-
-    .round-btn.red {
-      background: var(--accent-red);
-    }
-
-    .round-btn.blue {
-      background: var(--accent-blue);
-    }
-
-    .round-btn:active {
-      transform: scale(0.96);
+      flex-direction: column;
+      gap: 10px;
     }
 
     .set-row {
-      display: grid;
-      grid-template-columns: auto 1.1fr 1.1fr auto auto;
-      gap: 10px;
+      display: flex;
       align-items: center;
-      margin-bottom: 10px;
+      gap: 12px;
     }
 
     .set-label {
-      color: var(--accent-gold);
-      font-size: 20px;
-      padding-left: 4px;
-    }
-
-    .set-group-label {
-      font-size: 15px;
-      margin-bottom: 4px;
-      color: var(--text-muted);
-    }
-
-    .compact-input-shell {
-      border-radius: 18px;
-      background: var(--input-bg);
-      border: 1px solid var(--input-border);
-      padding: 0 12px;
-      height: 48px;
-      display: flex;
-      align-items: center;
-    }
-
-    .compact-input-shell input {
-      border: none;
-      outline: none;
-      background: transparent;
-      color: var(--text-main);
-      width: 100%;
+      flex: 0 0 auto;
+      min-width: 60px;
+      font-weight: 700;
+      color: var(--accent-text);
       font-size: 16px;
-      text-align: left;
     }
 
-    .compact-input-shell input::placeholder {
-      color: #666;
+    .set-inputs {
+      flex: 1 1 auto;
+      min-width: 0;
+      display: flex;
+      gap: 8px;
+    }
+
+    .set-inputs .pill-input {
+      border-radius: 18px;
+      padding: 9px 14px;
+      font-size: 15px;
     }
 
     .set-actions {
       display: flex;
+      flex: 0 0 auto;
       gap: 8px;
-      justify-content: flex-end;
     }
 
-    .round-btn.small {
-      width: 44px;
-      height: 44px;
-      font-size: 24px;
+    .circle-btn--small {
+      width: 42px;
+      height: 42px;
+      font-size: 22px;
     }
 
-    .section-spacer {
-      height: 24px;
+    /* ROUTINES */
+
+    #routinesSection .card {
+      padding-bottom: 24px;
     }
 
-    /* Routines */
-    #routines-view {
-      display: none;
-      flex-direction: column;
-      gap: 18px;
+    .helper-text {
+      margin: 10px 2px 16px;
+      font-size: 15px;
+      color: var(--text-subtle);
     }
 
-    .cta-btn {
-      margin-top: 14px;
+    .primary-btn {
+      display: block;
       width: 100%;
-      height: 60px;
-      border-radius: var(--radius-pill);
+      margin-top: 6px;
+      border-radius: 999px;
       border: none;
-      cursor: pointer;
-      font-size: 20px;
-      letter-spacing: 0.02em;
-      color: #fff;
       background: var(--accent-blue);
+      color: #fff;
+      font-size: 17px;
+      font-weight: 600;
+      padding: 13px 18px;
+      cursor: pointer;
       box-shadow: var(--shadow-soft);
     }
 
-    .cta-btn:active {
-      transform: scale(0.97);
+    .primary-btn:active {
+      transform: translateY(1px);
     }
 
     .routines-list {
@@ -340,675 +323,498 @@
     }
 
     .routine-card {
-      background: #141414;
-      border-radius: 26px;
-      border: 1px solid #262626;
-      padding: 14px 14px 16px;
+      background: #101114;
+      border-radius: 22px;
+      padding: 12px 14px 12px;
+      border: 1px solid var(--outline);
     }
 
     .routine-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 10px;
+      gap: 10px;
+      margin-bottom: 4px;
     }
 
     .routine-name {
-      font-size: 24px;
+      font-size: 18px;
+      font-weight: 700;
     }
 
-    .routine-buttons {
+    .routine-actions {
       display: flex;
       gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
     }
 
-    .pill-btn {
-      border-radius: var(--radius-pill);
+    .chip-btn {
+      border-radius: 999px;
       border: none;
-      padding: 8px 16px;
-      font-size: 16px;
-      color: #fff;
+      padding: 7px 14px;
+      font-size: 14px;
+      font-weight: 600;
       cursor: pointer;
-      box-shadow: var(--shadow-soft);
-      white-space: nowrap;
+      color: #fff;
     }
 
-    .pill-btn.green {
+    .chip-btn--green {
       background: var(--accent-green);
     }
 
-    .pill-btn.blue {
+    .chip-btn--blue {
       background: var(--accent-blue);
     }
 
-    .pill-btn.red {
+    .chip-btn--red {
       background: var(--accent-red);
+    }
+
+    .routine-meta {
+      font-size: 13px;
+      color: var(--text-subtle);
+      margin-top: 2px;
     }
 
     .back-link {
       margin-top: 18px;
+      font-size: 16px;
+      color: var(--text-main);
+      text-decoration: none;
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      color: var(--text-main);
-      font-size: 18px;
-      cursor: pointer;
     }
 
     .back-link span {
-      font-size: 22px;
+      font-size: 19px;
     }
 
-    @media (max-width: 400px) {
-      .brand-title {
-        font-size: 26px;
+    /* Utility */
+
+    input:focus,
+    button:focus {
+      outline: 2px solid var(--accent-blue);
+      outline-offset: 2px;
+    }
+
+    @media (min-width: 600px) {
+      .card {
+        padding: 20px 20px 24px;
       }
-      .panel-title {
-        font-size: 28px;
+
+      .card-nested {
+        padding: 18px 16px 20px;
       }
+
+      .exercise-header {
+        gap: 14px;
+      }
+
       .set-row {
-        grid-template-columns: auto 1fr 1fr auto auto;
+        gap: 14px;
       }
     }
   </style>
 </head>
 <body>
-  <div class="app-shell">
-    <header>
+  <div class="app">
+    <header class="top-bar">
       <div class="brand-title">Code and Iron Test</div>
-      <button class="menu-button" id="menu-toggle" aria-label="Menu">
-        <div class="menu-icon">
-          <span></span><span></span><span></span>
-        </div>
+
+      <button class="menu-toggle" id="menuToggle" aria-label="Open navigation">
+        <span></span>
+        <span></span>
+        <span></span>
       </button>
 
-      <div class="dropdown-menu" id="dropdown-menu">
-        <div class="dropdown-item" data-nav="routines">Routines</div>
-      </div>
+      <nav class="menu" id="menu">
+        <button type="button" data-target="todaySection">Today</button>
+        <button type="button" data-target="routinesSection">Routines</button>
+      </nav>
     </header>
 
     <main>
-      <!-- TODAY / LOGGER VIEW -->
-      <section id="today-view">
-        <div class="panel">
-          <div class="panel-header-row">
-            <div>
-              <div class="panel-title">Today</div>
-            </div>
-          </div>
+      <!-- TODAY -------------------------------------------------------------->
+      <section id="todaySection" class="section section-active">
+        <div class="card">
+          <h2 class="section-title">Today</h2>
 
-          <div class="panel-inner">
-            <div id="today-exercises-container">
-              <!-- exercises injected by JS -->
-            </div>
+          <div id="todayExercises" class="card-nested">
+            <!-- Exercises rendered here -->
           </div>
         </div>
       </section>
 
-      <!-- ROUTINES VIEW -->
-      <section id="routines-view">
-        <div class="panel">
-          <div class="panel-header-row">
-            <div>
-              <div class="panel-title">Routines</div>
-              <div class="muted">Save exercise groups you can quickly load into Today.</div>
-            </div>
+      <!-- ROUTINES ----------------------------------------------------------->
+      <section id="routinesSection" class="section">
+        <div class="card">
+          <h2 class="section-title">Routines</h2>
+          <p class="helper-text">
+            Save exercise groups you can quickly load into <strong>Today</strong>.
+          </p>
+
+          <input
+            id="routineNameInput"
+            class="pill-input"
+            type="text"
+            placeholder="e.g. Push Day, Legs, Back &amp; Biceps"
+            autocomplete="off"
+          />
+
+          <button id="saveRoutineBtn" class="primary-btn" type="button">
+            Save routine
+          </button>
+
+          <div id="routinesList" class="routines-list">
+            <!-- Saved routines -->
           </div>
 
-          <div class="panel-inner">
-            <div class="field-label">New routine name</div>
-            <div class="input-shell" style="margin-bottom: 10px;">
-              <input id="routine-name-input" type="text" placeholder="e.g. Push Day, Legs, Back &amp; Biceps">
-            </div>
-
-            <button class="cta-btn" id="save-routine-btn">Save routine</button>
-
-            <div class="routines-list" id="routines-list">
-              <!-- routine cards injected by JS -->
-            </div>
-
-            <div class="section-spacer"></div>
-
-            <div class="back-link" id="back-to-logger">
-              <span>←</span>
-              <span>Back to logger</span>
-            </div>
-          </div>
+          <a href="#todaySection" class="back-link" id="backToToday">
+            <span>←</span>
+            <span>Back to logger</span>
+          </a>
         </div>
       </section>
     </main>
   </div>
 
   <script>
-    // ----- DATA MODEL HELPERS -----
-    function newId() {
-      return Math.random().toString(36).slice(2) + Date.now().toString(36);
+    // ---------- State ----------
+    const STORAGE_KEY = "ci_test_state_v1";
+
+    let appState = {
+      today: [],
+      routines: []
+    };
+
+    // ---------- DOM refs ----------
+    const menuToggle = document.getElementById("menuToggle");
+    const menu = document.getElementById("menu");
+    const todaySection = document.getElementById("todaySection");
+    const routinesSection = document.getElementById("routinesSection");
+
+    const todayExercisesEl = document.getElementById("todayExercises");
+    const routineNameInput = document.getElementById("routineNameInput");
+    const saveRoutineBtn = document.getElementById("saveRoutineBtn");
+    const routinesListEl = document.getElementById("routinesList");
+    const backToToday = document.getElementById("backToToday");
+
+    // ---------- Helpers ----------
+    function saveState() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+      } catch (err) {
+        console.warn("Unable to save state", err);
+      }
     }
-
-    function createEmptySet() {
-      return {
-        id: newId(),
-        weight: "",
-        reps: ""
-      };
-    }
-
-    function createEmptyExercise() {
-      return {
-        id: newId(),
-        name: "",
-        sets: [createEmptySet()]
-      };
-    }
-
-    function deepClone(obj) {
-      return JSON.parse(JSON.stringify(obj));
-    }
-
-    // ----- STATE -----
-    const TODAY_KEY = "ci_test_today_exercises";
-    const ROUTINES_KEY = "ci_test_routines";
-
-    let todayExercises = [];
-    let routines = [];
 
     function loadState() {
       try {
-        const t = localStorage.getItem(TODAY_KEY);
-        todayExercises = t ? JSON.parse(t) : [createEmptyExercise()];
-      } catch {
-        todayExercises = [createEmptyExercise()];
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed && typeof parsed === "object") {
+            if (Array.isArray(parsed.today)) appState.today = parsed.today;
+            if (Array.isArray(parsed.routines)) appState.routines = parsed.routines;
+          }
+        }
+      } catch (err) {
+        console.warn("Unable to load state", err);
       }
 
-      try {
-        const r = localStorage.getItem(ROUTINES_KEY);
-        routines = r ? JSON.parse(r) : [];
-      } catch {
-        routines = [];
+      // If no exercises, start with one blank exercise & set
+      if (!appState.today.length) {
+        appState.today.push({
+          name: "",
+          sets: [{ weight: "", reps: "" }]
+        });
       }
     }
 
-    function saveToday() {
-      localStorage.setItem(TODAY_KEY, JSON.stringify(todayExercises));
+    function countSets(exercises) {
+      return exercises.reduce((total, ex) => total + ex.sets.length, 0);
     }
 
-    function saveRoutines() {
-      localStorage.setItem(ROUTINES_KEY, JSON.stringify(routines));
-    }
-
-    // ----- RENDERING -----
-    const todayContainer = document.getElementById("today-exercises-container");
-    const routinesListEl = document.getElementById("routines-list");
-
+    // ---------- Render TODAY ----------
     function renderToday() {
-      if (!todayExercises.length) {
-        todayExercises.push(createEmptyExercise());
+      todayExercisesEl.innerHTML = "";
+
+      appState.today.forEach((exercise, exerciseIndex) => {
+        const exEl = document.createElement("div");
+        exEl.className = "exercise";
+        exEl.dataset.exerciseIndex = exerciseIndex;
+
+        exEl.innerHTML = `
+          <div class="exercise-header">
+            <div class="exercise-name">
+              <input
+                type="text"
+                class="pill-input exercise-name-input"
+                placeholder="Exercise name"
+                value="${exercise.name || ""}"
+              />
+            </div>
+            <div class="exercise-actions">
+              <button type="button" class="circle-btn circle-btn--red remove-exercise" aria-label="Remove exercise">−</button>
+              <button type="button" class="circle-btn circle-btn--blue add-exercise" aria-label="Add exercise">+</button>
+            </div>
+          </div>
+          <div class="sets"></div>
+        `;
+
+        const setsContainer = exEl.querySelector(".sets");
+
+        exercise.sets.forEach((set, setIndex) => {
+          const setRow = document.createElement("div");
+          setRow.className = "set-row";
+          setRow.dataset.setIndex = setIndex;
+
+          setRow.innerHTML = `
+            <div class="set-label">Set <span class="set-number">${setIndex + 1}</span></div>
+            <div class="set-inputs">
+              <input
+                type="number"
+                inputmode="decimal"
+                class="pill-input set-weight-input"
+                placeholder="Weight"
+                value="${set.weight ?? ""}"
+              />
+              <input
+                type="number"
+                inputmode="numeric"
+                class="pill-input set-reps-input"
+                placeholder="Reps"
+                value="${set.reps ?? ""}"
+              />
+            </div>
+            <div class="set-actions">
+              <button type="button" class="circle-btn circle-btn--red circle-btn--small remove-set" aria-label="Remove set">−</button>
+              <button type="button" class="circle-btn circle-btn--blue circle-btn--small add-set" aria-label="Add set">+</button>
+            </div>
+          `;
+
+          setsContainer.appendChild(setRow);
+        });
+
+        todayExercisesEl.appendChild(exEl);
+      });
+    }
+
+    function syncTodayFromDOM() {
+      const exercises = [];
+      todayExercisesEl.querySelectorAll(".exercise").forEach(exEl => {
+        const exName = exEl.querySelector(".exercise-name-input").value.trim();
+        const sets = [];
+        exEl.querySelectorAll(".set-row").forEach(row => {
+          const weight = row.querySelector(".set-weight-input").value.trim();
+          const reps = row.querySelector(".set-reps-input").value.trim();
+          sets.push({ weight, reps });
+        });
+
+        exercises.push({ name: exName, sets });
+      });
+
+      appState.today = exercises;
+      saveState();
+    }
+
+    function addExercise(afterIndex = null) {
+      const newExercise = {
+        name: "",
+        sets: [{ weight: "", reps: "" }]
+      };
+
+      if (afterIndex === null || afterIndex >= appState.today.length - 1) {
+        appState.today.push(newExercise);
+      } else {
+        appState.today.splice(afterIndex + 1, 0, newExercise);
       }
 
-      todayContainer.innerHTML = todayExercises.map((ex, exIndex) => {
-        const setsHtml = ex.sets.map((set, setIndex) => {
-          const setNumber = setIndex + 1;
-          return `
-            <div class="set-row" data-context="today" data-exercise-id="${ex.id}" data-set-index="${setIndex}">
-              <div class="set-label">Set ${setNumber}</div>
-
-              <div>
-                <div class="set-group-label">Weight</div>
-                <div class="compact-input-shell">
-                  <input
-                    type="text"
-                    class="weight-input"
-                    data-context="today"
-                    data-exercise-id="${ex.id}"
-                    data-set-index="${setIndex}"
-                    placeholder="Weight"
-                    value="${set.weight || ""}"
-                  >
-                </div>
-              </div>
-
-              <div>
-                <div class="set-group-label">Reps</div>
-                <div class="compact-input-shell">
-                  <input
-                    type="text"
-                    class="reps-input"
-                    data-context="today"
-                    data-exercise-id="${ex.id}"
-                    data-set-index="${setIndex}"
-                    placeholder="Reps"
-                    value="${set.reps || ""}"
-                  >
-                </div>
-              </div>
-
-              <div class="set-actions">
-                <button
-                  class="round-btn small red"
-                  data-role="remove-set"
-                  data-context="today"
-                  data-exercise-id="${ex.id}"
-                  data-set-index="${setIndex}"
-                >−</button>
-                <button
-                  class="round-btn small blue"
-                  data-role="add-set"
-                  data-context="today"
-                  data-exercise-id="${ex.id}"
-                >+</button>
-              </div>
-            </div>
-          `;
-        }).join("");
-
-        return `
-          <div class="exercise-card" data-context="today" data-exercise-id="${ex.id}">
-            <div class="exercise-header-row">
-              <div class="input-shell">
-                <input
-                  type="text"
-                  class="exercise-name-input"
-                  data-context="today"
-                  data-exercise-id="${ex.id}"
-                  placeholder="Exercise name"
-                  value="${ex.name || ""}"
-                >
-              </div>
-              <div class="exercise-actions">
-                <button
-                  class="round-btn red"
-                  data-role="remove-exercise"
-                  data-context="today"
-                  data-exercise-id="${ex.id}"
-                >−</button>
-                <button
-                  class="round-btn blue"
-                  data-role="add-exercise"
-                  data-context="today"
-                  data-after-id="${ex.id}"
-                >+</button>
-              </div>
-            </div>
-
-            ${setsHtml}
-          </div>
-        `;
-      }).join("");
+      saveState();
+      renderToday();
     }
 
-    function renderRoutineCardExercises(exercises, routineId) {
-      return exercises.map((ex) => {
-        const setsHtml = ex.sets.map((set, setIndex) => {
-          const setNumber = setIndex + 1;
-          return `
-            <div class="set-row" data-context="routine" data-routine-id="${routineId}" data-exercise-id="${ex.id}" data-set-index="${setIndex}">
-              <div class="set-label">Set ${setNumber}</div>
-
-              <div>
-                <div class="set-group-label">Weight</div>
-                <div class="compact-input-shell">
-                  <input
-                    type="text"
-                    class="weight-input"
-                    data-context="routine"
-                    data-routine-id="${routineId}"
-                    data-exercise-id="${ex.id}"
-                    data-set-index="${setIndex}"
-                    placeholder="Weight"
-                    value="${set.weight || ""}"
-                  >
-                </div>
-              </div>
-
-              <div>
-                <div class="set-group-label">Reps</div>
-                <div class="compact-input-shell">
-                  <input
-                    type="text"
-                    class="reps-input"
-                    data-context="routine"
-                    data-routine-id="${routineId}"
-                    data-exercise-id="${ex.id}"
-                    data-set-index="${setIndex}"
-                    placeholder="Reps"
-                    value="${set.reps || ""}"
-                  >
-                </div>
-              </div>
-
-              <div class="set-actions">
-                <button
-                  class="round-btn small red"
-                  data-role="remove-set"
-                  data-context="routine"
-                  data-routine-id="${routineId}"
-                  data-exercise-id="${ex.id}"
-                  data-set-index="${setIndex}"
-                >−</button>
-                <button
-                  class="round-btn small blue"
-                  data-role="add-set"
-                  data-context="routine"
-                  data-routine-id="${routineId}"
-                  data-exercise-id="${ex.id}"
-                >+</button>
-              </div>
-            </div>
-          `;
-        }).join("");
-
-        return `
-          <div class="exercise-card" data-context="routine" data-routine-id="${routineId}" data-exercise-id="${ex.id}">
-            <div class="exercise-header-row">
-              <div class="input-shell">
-                <input
-                  type="text"
-                  class="exercise-name-input"
-                  data-context="routine"
-                  data-routine-id="${routineId}"
-                  data-exercise-id="${ex.id}"
-                  placeholder="Exercise name"
-                  value="${ex.name || ""}"
-                >
-              </div>
-              <div class="exercise-actions">
-                <button
-                  class="round-btn red"
-                  data-role="remove-exercise"
-                  data-context="routine"
-                  data-routine-id="${routineId}"
-                  data-exercise-id="${ex.id}"
-                >−</button>
-                <button
-                  class="round-btn blue"
-                  data-role="add-exercise"
-                  data-context="routine"
-                  data-routine-id="${routineId}"
-                  data-after-id="${ex.id}"
-                >+</button>
-              </div>
-            </div>
-
-            ${setsHtml}
-          </div>
-        `;
-      }).join("");
+    function removeExercise(index) {
+      if (appState.today.length === 1) {
+        // Reset the only exercise instead of deleting
+        appState.today[0] = { name: "", sets: [{ weight: "", reps: "" }] };
+      } else {
+        appState.today.splice(index, 1);
+      }
+      saveState();
+      renderToday();
     }
 
+    function addSet(exerciseIndex, afterIndex) {
+      const sets = appState.today[exerciseIndex].sets;
+      const newSet = { weight: "", reps: "" };
+
+      if (afterIndex === null || afterIndex >= sets.length - 1) {
+        sets.push(newSet);
+      } else {
+        sets.splice(afterIndex + 1, 0, newSet);
+      }
+
+      saveState();
+      renderToday();
+    }
+
+    function removeSet(exerciseIndex, setIndex) {
+      const sets = appState.today[exerciseIndex].sets;
+      if (sets.length === 1) {
+        sets[0] = { weight: "", reps: "" };
+      } else {
+        sets.splice(setIndex, 1);
+      }
+      saveState();
+      renderToday();
+    }
+
+    // ---------- Render ROUTINES ----------
     function renderRoutines() {
-      if (!routines.length) {
-        routinesListEl.innerHTML = "";
+      routinesListEl.innerHTML = "";
+
+      if (!appState.routines.length) {
+        const empty = document.createElement("div");
+        empty.style.color = "var(--text-subtle)";
+        empty.style.fontSize = "14px";
+        empty.textContent = "No routines saved yet. Build a day in Today, give it a name, and tap “Save routine.”";
+        routinesListEl.appendChild(empty);
         return;
       }
 
-      routinesListEl.innerHTML = routines.map(routine => {
-        const exercisesHtml = renderRoutineCardExercises(routine.exercises, routine.id);
-        return `
-          <div class="routine-card" data-routine-id="${routine.id}">
-            <div class="routine-header">
-              <div class="routine-name">${routine.name}</div>
-              <div class="routine-buttons">
-                <button class="pill-btn green" data-role="load-routine" data-routine-id="${routine.id}">Load</button>
-                <button class="pill-btn blue" data-role="close-routine" data-routine-id="${routine.id}">Close</button>
-                <button class="pill-btn red" data-role="delete-routine" data-routine-id="${routine.id}">Delete</button>
-              </div>
-            </div>
+      appState.routines.forEach((routine, index) => {
+        const card = document.createElement("div");
+        card.className = "routine-card";
+        card.dataset.routineIndex = index;
 
-            <div class="panel-inner">
-              ${exercisesHtml}
+        const exerciseCount = routine.exercises.length;
+        const setCount = countSets(routine.exercises);
+
+        card.innerHTML = `
+          <div class="routine-header">
+            <div class="routine-name">${routine.name || "Unnamed routine"}</div>
+            <div class="routine-actions">
+              <button type="button" class="chip-btn chip-btn--green load-routine">Load</button>
+              <button type="button" class="chip-btn chip-btn--red delete-routine">Delete</button>
             </div>
           </div>
+          <div class="routine-meta">${exerciseCount} exercise${exerciseCount !== 1 ? "s" : ""} · ${setCount} set${setCount !== 1 ? "s" : ""}</div>
         `;
-      }).join("");
+
+        routinesListEl.appendChild(card);
+      });
     }
 
-    // ----- EVENT HANDLERS -----
-    document.addEventListener("click", (e) => {
-      const role = e.target.getAttribute("data-role");
-      const context = e.target.getAttribute("data-context");
-
-      // Menu
-      if (e.target.id === "menu-toggle" || e.target.closest("#menu-toggle")) {
-        document.getElementById("dropdown-menu").classList.toggle("open");
+    function saveRoutine() {
+      const name = routineNameInput.value.trim();
+      if (!name) {
+        routineNameInput.focus();
         return;
       }
 
-      if (e.target.closest("#dropdown-menu")) {
-        const nav = e.target.getAttribute("data-nav");
-        if (nav === "routines") {
-          showRoutinesView();
-        }
-        document.getElementById("dropdown-menu").classList.remove("open");
-        return;
+      syncTodayFromDOM();
+
+      appState.routines.push({
+        name,
+        exercises: JSON.parse(JSON.stringify(appState.today))
+      });
+
+      routineNameInput.value = "";
+      saveState();
+      renderRoutines();
+    }
+
+    function loadRoutine(index) {
+      const routine = appState.routines[index];
+      if (!routine) return;
+      appState.today = JSON.parse(JSON.stringify(routine.exercises));
+      saveState();
+      renderToday();
+      // Jump back to Today view
+      showSection("todaySection");
+    }
+
+    function deleteRoutine(index) {
+      appState.routines.splice(index, 1);
+      saveState();
+      renderRoutines();
+    }
+
+    // ---------- Navigation ----------
+    function showSection(id) {
+      if (id === "todaySection") {
+        todaySection.classList.add("section-active");
+        routinesSection.classList.remove("section-active");
+      } else {
+        routinesSection.classList.add("section-active");
+        todaySection.classList.remove("section-active");
       }
+      menu.classList.remove("open");
+    }
 
-      // Save routine
-      if (e.target.id === "save-routine-btn") {
-        const nameInput = document.getElementById("routine-name-input");
-        const name = nameInput.value.trim();
-        if (!name) return;
-        const newRoutine = {
-          id: newId(),
-          name,
-          exercises: deepClone(todayExercises)
-        };
-        routines.push(newRoutine);
-        saveRoutines();
-        renderRoutines();
-        nameInput.value = "";
-        return;
-      }
+    // ---------- Event wiring ----------
+    menuToggle.addEventListener("click", () => {
+      menu.classList.toggle("open");
+    });
 
-      // Back to logger
-      if (e.target.id === "back-to-logger" || e.target.closest("#back-to-logger")) {
-        showTodayView();
-        return;
-      }
+    menu.addEventListener("click", e => {
+      const btn = e.target.closest("button[data-target]");
+      if (!btn) return;
+      showSection(btn.dataset.target);
+    });
 
-      // Routine buttons (load, delete, close)
-      if (role === "load-routine") {
-        const routineId = e.target.getAttribute("data-routine-id");
-        const routine = routines.find(r => r.id === routineId);
-        if (routine) {
-          todayExercises = deepClone(routine.exercises);
-          saveToday();
-          renderToday();
-          showTodayView();
-        }
-        return;
-      }
+    backToToday.addEventListener("click", e => {
+      e.preventDefault();
+      showSection("todaySection");
+    });
 
-      if (role === "delete-routine") {
-        const routineId = e.target.getAttribute("data-routine-id");
-        routines = routines.filter(r => r.id !== routineId);
-        saveRoutines();
-        renderRoutines();
-        return;
-      }
+    // Today interactions (event delegation)
+    todayExercisesEl.addEventListener("click", e => {
+      const exEl = e.target.closest(".exercise");
+      if (!exEl) return;
+      const exerciseIndex = Number(exEl.dataset.exerciseIndex);
 
-      if (role === "close-routine") {
-        const routineId = e.target.getAttribute("data-routine-id");
-        const card = document.querySelector(`.routine-card[data-routine-id="${routineId}"] .panel-inner`);
-        if (card) {
-          card.style.display = card.style.display === "none" ? "block" : "none";
-        }
-        return;
-      }
-
-      // Exercise / set buttons (today or routine)
-      if (!role || !context) return;
-
-      if (role === "add-exercise") {
-        const afterId = e.target.getAttribute("data-after-id");
-        if (context === "today") {
-          const idx = todayExercises.findIndex(ex => ex.id === afterId);
-          const insertAt = idx === -1 ? todayExercises.length : idx + 1;
-          todayExercises.splice(insertAt, 0, createEmptyExercise());
-          saveToday();
-          renderToday();
-        } else if (context === "routine") {
-          const routineId = e.target.getAttribute("data-routine-id");
-          const routine = routines.find(r => r.id === routineId);
-          if (!routine) return;
-          const idx = routine.exercises.findIndex(ex => ex.id === afterId);
-          const insertAt = idx === -1 ? routine.exercises.length : idx + 1;
-          routine.exercises.splice(insertAt, 0, createEmptyExercise());
-          saveRoutines();
-          renderRoutines();
-        }
-        return;
-      }
-
-      if (role === "remove-exercise") {
-        const exerciseId = e.target.getAttribute("data-exercise-id");
-        if (context === "today") {
-          if (todayExercises.length === 1) {
-            todayExercises[0] = createEmptyExercise();
-          } else {
-            todayExercises = todayExercises.filter(ex => ex.id !== exerciseId);
-          }
-          saveToday();
-          renderToday();
-        } else if (context === "routine") {
-          const routineId = e.target.getAttribute("data-routine-id");
-          const routine = routines.find(r => r.id === routineId);
-          if (!routine) return;
-          if (routine.exercises.length === 1) {
-            routine.exercises[0] = createEmptyExercise();
-          } else {
-            routine.exercises = routine.exercises.filter(ex => ex.id !== exerciseId);
-          }
-          saveRoutines();
-          renderRoutines();
-        }
-        return;
-      }
-
-      if (role === "add-set") {
-        const exerciseId = e.target.getAttribute("data-exercise-id");
-        if (context === "today") {
-          const exercise = todayExercises.find(ex => ex.id === exerciseId);
-          if (!exercise) return;
-          exercise.sets.push(createEmptySet());
-          saveToday();
-          renderToday();
-        } else if (context === "routine") {
-          const routineId = e.target.getAttribute("data-routine-id");
-          const routine = routines.find(r => r.id === routineId);
-          if (!routine) return;
-          const exercise = routine.exercises.find(ex => ex.id === exerciseId);
-          if (!exercise) return;
-          exercise.sets.push(createEmptySet());
-          saveRoutines();
-          renderRoutines();
-        }
-        return;
-      }
-
-      if (role === "remove-set") {
-        const exerciseId = e.target.getAttribute("data-exercise-id");
-        const setIndex = parseInt(e.target.getAttribute("data-set-index"), 10);
-        if (isNaN(setIndex)) return;
-
-        if (context === "today") {
-          const exercise = todayExercises.find(ex => ex.id === exerciseId);
-          if (!exercise) return;
-          if (exercise.sets.length === 1) {
-            exercise.sets[0] = createEmptySet();
-          } else {
-            exercise.sets.splice(setIndex, 1);
-          }
-          saveToday();
-          renderToday();
-        } else if (context === "routine") {
-          const routineId = e.target.getAttribute("data-routine-id");
-          const routine = routines.find(r => r.id === routineId);
-          if (!routine) return;
-          const exercise = routine.exercises.find(ex => ex.id === exerciseId);
-          if (!exercise) return;
-          if (exercise.sets.length === 1) {
-            exercise.sets[0] = createEmptySet();
-          } else {
-            exercise.sets.splice(setIndex, 1);
-          }
-          saveRoutines();
-          renderRoutines();
-        }
-        return;
+      if (e.target.closest(".add-exercise")) {
+        addExercise(exerciseIndex);
+      } else if (e.target.closest(".remove-exercise")) {
+        removeExercise(exerciseIndex);
+      } else if (e.target.closest(".add-set")) {
+        const row = e.target.closest(".set-row");
+        const setIndex = Number(row.dataset.setIndex);
+        addSet(exerciseIndex, setIndex);
+      } else if (e.target.closest(".remove-set")) {
+        const row = e.target.closest(".set-row");
+        const setIndex = Number(row.dataset.setIndex);
+        removeSet(exerciseIndex, setIndex);
       }
     });
 
-    // Input updates
-    document.addEventListener("input", (e) => {
-      const cls = e.target.classList;
-      const context = e.target.getAttribute("data-context");
-      if (!context) return;
+    // Save on typing in any today input
+    todayExercisesEl.addEventListener("input", () => {
+      syncTodayFromDOM();
+    });
 
-      if (cls.contains("exercise-name-input")) {
-        const exId = e.target.getAttribute("data-exercise-id");
-        const val = e.target.value;
-        if (context === "today") {
-          const ex = todayExercises.find(ex => ex.id === exId);
-          if (ex) {
-            ex.name = val;
-            saveToday();
-          }
-        } else if (context === "routine") {
-          const routineId = e.target.getAttribute("data-routine-id");
-          const routine = routines.find(r => r.id === routineId);
-          if (!routine) return;
-          const ex = routine.exercises.find(ex => ex.id === exId);
-          if (ex) {
-            ex.name = val;
-            saveRoutines();
-          }
-        }
-        return;
-      }
+    saveRoutineBtn.addEventListener("click", saveRoutine);
 
-      if (cls.contains("weight-input") || cls.contains("reps-input")) {
-        const exId = e.target.getAttribute("data-exercise-id");
-        const setIndex = parseInt(e.target.getAttribute("data-set-index"), 10);
-        if (isNaN(setIndex)) return;
-        const field = cls.contains("weight-input") ? "weight" : "reps";
-        const val = e.target.value;
+    routinesListEl.addEventListener("click", e => {
+      const card = e.target.closest(".routine-card");
+      if (!card) return;
+      const index = Number(card.dataset.routineIndex);
 
-        if (context === "today") {
-          const ex = todayExercises.find(ex => ex.id === exId);
-          if (!ex || !ex.sets[setIndex]) return;
-          ex.sets[setIndex][field] = val;
-          saveToday();
-        } else if (context === "routine") {
-          const routineId = e.target.getAttribute("data-routine-id");
-          const routine = routines.find(r => r.id === routineId);
-          if (!routine) return;
-          const ex = routine.exercises.find(ex => ex.id === exId);
-          if (!ex || !ex.sets[setIndex]) return;
-          ex.sets[setIndex][field] = val;
-          saveRoutines();
-        }
+      if (e.target.closest(".load-routine")) {
+        loadRoutine(index);
+      } else if (e.target.closest(".delete-routine")) {
+        deleteRoutine(index);
       }
     });
 
-    // ----- VIEW SWITCHING -----
-    const todayView = document.getElementById("today-view");
-    const routinesView = document.getElementById("routines-view");
-
-    function showTodayView() {
-      todayView.style.display = "block";
-      routinesView.style.display = "none";
-    }
-
-    function showRoutinesView() {
-      todayView.style.display = "none";
-      routinesView.style.display = "block";
-    }
-
-    // ----- INIT -----
+    // ---------- Init ----------
     loadState();
     renderToday();
     renderRoutines();
-    showTodayView();
   </script>
 </body>
 </html>
