@@ -5,801 +5,1010 @@
   <title>Code and Iron Test</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <!-- Custom title font (adjust path/name if your file is different) -->
-  <style>
-    @font-face {
-      font-family: "CodeAndIronRough";
-      src: url("fonts/CodeAndIronRough.otf") format("opentype");
-      font-weight: normal;
-      font-style: normal;
-    }
+  <!-- Germania One font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Germania+One&display=swap" rel="stylesheet">
 
+  <style>
     :root {
-      --bg-main: #000000;
-      --bg-card: #111111;
-      --bg-inner: #181818;
-      --bg-input: #000000;
-      --border-soft: #262626;
+      --bg: #000000;
+      --card: #101010;
+      --card-inner: #171717;
+      --border: #2b2b2b;
+      --accent-blue: #0b84ff;
+      --accent-red: #e23b3b;
+      --accent-green: #23b25b;
+      --accent-gold: #ffb43b;
       --text-main: #ffffff;
-      --text-muted: #b3b3b3;
-      --accent-blue: #0a84ff;
-      --accent-red: #ff3b30;
-      --accent-green: #34c759;
-      --set-label: #ffb74d;
-      --radius-lg: 22px;
-      --radius-md: 16px;
+      --text-muted: #b0b0b0;
+      --input-bg: #050505;
+      --input-border: #2e2e2e;
+      --shadow-soft: 0 16px 40px rgba(0, 0, 0, 0.55);
+      --radius-lg: 26px;
+      --radius-md: 18px;
       --radius-pill: 999px;
-      --shadow-soft: 0 18px 40px rgba(0, 0, 0, 0.75);
     }
 
     * {
       box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      height: 100%;
     }
 
     body {
-      margin: 0;
-      min-height: 100vh;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
-        sans-serif;
-      background: radial-gradient(circle at top, #1a1a1a 0, #000 55%);
+      font-family: "Germania One", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top left, #181818 0, #000 55%);
       color: var(--text-main);
       -webkit-font-smoothing: antialiased;
     }
 
-    .app {
+    .app-shell {
       max-width: 480px;
       margin: 0 auto;
-      padding: 16px 16px 40px;
+      min-height: 100vh;
+      padding: 20px 18px 40px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
     }
 
-    /* Header / title */
-
-    .app-header {
+    header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 20px;
-      padding-top: 4px;
+      padding-top: 10px;
     }
 
-    .app-title {
-      font-family: "CodeAndIronRough", system-ui, sans-serif;
+    .brand-title {
       font-size: 32px;
-      line-height: 1.1;
-      letter-spacing: 0.05em;
-      color: #ffffff;
+      letter-spacing: 0.03em;
+      text-shadow: 0 0 18px rgba(0, 0, 0, 0.9);
     }
 
     .menu-button {
-      width: 44px;
-      height: 44px;
-      border-radius: 14px;
-      border: 0;
-      background: #111111;
-      display: inline-flex;
+      width: 48px;
+      height: 48px;
+      border-radius: 18px;
+      border: 1px solid #333;
+      background: linear-gradient(145deg, #171717, #101010);
+      display: flex;
       align-items: center;
       justify-content: center;
       box-shadow: var(--shadow-soft);
       cursor: pointer;
     }
 
-    .menu-icon,
-    .menu-icon::before,
-    .menu-icon::after {
-      content: "";
+    .menu-icon {
+      width: 22px;
+      height: 16px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .menu-icon span {
       display: block;
-      width: 20px;
-      height: 2px;
+      height: 3px;
       border-radius: 999px;
-      background: #ffffff;
-      position: relative;
+      background: #f5f5f5;
     }
 
-    .menu-icon::before {
+    .dropdown-menu {
       position: absolute;
-      top: -6px;
-    }
-    .menu-icon::after {
-      position: absolute;
-      top: 6px;
-    }
-
-    .menu-sheet {
-      position: absolute;
-      top: 64px;
-      right: 16px;
-      width: 220px;
-      background: #111111;
-      border-radius: 18px;
+      top: 80px;
+      right: 24px;
+      width: 210px;
+      border-radius: 24px;
+      padding: 10px 0;
+      background: rgba(10, 10, 10, 0.97);
+      border: 1px solid #333;
       box-shadow: var(--shadow-soft);
-      padding: 8px 0;
-      z-index: 20;
+      backdrop-filter: blur(16px);
       display: none;
+      z-index: 20;
     }
 
-    .menu-sheet.open {
+    .dropdown-menu.open {
       display: block;
     }
 
-    .menu-item-btn {
-      width: 100%;
-      border: 0;
-      background: transparent;
-      text-align: left;
-      padding: 12px 18px;
+    .dropdown-item {
+      padding: 12px 20px;
       font-size: 18px;
       color: var(--text-main);
       cursor: pointer;
     }
 
-    .menu-item-btn:hover {
-      background: #1f1f1f;
+    .dropdown-item:hover {
+      background: #1b1b1b;
     }
 
     main {
-      position: relative;
-    }
-
-    .screen {
-      display: none;
-    }
-
-    .screen.active {
-      display: block;
-    }
-
-    /* Section cards */
-
-    .section-card {
-      background: var(--bg-card);
-      border-radius: var(--radius-lg);
-      box-shadow: var(--shadow-soft);
-      padding: 18px 18px 22px;
-      border: 1px solid var(--border-soft);
-    }
-
-    .section-header {
-      font-size: 26px;
-      font-weight: 700;
-      margin-bottom: 10px;
-    }
-
-    .section-subtitle {
-      font-size: 14px;
-      color: var(--text-muted);
-      margin-bottom: 18px;
-    }
-
-    /* Exercise layout */
-
-    .exercise-list {
+      flex: 1;
       display: flex;
       flex-direction: column;
       gap: 18px;
-      margin-bottom: 20px;
     }
 
-    .exercise-card {
-      background: var(--bg-inner);
-      border-radius: var(--radius-md);
-      border: 1px solid var(--border-soft);
-      padding: 14px 14px 16px;
+    .panel {
+      background: radial-gradient(circle at top left, #191919 0, #080808 55%);
+      border-radius: 34px;
+      padding: 22px 18px 24px;
+      border: 1px solid #252525;
+      box-shadow: var(--shadow-soft);
     }
 
-    .exercise-row {
+    .panel-inner {
+      background: #111111;
+      border-radius: 28px;
+      padding: 16px 14px 18px;
+      border: 1px solid #222222;
+    }
+
+    .panel-header-row {
       display: flex;
       align-items: center;
-      gap: 10px;
-      margin-bottom: 10px;
+      justify-content: space-between;
+      margin-bottom: 12px;
     }
 
-    .exercise-name {
-      flex: 1;
+    .panel-title {
+      font-size: 32px;
     }
 
-    .input-field {
-      width: 100%;
-      border-radius: 14px;
-      border: 1px solid #333333;
-      background: var(--bg-input);
-      color: var(--text-main);
-      padding: 10px 12px;
-      font-size: 16px;
-      outline: none;
-    }
-
-    .input-field::placeholder {
+    .muted {
       color: var(--text-muted);
-    }
-
-    .icon-btn {
-      width: 40px;
-      height: 40px;
-      border-radius: 20px;
-      border: 0;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 24px;
-      line-height: 1;
-      color: #ffffff;
-      cursor: pointer;
-      flex-shrink: 0;
-    }
-
-    .icon-btn.minus {
-      background: var(--accent-red);
-    }
-
-    .icon-btn.plus {
-      background: var(--accent-blue);
-    }
-
-    .icon-btn:active {
-      transform: scale(0.96);
-    }
-
-    .sets-list {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
+      font-size: 16px;
       margin-top: 4px;
     }
 
-    .set-row {
+    .field-label {
+      font-size: 17px;
+      margin-bottom: 6px;
+    }
+
+    .input-shell {
+      width: 100%;
+      border-radius: 999px;
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      padding: 0 18px;
+      height: 54px;
       display: flex;
       align-items: center;
+    }
+
+    .input-shell input {
+      border: none;
+      outline: none;
+      background: transparent;
+      color: var(--text-main);
+      font-size: 18px;
+      width: 100%;
+    }
+
+    .input-shell input::placeholder {
+      color: #666;
+    }
+
+    .exercise-card {
+      margin-top: 18px;
+      padding: 16px 14px 14px;
+      border-radius: 26px;
+      background: #141414;
+      border: 1px solid #262626;
+    }
+
+    .exercise-header-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .exercise-header-row .input-shell {
+      flex: 1;
+      height: 50px;
+    }
+
+    .exercise-actions {
+      display: flex;
       gap: 8px;
     }
 
-    .set-label {
-      min-width: 44px;
-      font-size: 16px;
-      color: var(--set-label);
-      font-weight: 600;
+    .round-btn {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      border: none;
+      color: #fff;
+      font-size: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: var(--shadow-soft);
     }
 
-    .weight-field,
-    .reps-field {
-      flex: 1;
+    .round-btn.red {
+      background: var(--accent-red);
+    }
+
+    .round-btn.blue {
+      background: var(--accent-blue);
+    }
+
+    .round-btn:active {
+      transform: scale(0.96);
+    }
+
+    .set-row {
+      display: grid;
+      grid-template-columns: auto 1.1fr 1.1fr auto auto;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .set-label {
+      color: var(--accent-gold);
+      font-size: 20px;
+      padding-left: 4px;
+    }
+
+    .set-group-label {
+      font-size: 15px;
+      margin-bottom: 4px;
+      color: var(--text-muted);
+    }
+
+    .compact-input-shell {
+      border-radius: 18px;
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      padding: 0 12px;
+      height: 48px;
+      display: flex;
+      align-items: center;
+    }
+
+    .compact-input-shell input {
+      border: none;
+      outline: none;
+      background: transparent;
+      color: var(--text-main);
+      width: 100%;
+      font-size: 16px;
+      text-align: left;
+    }
+
+    .compact-input-shell input::placeholder {
+      color: #666;
     }
 
     .set-actions {
       display: flex;
-      gap: 6px;
-      flex-shrink: 0;
+      gap: 8px;
+      justify-content: flex-end;
     }
 
-    /* Big CTA buttons */
+    .round-btn.small {
+      width: 44px;
+      height: 44px;
+      font-size: 24px;
+    }
 
-    .primary-btn {
+    .section-spacer {
+      height: 24px;
+    }
+
+    /* Routines */
+    #routines-view {
+      display: none;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .cta-btn {
+      margin-top: 14px;
       width: 100%;
+      height: 60px;
       border-radius: var(--radius-pill);
-      border: 0;
-      padding: 14px 16px;
-      font-size: 18px;
-      font-weight: 600;
+      border: none;
       cursor: pointer;
-      color: #ffffff;
+      font-size: 20px;
+      letter-spacing: 0.02em;
+      color: #fff;
       background: var(--accent-blue);
       box-shadow: var(--shadow-soft);
     }
 
-    .primary-btn:active {
+    .cta-btn:active {
       transform: scale(0.97);
     }
 
-    .secondary-link {
+    .routines-list {
       margin-top: 18px;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      color: var(--text-main);
-      font-size: 16px;
-      text-decoration: none;
-      cursor: pointer;
-    }
-
-    .secondary-link span.arrow {
-      font-size: 18px;
-    }
-
-    /* Routine list */
-
-    .routine-list {
       display: flex;
       flex-direction: column;
-      gap: 14px;
-      margin-top: 18px;
+      gap: 12px;
     }
 
     .routine-card {
-      background: var(--bg-inner);
-      border-radius: var(--radius-md);
-      border: 1px solid var(--border-soft);
-      padding: 14px 14px 12px;
+      background: #141414;
+      border-radius: 26px;
+      border: 1px solid #262626;
+      padding: 14px 14px 16px;
     }
 
-    .routine-header-row {
+    .routine-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 10px;
-      margin-bottom: 8px;
+      margin-bottom: 10px;
     }
 
     .routine-name {
-      font-size: 20px;
-      font-weight: 700;
+      font-size: 24px;
     }
 
-    .routine-actions {
+    .routine-buttons {
       display: flex;
       gap: 8px;
     }
 
     .pill-btn {
       border-radius: var(--radius-pill);
-      border: 0;
-      padding: 8px 14px;
-      font-size: 14px;
-      font-weight: 600;
+      border: none;
+      padding: 8px 16px;
+      font-size: 16px;
+      color: #fff;
       cursor: pointer;
-      color: #ffffff;
-      flex-shrink: 0;
+      box-shadow: var(--shadow-soft);
+      white-space: nowrap;
     }
 
-    .pill-btn.load {
+    .pill-btn.green {
       background: var(--accent-green);
     }
-    .pill-btn.close {
+
+    .pill-btn.blue {
       background: var(--accent-blue);
     }
-    .pill-btn.delete {
+
+    .pill-btn.red {
       background: var(--accent-red);
     }
 
-    .routine-summary {
-      font-size: 13px;
-      color: var(--text-muted);
-      margin-bottom: 8px;
+    .back-link {
+      margin-top: 18px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--text-main);
+      font-size: 18px;
+      cursor: pointer;
     }
 
-    .routine-preview {
-      margin-top: 8px;
+    .back-link span {
+      font-size: 22px;
     }
 
-    .routine-preview .exercise-card {
-      box-shadow: none;
-    }
-
-    .routine-preview .input-field {
-      opacity: 0.75;
-    }
-
-    .routine-preview .icon-btn {
-      display: none; /* preview is read-only */
-    }
-
-    .hidden {
-      display: none !important;
+    @media (max-width: 400px) {
+      .brand-title {
+        font-size: 26px;
+      }
+      .panel-title {
+        font-size: 28px;
+      }
+      .set-row {
+        grid-template-columns: auto 1fr 1fr auto auto;
+      }
     }
   </style>
 </head>
 <body>
-  <div class="app">
-    <header class="app-header">
-      <div class="app-title">Code and Iron Test</div>
-      <button class="menu-button" id="menuToggle" aria-label="Open menu">
-        <span class="menu-icon"></span>
+  <div class="app-shell">
+    <header>
+      <div class="brand-title">Code and Iron Test</div>
+      <button class="menu-button" id="menu-toggle" aria-label="Menu">
+        <div class="menu-icon">
+          <span></span><span></span><span></span>
+        </div>
       </button>
 
-      <div class="menu-sheet" id="menuSheet">
-        <!-- Home removed as requested; only Routines -->
-        <button class="menu-item-btn" data-nav-screen="routines">Routines</button>
+      <div class="dropdown-menu" id="dropdown-menu">
+        <div class="dropdown-item" data-nav="routines">Routines</div>
       </div>
     </header>
 
     <main>
-      <!-- TODAY / LOGGER SCREEN -->
-      <section id="todayScreen" class="screen active">
-        <div class="section-card">
-          <div class="section-header">Today</div>
+      <!-- TODAY / LOGGER VIEW -->
+      <section id="today-view">
+        <div class="panel">
+          <div class="panel-header-row">
+            <div>
+              <div class="panel-title">Today</div>
+            </div>
+          </div>
 
-          <div id="exerciseList" class="exercise-list"></div>
-
-          <button id="addExerciseBtn" class="primary-btn">
-            Add exercise
-          </button>
+          <div class="panel-inner">
+            <div id="today-exercises-container">
+              <!-- exercises injected by JS -->
+            </div>
+          </div>
         </div>
       </section>
 
-      <!-- ROUTINES SCREEN -->
-      <section id="routinesScreen" class="screen">
-        <div class="section-card">
-          <div class="section-header">Routines</div>
-          <div class="section-subtitle">
-            Save exercise groups you can quickly load into Today.
+      <!-- ROUTINES VIEW -->
+      <section id="routines-view">
+        <div class="panel">
+          <div class="panel-header-row">
+            <div>
+              <div class="panel-title">Routines</div>
+              <div class="muted">Save exercise groups you can quickly load into Today.</div>
+            </div>
           </div>
 
-          <div style="margin-bottom: 10px;">
-            <input
-              id="routineNameInput"
-              class="input-field"
-              placeholder="e.g. Push Day, Legs, Back &amp; Biceps"
-            />
+          <div class="panel-inner">
+            <div class="field-label">New routine name</div>
+            <div class="input-shell" style="margin-bottom: 10px;">
+              <input id="routine-name-input" type="text" placeholder="e.g. Push Day, Legs, Back &amp; Biceps">
+            </div>
+
+            <button class="cta-btn" id="save-routine-btn">Save routine</button>
+
+            <div class="routines-list" id="routines-list">
+              <!-- routine cards injected by JS -->
+            </div>
+
+            <div class="section-spacer"></div>
+
+            <div class="back-link" id="back-to-logger">
+              <span>←</span>
+              <span>Back to logger</span>
+            </div>
           </div>
-
-          <button id="saveRoutineBtn" class="primary-btn">
-            Save routine
-          </button>
-
-          <div id="routineList" class="routine-list"></div>
-
-          <button id="backToLogger" class="secondary-link" type="button">
-            <span class="arrow">←</span>
-            <span>Back to logger</span>
-          </button>
         </div>
       </section>
     </main>
   </div>
 
   <script>
-    // ----- Helpers -----
-
-    const todayScreen = document.getElementById("todayScreen");
-    const routinesScreen = document.getElementById("routinesScreen");
-    const exerciseListEl = document.getElementById("exerciseList");
-    const addExerciseBtn = document.getElementById("addExerciseBtn");
-    const menuToggle = document.getElementById("menuToggle");
-    const menuSheet = document.getElementById("menuSheet");
-    const routineNameInput = document.getElementById("routineNameInput");
-    const saveRoutineBtn = document.getElementById("saveRoutineBtn");
-    const routineListEl = document.getElementById("routineList");
-    const backToLoggerBtn = document.getElementById("backToLogger");
-
-    const ROUTINES_KEY = "codeIronTest_routines";
-
-    function showScreen(which) {
-      if (which === "today") {
-        todayScreen.classList.add("active");
-        routinesScreen.classList.remove("active");
-      } else {
-        routinesScreen.classList.add("active");
-        todayScreen.classList.remove("active");
-      }
-      menuSheet.classList.remove("open");
+    // ----- DATA MODEL HELPERS -----
+    function newId() {
+      return Math.random().toString(36).slice(2) + Date.now().toString(36);
     }
 
-    function createSetRow(setIndex, values = {}, readOnly = false) {
-      const row = document.createElement("div");
-      row.className = "set-row";
-      row.innerHTML = `
-        <div class="set-label">Set ${setIndex}</div>
-        <div class="weight-field">
-          <input class="input-field weight-input" placeholder="Weight" ${
-            readOnly ? "readonly" : ""
-          } value="${values.weight || ""}">
-        </div>
-        <div class="reps-field">
-          <input class="input-field reps-input" placeholder="Reps" ${
-            readOnly ? "readonly" : ""
-          } value="${values.reps || ""}">
-        </div>
-        ${
-          readOnly
-            ? ""
-            : `<div class="set-actions">
-                 <button class="icon-btn minus" data-action="remove-set">−</button>
-                 <button class="icon-btn plus" data-action="add-set">+</button>
-               </div>`
-        }
-      `;
-      return row;
+    function createEmptySet() {
+      return {
+        id: newId(),
+        weight: "",
+        reps: ""
+      };
     }
 
-    function renumberSets(exerciseCard) {
-      const rows = exerciseCard.querySelectorAll(".set-row");
-      rows.forEach((row, index) => {
-        const label = row.querySelector(".set-label");
-        if (label) label.textContent = `Set ${index + 1}`;
-      });
+    function createEmptyExercise() {
+      return {
+        id: newId(),
+        name: "",
+        sets: [createEmptySet()]
+      };
     }
 
-    function createExerciseCard(data = {}, readOnly = false) {
-      const card = document.createElement("div");
-      card.className = "exercise-card";
-      card.innerHTML = `
-        <div class="exercise-row">
-          <div class="exercise-name">
-            <input class="input-field exercise-name-input" placeholder="Exercise name" ${
-              readOnly ? "readonly" : ""
-            } value="${data.name || ""}">
-          </div>
-          ${
-            readOnly
-              ? ""
-              : `<button class="icon-btn minus" data-action="remove-exercise">−</button>
-                 <button class="icon-btn plus" data-action="duplicate-exercise">+</button>`
-          }
-        </div>
-        <div class="sets-list"></div>
-      `;
-
-      const setsList = card.querySelector(".sets-list");
-      const setsData =
-        data.sets && data.sets.length
-          ? data.sets
-          : [
-              {
-                weight: "",
-                reps: "",
-              },
-            ];
-
-      setsData.forEach((set, idx) => {
-        setsList.appendChild(createSetRow(idx + 1, set, readOnly));
-      });
-
-      return card;
+    function deepClone(obj) {
+      return JSON.parse(JSON.stringify(obj));
     }
 
-    function serializeExercises(rootEl) {
-      const exercises = [];
-      rootEl.querySelectorAll(".exercise-card").forEach((card) => {
-        const nameInput = card.querySelector(".exercise-name-input");
-        const sets = [];
-        card.querySelectorAll(".set-row").forEach((row) => {
-          const weight = row.querySelector(".weight-input")?.value || "";
-          const reps = row.querySelector(".reps-input")?.value || "";
-          sets.push({ weight, reps });
-        });
-        exercises.push({
-          name: nameInput ? nameInput.value || "" : "",
-          sets,
-        });
-      });
-      return exercises;
-    }
+    // ----- STATE -----
+    const TODAY_KEY = "ci_test_today_exercises";
+    const ROUTINES_KEY = "ci_test_routines";
 
-    function clearChildren(el) {
-      while (el.firstChild) el.removeChild(el.firstChild);
-    }
+    let todayExercises = [];
+    let routines = [];
 
-    // ----- Today / logger logic -----
-
-    function addNewExercise(data) {
-      const card = createExerciseCard(data || {});
-      exerciseListEl.appendChild(card);
-    }
-
-    addExerciseBtn.addEventListener("click", () => {
-      addNewExercise();
-    });
-
-    // Event delegation for exercise / set buttons
-    exerciseListEl.addEventListener("click", (e) => {
-      const btn = e.target.closest("button");
-      if (!btn) return;
-
-      const action = btn.dataset.action;
-
-      if (action === "remove-exercise") {
-        const card = btn.closest(".exercise-card");
-        if (!card) return;
-        if (exerciseListEl.children.length === 1) {
-          // Always keep at least one exercise card
-          card.querySelectorAll("input").forEach((input) => (input.value = ""));
-          const setsList = card.querySelector(".sets-list");
-          clearChildren(setsList);
-          setsList.appendChild(createSetRow(1));
-        } else {
-          card.remove();
-        }
-      }
-
-      if (action === "duplicate-exercise") {
-        const card = btn.closest(".exercise-card");
-        if (!card) return;
-        const data = serializeExercises(card.parentElement); // this gives all, but we want just this one
-        // simpler: re-read directly from card
-        const exerciseData = {
-          name:
-            card.querySelector(".exercise-name-input")?.value ||
-            "",
-          sets: [],
-        };
-        card.querySelectorAll(".set-row").forEach((row) => {
-          exerciseData.sets.push({
-            weight: row.querySelector(".weight-input")?.value || "",
-            reps: row.querySelector(".reps-input")?.value || "",
-          });
-        });
-        addNewExercise(exerciseData);
-      }
-
-      if (action === "add-set" || action === "remove-set") {
-        const card = btn.closest(".exercise-card");
-        const setsList = card.querySelector(".sets-list");
-        if (!setsList) return;
-
-        if (action === "add-set") {
-          const newRow = createSetRow(setsList.children.length + 1);
-          setsList.appendChild(newRow);
-        } else if (action === "remove-set") {
-          if (setsList.children.length === 1) {
-            // Clear the only row
-            const firstRow = setsList.children[0];
-            firstRow
-              .querySelectorAll("input")
-              .forEach((input) => (input.value = ""));
-          } else {
-            setsList.lastElementChild.remove();
-          }
-        }
-
-        renumberSets(card);
-      }
-    });
-
-    // ----- Menu / nav -----
-
-    menuToggle.addEventListener("click", () => {
-      menuSheet.classList.toggle("open");
-    });
-
-    menuSheet.addEventListener("click", (e) => {
-      const btn = e.target.closest("[data-nav-screen]");
-      if (!btn) return;
-      const target = btn.dataset.navScreen;
-      if (target === "routines") {
-        showScreen("routines");
-      }
-    });
-
-    backToLoggerBtn.addEventListener("click", () => {
-      showScreen("today");
-    });
-
-    document.addEventListener("click", (e) => {
-      if (
-        !menuSheet.contains(e.target) &&
-        !menuToggle.contains(e.target)
-      ) {
-        menuSheet.classList.remove("open");
-      }
-    });
-
-    // ----- Routines logic -----
-
-    function loadRoutinesFromStorage() {
+    function loadState() {
       try {
-        const raw = localStorage.getItem(ROUTINES_KEY);
-        if (!raw) return [];
-        const parsed = JSON.parse(raw);
-        if (!Array.isArray(parsed)) return [];
-        return parsed;
-      } catch (err) {
-        console.error("Error loading routines", err);
-        return [];
+        const t = localStorage.getItem(TODAY_KEY);
+        todayExercises = t ? JSON.parse(t) : [createEmptyExercise()];
+      } catch {
+        todayExercises = [createEmptyExercise()];
+      }
+
+      try {
+        const r = localStorage.getItem(ROUTINES_KEY);
+        routines = r ? JSON.parse(r) : [];
+      } catch {
+        routines = [];
       }
     }
 
-    function saveRoutinesToStorage(routines) {
+    function saveToday() {
+      localStorage.setItem(TODAY_KEY, JSON.stringify(todayExercises));
+    }
+
+    function saveRoutines() {
       localStorage.setItem(ROUTINES_KEY, JSON.stringify(routines));
     }
 
-    let routines = loadRoutinesFromStorage();
+    // ----- RENDERING -----
+    const todayContainer = document.getElementById("today-exercises-container");
+    const routinesListEl = document.getElementById("routines-list");
+
+    function renderToday() {
+      if (!todayExercises.length) {
+        todayExercises.push(createEmptyExercise());
+      }
+
+      todayContainer.innerHTML = todayExercises.map((ex, exIndex) => {
+        const setsHtml = ex.sets.map((set, setIndex) => {
+          const setNumber = setIndex + 1;
+          return `
+            <div class="set-row" data-context="today" data-exercise-id="${ex.id}" data-set-index="${setIndex}">
+              <div class="set-label">Set ${setNumber}</div>
+
+              <div>
+                <div class="set-group-label">Weight</div>
+                <div class="compact-input-shell">
+                  <input
+                    type="text"
+                    class="weight-input"
+                    data-context="today"
+                    data-exercise-id="${ex.id}"
+                    data-set-index="${setIndex}"
+                    placeholder="Weight"
+                    value="${set.weight || ""}"
+                  >
+                </div>
+              </div>
+
+              <div>
+                <div class="set-group-label">Reps</div>
+                <div class="compact-input-shell">
+                  <input
+                    type="text"
+                    class="reps-input"
+                    data-context="today"
+                    data-exercise-id="${ex.id}"
+                    data-set-index="${setIndex}"
+                    placeholder="Reps"
+                    value="${set.reps || ""}"
+                  >
+                </div>
+              </div>
+
+              <div class="set-actions">
+                <button
+                  class="round-btn small red"
+                  data-role="remove-set"
+                  data-context="today"
+                  data-exercise-id="${ex.id}"
+                  data-set-index="${setIndex}"
+                >−</button>
+                <button
+                  class="round-btn small blue"
+                  data-role="add-set"
+                  data-context="today"
+                  data-exercise-id="${ex.id}"
+                >+</button>
+              </div>
+            </div>
+          `;
+        }).join("");
+
+        return `
+          <div class="exercise-card" data-context="today" data-exercise-id="${ex.id}">
+            <div class="exercise-header-row">
+              <div class="input-shell">
+                <input
+                  type="text"
+                  class="exercise-name-input"
+                  data-context="today"
+                  data-exercise-id="${ex.id}"
+                  placeholder="Exercise name"
+                  value="${ex.name || ""}"
+                >
+              </div>
+              <div class="exercise-actions">
+                <button
+                  class="round-btn red"
+                  data-role="remove-exercise"
+                  data-context="today"
+                  data-exercise-id="${ex.id}"
+                >−</button>
+                <button
+                  class="round-btn blue"
+                  data-role="add-exercise"
+                  data-context="today"
+                  data-after-id="${ex.id}"
+                >+</button>
+              </div>
+            </div>
+
+            ${setsHtml}
+          </div>
+        `;
+      }).join("");
+    }
+
+    function renderRoutineCardExercises(exercises, routineId) {
+      return exercises.map((ex) => {
+        const setsHtml = ex.sets.map((set, setIndex) => {
+          const setNumber = setIndex + 1;
+          return `
+            <div class="set-row" data-context="routine" data-routine-id="${routineId}" data-exercise-id="${ex.id}" data-set-index="${setIndex}">
+              <div class="set-label">Set ${setNumber}</div>
+
+              <div>
+                <div class="set-group-label">Weight</div>
+                <div class="compact-input-shell">
+                  <input
+                    type="text"
+                    class="weight-input"
+                    data-context="routine"
+                    data-routine-id="${routineId}"
+                    data-exercise-id="${ex.id}"
+                    data-set-index="${setIndex}"
+                    placeholder="Weight"
+                    value="${set.weight || ""}"
+                  >
+                </div>
+              </div>
+
+              <div>
+                <div class="set-group-label">Reps</div>
+                <div class="compact-input-shell">
+                  <input
+                    type="text"
+                    class="reps-input"
+                    data-context="routine"
+                    data-routine-id="${routineId}"
+                    data-exercise-id="${ex.id}"
+                    data-set-index="${setIndex}"
+                    placeholder="Reps"
+                    value="${set.reps || ""}"
+                  >
+                </div>
+              </div>
+
+              <div class="set-actions">
+                <button
+                  class="round-btn small red"
+                  data-role="remove-set"
+                  data-context="routine"
+                  data-routine-id="${routineId}"
+                  data-exercise-id="${ex.id}"
+                  data-set-index="${setIndex}"
+                >−</button>
+                <button
+                  class="round-btn small blue"
+                  data-role="add-set"
+                  data-context="routine"
+                  data-routine-id="${routineId}"
+                  data-exercise-id="${ex.id}"
+                >+</button>
+              </div>
+            </div>
+          `;
+        }).join("");
+
+        return `
+          <div class="exercise-card" data-context="routine" data-routine-id="${routineId}" data-exercise-id="${ex.id}">
+            <div class="exercise-header-row">
+              <div class="input-shell">
+                <input
+                  type="text"
+                  class="exercise-name-input"
+                  data-context="routine"
+                  data-routine-id="${routineId}"
+                  data-exercise-id="${ex.id}"
+                  placeholder="Exercise name"
+                  value="${ex.name || ""}"
+                >
+              </div>
+              <div class="exercise-actions">
+                <button
+                  class="round-btn red"
+                  data-role="remove-exercise"
+                  data-context="routine"
+                  data-routine-id="${routineId}"
+                  data-exercise-id="${ex.id}"
+                >−</button>
+                <button
+                  class="round-btn blue"
+                  data-role="add-exercise"
+                  data-context="routine"
+                  data-routine-id="${routineId}"
+                  data-after-id="${ex.id}"
+                >+</button>
+              </div>
+            </div>
+
+            ${setsHtml}
+          </div>
+        `;
+      }).join("");
+    }
 
     function renderRoutines() {
-      clearChildren(routineListEl);
-      routines.forEach((routine) => {
-        const card = document.createElement("div");
-        card.className = "routine-card";
-        card.dataset.id = routine.id;
+      if (!routines.length) {
+        routinesListEl.innerHTML = "";
+        return;
+      }
 
-        const totalExercises = routine.layout.length;
-        const totalSets = routine.layout.reduce(
-          (acc, ex) => acc + (ex.sets ? ex.sets.length : 0),
-          0
-        );
+      routinesListEl.innerHTML = routines.map(routine => {
+        const exercisesHtml = renderRoutineCardExercises(routine.exercises, routine.id);
+        return `
+          <div class="routine-card" data-routine-id="${routine.id}">
+            <div class="routine-header">
+              <div class="routine-name">${routine.name}</div>
+              <div class="routine-buttons">
+                <button class="pill-btn green" data-role="load-routine" data-routine-id="${routine.id}">Load</button>
+                <button class="pill-btn blue" data-role="close-routine" data-routine-id="${routine.id}">Close</button>
+                <button class="pill-btn red" data-role="delete-routine" data-routine-id="${routine.id}">Delete</button>
+              </div>
+            </div>
 
-        card.innerHTML = `
-          <div class="routine-header-row">
-            <div class="routine-name">${routine.name}</div>
-            <div class="routine-actions">
-              <button class="pill-btn load" data-routine-action="load">Load</button>
-              <button class="pill-btn close" data-routine-action="toggle">Close</button>
-              <button class="pill-btn delete" data-routine-action="delete">Delete</button>
+            <div class="panel-inner">
+              ${exercisesHtml}
             </div>
           </div>
-          <div class="routine-summary">
-            ${totalExercises} exercise${totalExercises !== 1 ? "s" : ""} ·
-            ${totalSets} set${totalSets !== 1 ? "s" : ""}
-          </div>
-          <div class="routine-preview"></div>
         `;
-
-        routineListEl.appendChild(card);
-
-        const previewRoot = card.querySelector(".routine-preview");
-        routine.layout.forEach((exercise) => {
-          const exCard = createExerciseCard(exercise, true);
-          previewRoot.appendChild(exCard);
-        });
-      });
+      }).join("");
     }
 
-    saveRoutineBtn.addEventListener("click", () => {
-      const name = routineNameInput.value.trim();
-      if (!name) {
-        alert("Name your routine first.");
+    // ----- EVENT HANDLERS -----
+    document.addEventListener("click", (e) => {
+      const role = e.target.getAttribute("data-role");
+      const context = e.target.getAttribute("data-context");
+
+      // Menu
+      if (e.target.id === "menu-toggle" || e.target.closest("#menu-toggle")) {
+        document.getElementById("dropdown-menu").classList.toggle("open");
         return;
       }
 
-      const layout = serializeExercises(exerciseListEl);
-      if (!layout.length) {
-        alert("Add at least one exercise before saving.");
+      if (e.target.closest("#dropdown-menu")) {
+        const nav = e.target.getAttribute("data-nav");
+        if (nav === "routines") {
+          showRoutinesView();
+        }
+        document.getElementById("dropdown-menu").classList.remove("open");
         return;
       }
 
-      const newRoutine = {
-        id: Date.now(),
-        name,
-        layout,
-      };
-
-      routines.push(newRoutine);
-      saveRoutinesToStorage(routines);
-      renderRoutines();
-      routineNameInput.value = "";
-      showScreen("routines");
-    });
-
-    routineListEl.addEventListener("click", (e) => {
-      const btn = e.target.closest("[data-routine-action]");
-      if (!btn) return;
-
-      const action = btn.dataset.routineAction;
-      const card = btn.closest(".routine-card");
-      if (!card) return;
-      const id = Number(card.dataset.id);
-      const routine = routines.find((r) => r.id === id);
-      if (!routine) return;
-
-      if (action === "load") {
-        clearChildren(exerciseListEl);
-        routine.layout.forEach((exercise) => {
-          const exCard = createExerciseCard(exercise, false);
-          exerciseListEl.appendChild(exCard);
-        });
-        showScreen("today");
-        window.scrollTo(0, 0);
-      }
-
-      if (action === "delete") {
-        routines = routines.filter((r) => r.id !== id);
-        saveRoutinesToStorage(routines);
+      // Save routine
+      if (e.target.id === "save-routine-btn") {
+        const nameInput = document.getElementById("routine-name-input");
+        const name = nameInput.value.trim();
+        if (!name) return;
+        const newRoutine = {
+          id: newId(),
+          name,
+          exercises: deepClone(todayExercises)
+        };
+        routines.push(newRoutine);
+        saveRoutines();
         renderRoutines();
+        nameInput.value = "";
+        return;
       }
 
-      if (action === "toggle") {
-        const preview = card.querySelector(".routine-preview");
-        if (!preview) return;
-        const hidden = preview.classList.toggle("hidden");
-        btn.textContent = hidden ? "Open" : "Close";
+      // Back to logger
+      if (e.target.id === "back-to-logger" || e.target.closest("#back-to-logger")) {
+        showTodayView();
+        return;
+      }
+
+      // Routine buttons (load, delete, close)
+      if (role === "load-routine") {
+        const routineId = e.target.getAttribute("data-routine-id");
+        const routine = routines.find(r => r.id === routineId);
+        if (routine) {
+          todayExercises = deepClone(routine.exercises);
+          saveToday();
+          renderToday();
+          showTodayView();
+        }
+        return;
+      }
+
+      if (role === "delete-routine") {
+        const routineId = e.target.getAttribute("data-routine-id");
+        routines = routines.filter(r => r.id !== routineId);
+        saveRoutines();
+        renderRoutines();
+        return;
+      }
+
+      if (role === "close-routine") {
+        const routineId = e.target.getAttribute("data-routine-id");
+        const card = document.querySelector(`.routine-card[data-routine-id="${routineId}"] .panel-inner`);
+        if (card) {
+          card.style.display = card.style.display === "none" ? "block" : "none";
+        }
+        return;
+      }
+
+      // Exercise / set buttons (today or routine)
+      if (!role || !context) return;
+
+      if (role === "add-exercise") {
+        const afterId = e.target.getAttribute("data-after-id");
+        if (context === "today") {
+          const idx = todayExercises.findIndex(ex => ex.id === afterId);
+          const insertAt = idx === -1 ? todayExercises.length : idx + 1;
+          todayExercises.splice(insertAt, 0, createEmptyExercise());
+          saveToday();
+          renderToday();
+        } else if (context === "routine") {
+          const routineId = e.target.getAttribute("data-routine-id");
+          const routine = routines.find(r => r.id === routineId);
+          if (!routine) return;
+          const idx = routine.exercises.findIndex(ex => ex.id === afterId);
+          const insertAt = idx === -1 ? routine.exercises.length : idx + 1;
+          routine.exercises.splice(insertAt, 0, createEmptyExercise());
+          saveRoutines();
+          renderRoutines();
+        }
+        return;
+      }
+
+      if (role === "remove-exercise") {
+        const exerciseId = e.target.getAttribute("data-exercise-id");
+        if (context === "today") {
+          if (todayExercises.length === 1) {
+            todayExercises[0] = createEmptyExercise();
+          } else {
+            todayExercises = todayExercises.filter(ex => ex.id !== exerciseId);
+          }
+          saveToday();
+          renderToday();
+        } else if (context === "routine") {
+          const routineId = e.target.getAttribute("data-routine-id");
+          const routine = routines.find(r => r.id === routineId);
+          if (!routine) return;
+          if (routine.exercises.length === 1) {
+            routine.exercises[0] = createEmptyExercise();
+          } else {
+            routine.exercises = routine.exercises.filter(ex => ex.id !== exerciseId);
+          }
+          saveRoutines();
+          renderRoutines();
+        }
+        return;
+      }
+
+      if (role === "add-set") {
+        const exerciseId = e.target.getAttribute("data-exercise-id");
+        if (context === "today") {
+          const exercise = todayExercises.find(ex => ex.id === exerciseId);
+          if (!exercise) return;
+          exercise.sets.push(createEmptySet());
+          saveToday();
+          renderToday();
+        } else if (context === "routine") {
+          const routineId = e.target.getAttribute("data-routine-id");
+          const routine = routines.find(r => r.id === routineId);
+          if (!routine) return;
+          const exercise = routine.exercises.find(ex => ex.id === exerciseId);
+          if (!exercise) return;
+          exercise.sets.push(createEmptySet());
+          saveRoutines();
+          renderRoutines();
+        }
+        return;
+      }
+
+      if (role === "remove-set") {
+        const exerciseId = e.target.getAttribute("data-exercise-id");
+        const setIndex = parseInt(e.target.getAttribute("data-set-index"), 10);
+        if (isNaN(setIndex)) return;
+
+        if (context === "today") {
+          const exercise = todayExercises.find(ex => ex.id === exerciseId);
+          if (!exercise) return;
+          if (exercise.sets.length === 1) {
+            exercise.sets[0] = createEmptySet();
+          } else {
+            exercise.sets.splice(setIndex, 1);
+          }
+          saveToday();
+          renderToday();
+        } else if (context === "routine") {
+          const routineId = e.target.getAttribute("data-routine-id");
+          const routine = routines.find(r => r.id === routineId);
+          if (!routine) return;
+          const exercise = routine.exercises.find(ex => ex.id === exerciseId);
+          if (!exercise) return;
+          if (exercise.sets.length === 1) {
+            exercise.sets[0] = createEmptySet();
+          } else {
+            exercise.sets.splice(setIndex, 1);
+          }
+          saveRoutines();
+          renderRoutines();
+        }
+        return;
       }
     });
 
-    // ----- Initial state -----
+    // Input updates
+    document.addEventListener("input", (e) => {
+      const cls = e.target.classList;
+      const context = e.target.getAttribute("data-context");
+      if (!context) return;
 
-    // Make sure there's at least one exercise visible on first load
-    if (!exerciseListEl.children.length) {
-      addNewExercise();
+      if (cls.contains("exercise-name-input")) {
+        const exId = e.target.getAttribute("data-exercise-id");
+        const val = e.target.value;
+        if (context === "today") {
+          const ex = todayExercises.find(ex => ex.id === exId);
+          if (ex) {
+            ex.name = val;
+            saveToday();
+          }
+        } else if (context === "routine") {
+          const routineId = e.target.getAttribute("data-routine-id");
+          const routine = routines.find(r => r.id === routineId);
+          if (!routine) return;
+          const ex = routine.exercises.find(ex => ex.id === exId);
+          if (ex) {
+            ex.name = val;
+            saveRoutines();
+          }
+        }
+        return;
+      }
+
+      if (cls.contains("weight-input") || cls.contains("reps-input")) {
+        const exId = e.target.getAttribute("data-exercise-id");
+        const setIndex = parseInt(e.target.getAttribute("data-set-index"), 10);
+        if (isNaN(setIndex)) return;
+        const field = cls.contains("weight-input") ? "weight" : "reps";
+        const val = e.target.value;
+
+        if (context === "today") {
+          const ex = todayExercises.find(ex => ex.id === exId);
+          if (!ex || !ex.sets[setIndex]) return;
+          ex.sets[setIndex][field] = val;
+          saveToday();
+        } else if (context === "routine") {
+          const routineId = e.target.getAttribute("data-routine-id");
+          const routine = routines.find(r => r.id === routineId);
+          if (!routine) return;
+          const ex = routine.exercises.find(ex => ex.id === exId);
+          if (!ex || !ex.sets[setIndex]) return;
+          ex.sets[setIndex][field] = val;
+          saveRoutines();
+        }
+      }
+    });
+
+    // ----- VIEW SWITCHING -----
+    const todayView = document.getElementById("today-view");
+    const routinesView = document.getElementById("routines-view");
+
+    function showTodayView() {
+      todayView.style.display = "block";
+      routinesView.style.display = "none";
     }
 
+    function showRoutinesView() {
+      todayView.style.display = "none";
+      routinesView.style.display = "block";
+    }
+
+    // ----- INIT -----
+    loadState();
+    renderToday();
     renderRoutines();
+    showTodayView();
   </script>
 </body>
 </html>
