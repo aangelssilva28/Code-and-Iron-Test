@@ -771,238 +771,133 @@
   <script>
     // ---------- Helpers: exercise card + sets ----------
 
-  <script>
-  // ---------- Helpers: exercise card + sets ----------
-
   function createSetBox(card, setData, indexOverride) {
-    const existing = card.querySelectorAll(".set-box").length;
-    const setNumber = indexOverride || existing + 1;
+  const existing = card.querySelectorAll(".set-box").length;
+  const setNumber = indexOverride || existing + 1;
 
-    const box = document.createElement("div");
-    box.className = "set-box";
+  const box = document.createElement("div");
+  box.className = "set-box";
 
-    const header = document.createElement("div");
-    header.className = "set-header";
-    header.textContent = "Set " + setNumber;
-    box.appendChild(header);
+  // "Set 1"
+  const header = document.createElement("div");
+  header.className = "set-header";
+  header.textContent = "Set " + setNumber;
+  box.appendChild(header);
 
-    const row = document.createElement("div");
-    row.className = "set-row";
+  // Row that holds fields + +/- buttons
+  const row = document.createElement("div");
+  row.className = "set-row";
 
-    const fields = document.createElement("div");
-    fields.className = "set-fields";
+  // Left side: fields
+  const fields = document.createElement("div");
+  fields.className = "set-fields";
 
-    const colWeight = document.createElement("div");
-    colWeight.className = "set-col";
+  
 
-    const weightInput = document.createElement("input");
-    weightInput.className = "set-input";
-    weightInput.type = "text";
-    weightInput.placeholder = "Weight";
-    if (setData && setData.weight != null) {
-      weightInput.value = setData.weight;
+  const colWeight = document.createElement("div");
+  colWeight.className = "set-col";
+
+  const weightInput = document.createElement("input");
+  weightInput.className = "set-input";
+  weightInput.type = "text";
+  weightInput.placeholder = "Weight";   // NEW
+  if (setData && setData.weight != null) {
+    weightInput.value = setData.weight;
+  }
+  colWeight.appendChild(weightInput);
+
+  const colReps = document.createElement("div");
+  colReps.className = "set-col";
+
+  const repsInput = document.createElement("input");
+  repsInput.className = "set-input";
+  repsInput.type = "number";
+  repsInput.min = "0";
+  repsInput.placeholder = "Reps";       // NEW
+  if (setData && setData.reps != null) {
+    repsInput.value = setData.reps;
+  }
+  colReps.appendChild(repsInput);
+
+  fields.appendChild(colWeight);
+  fields.appendChild(colReps);
+
+  // Right side: round +/- buttons
+  const actions = document.createElement("div");
+  actions.className = "set-actions";
+
+  const minusBtn = document.createElement("button");
+  minusBtn.className = "round-btn minus";
+  minusBtn.textContent = "–";
+  minusBtn.addEventListener("click", () => {
+    const allSets = card.querySelectorAll(".set-box");
+    if (allSets.length > 1) {
+      box.remove();
+      // renumber remaining sets
+      card.querySelectorAll(".set-box").forEach((b, i) => {
+        const h = b.querySelector(".set-header");
+        if (h) h.textContent = "Set " + (i + 1);
+      });
     }
-    colWeight.appendChild(weightInput);
+  });
 
-    const colReps = document.createElement("div");
-    colReps.className = "set-col";
+  const plusBtn = document.createElement("button");
+  plusBtn.className = "round-btn plus";
+  plusBtn.textContent = "+";
+  plusBtn.addEventListener("click", () => {
+    const newBox = createSetBox(card);
+    const wrapper =
+      card.querySelector(".sets-wrapper") || card;
+    wrapper.appendChild(newBox);
+  });
 
-    const repsInput = document.createElement("input");
-    repsInput.className = "set-input";
-    repsInput.type = "number";
-    repsInput.min = "0";
-    repsInput.placeholder = "Reps";
-    if (setData && setData.reps != null) {
-      repsInput.value = setData.reps;
-    }
-    colReps.appendChild(repsInput);
+  actions.appendChild(minusBtn);
+  actions.appendChild(plusBtn);
 
-    fields.appendChild(colWeight);
-    fields.appendChild(colReps);
+  // put left + right into the row
+  row.appendChild(fields);
+  row.appendChild(actions);
+  box.appendChild(row);
 
-    const actions = document.createElement("div");
-    actions.className = "set-actions";
+  return box;
+  
+  // ---------- One-time tutorial walkthrough ----------
 
-    const minusBtn = document.createElement("button");
-    minusBtn.className = "round-btn minus";
-    minusBtn.textContent = "–";
-    minusBtn.addEventListener("click", () => {
-      const allSets = card.querySelectorAll(".set-box");
-      if (allSets.length > 1) {
-        box.remove();
-        card.querySelectorAll(".set-box").forEach((b, i) => {
-          const h = b.querySelector(".set-header");
-          if (h) h.textContent = "Set " + (i + 1);
-        });
-      }
-    });
+const TUTORIAL_KEY = "codeAndIronTutorialSeen_v1";
 
-    const plusBtn = document.createElement("button");
-    plusBtn.className = "round-btn plus";
-    plusBtn.textContent = "+";
-    plusBtn.addEventListener("click", () => {
-      const newBox = createSetBox(card);
-      const wrapper = card.querySelector(".sets-wrapper") || card;
-      wrapper.appendChild(newBox);
-    });
+function initTutorial() {
+  const overlay = document.getElementById("tutorialOverlay");
+  if (!overlay) return;
 
-    actions.appendChild(minusBtn);
-    actions.appendChild(plusBtn);
-
-    row.appendChild(fields);
-    row.appendChild(actions);
-    box.appendChild(row);
-
-    return box;
+  // If already seen, do nothing
+  const seen = localStorage.getItem(TUTORIAL_KEY);
+  if (seen === "true") {
+    overlay.classList.remove("visible");
+    return;
   }
 
-  function createWorkoutCard(parent, workoutData) {
-    const card = document.createElement("div");
-    card.className = "workout-card";
+  const screens = Array.from(
+    overlay.querySelectorAll(".tutorial-screen")
+  );
+  if (!screens.length) return;
 
-    const setsWrapper = document.createElement("div");
-    setsWrapper.className = "sets-wrapper";
+  let currentIndex = 0;
 
-    const header = document.createElement("div");
-    header.className = "workout-header";
-
-    const nameInput = document.createElement("input");
-    nameInput.className = "text-input workout-name";
-    nameInput.placeholder = "Enter exercise name";
-    if (workoutData && workoutData.name) {
-      nameInput.value = workoutData.name;
-    }
-
-    const headerActions = document.createElement("div");
-    headerActions.className = "workout-header-actions";
-
-    const removeWorkoutBtn = document.createElement("button");
-    removeWorkoutBtn.className = "round-btn minus";
-    removeWorkoutBtn.textContent = "–";
-    removeWorkoutBtn.addEventListener("click", () => {
-      const allCards = parent.querySelectorAll(".workout-card");
-
-      if (allCards.length <= 1) {
-        nameInput.value = "";
-        const setsWrapper = card.querySelector(".sets-wrapper");
-        if (setsWrapper) {
-          setsWrapper.innerHTML = "";
-          const setBox = createSetBox(card, { weight: "", reps: "" }, 1);
-          setsWrapper.appendChild(setBox);
-        }
+  function showStep(index) {
+    screens.forEach((el, i) => {
+      if (i === index) {
+        el.classList.add("active");
       } else {
-        card.remove();
+        el.classList.remove("active");
       }
     });
-
-    // Header "+" = add a NEW EXERCISE card below
-    const addExerciseBtn = document.createElement("button");
-    addExerciseBtn.className = "round-btn plus";
-    addExerciseBtn.textContent = "+";
-    addExerciseBtn.addEventListener("click", () => {
-      createWorkoutCard(parent);
-    });
-
-    headerActions.appendChild(removeWorkoutBtn);
-    headerActions.appendChild(addExerciseBtn);
-
-    header.appendChild(nameInput);
-    header.appendChild(headerActions);
-
-    card.appendChild(header);
-    card.appendChild(setsWrapper);
-
-    const setsFromData =
-      workoutData && Array.isArray(workoutData.sets)
-        ? workoutData.sets
-        : [{ weight: "", reps: "" }];
-
-    setsFromData.forEach((set, idx) => {
-      const setBox = createSetBox(card, set, idx + 1);
-      setsWrapper.appendChild(setBox);
-    });
-
-    parent.appendChild(card);
-    return card;
   }
 
-  // ---------- One-time tutorial walkthrough (GLOBAL) ----------
-
-  const TUTORIAL_KEY = "codeAndIronTutorialSeen_v1";
-
-  function initTutorial() {
-    const overlay = document.getElementById("tutorialOverlay");
-    if (!overlay) return;
-
-    const seen = localStorage.getItem(TUTORIAL_KEY);
-    if (seen === "true") {
-      overlay.classList.remove("visible");
-      return;
-    }
-
-    const screens = Array.from(
-      overlay.querySelectorAll(".tutorial-screen")
-    );
-    if (!screens.length) return;
-
-    let currentIndex = 0;
-
-    function showStep(index) {
-      screens.forEach((el, i) => {
-        el.classList.toggle("active", i === index);
-      });
-    }
-
-    function finishTutorial() {
-      localStorage.setItem(TUTORIAL_KEY, "true");
-      overlay.classList.remove("visible");
-    }
-
-    overlay.classList.add("visible");
-    showStep(currentIndex);
-
-    const skipBtn = document.getElementById("tutorialSkipBtn");
-    const startBtn = document.getElementById("tutorialStartBtn");
-
-    if (skipBtn) {
-      skipBtn.addEventListener("click", () => {
-        finishTutorial();
-      });
-    }
-
-    if (startBtn) {
-      startBtn.addEventListener("click", () => {
-        currentIndex = 1;
-        showStep(currentIndex);
-      });
-    }
-
-    overlay.querySelectorAll("[data-tutorial-next]").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        if (currentIndex < screens.length - 1) {
-          currentIndex++;
-          showStep(currentIndex);
-        } else {
-          finishTutorial();
-        }
-      });
-    });
-
-    overlay.querySelectorAll("[data-tutorial-back]").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        if (currentIndex > 0) {
-          currentIndex--;
-          showStep(currentIndex);
-        }
-      });
-    });
-
-    overlay.querySelectorAll("[data-tutorial-done]").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        finishTutorial();
-      });
-    });
+  function finishTutorial() {
+    localStorage.setItem(TUTORIAL_KEY, "true");
+    overlay.classList.remove("visible");
   }
+
   // Show overlay + first screen
   overlay.classList.add("visible");
   showStep(currentIndex);
