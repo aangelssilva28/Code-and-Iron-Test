@@ -271,24 +271,24 @@
       margin-bottom: 6px;
     }
 
-    .set-row {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 6px;
-    }
+.set-row {
+  display: flex;
+  align-items: center;      /* or stretch if you prefer */
+  gap: 10px;
+  margin-bottom: 6px;
+}
 
 .set-fields {
   flex: 1;
   display: flex;
   gap: 8px;
-  align-items: center;  
+  align-items: center;
+}
 
-
-    .set-input {
+.set-input {
   width: 100%;
-  padding: 0 10px;        
-  height: 44px;           
+  padding: 0 10px;
+  height: 44px;             /* same height as buttons */
   border-radius: 12px;
   background-color: #000;
   border: 1px solid #333;
@@ -301,18 +301,11 @@
   color: #666;
 }
 
-
-    
-.set-fields {
-  flex: 1;
-  display: flex;
-  gap: 8px;
-}
-
 .set-actions {
   display: flex;
   gap: 8px;
 }
+
 
 .round-btn {
   -webkit-appearance: none;
@@ -349,19 +342,7 @@
       margin-bottom: 2px;
     }
 
-    .set-input {
-      width: 100%;
-      padding: 8px 10px;
-      border-radius: 12px;
-      background-color: #000;
-      border: 1px solid #333;
-      color: #fff;
-      font-size: 15px;
-    }
 
-    .set-input::placeholder {
-      color: #666;
-    }
 
     .remove-set-btn {
       width: 100%;
