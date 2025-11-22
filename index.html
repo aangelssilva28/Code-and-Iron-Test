@@ -202,7 +202,7 @@
 
     .workout-header {
   display: flex;
-  align-items: center;
+  align-items: stretch;
   justify-content: space-between;
   gap: 10px;
   margin-bottom: 10px;
@@ -211,6 +211,8 @@
 /* Make the exercise name box about half the card width */
 .workout-header .workout-name {
   flex: 1;   /* fill the same flex space as the set fields (weight+reps) */
+  height: 44px;
+  padding: 0 12px;
 }
 
 /* Container for the header + / - buttons */
@@ -271,11 +273,28 @@
 
     .set-row {
       display: flex;
-      align-items: center;
+      align-items: stretch;
       gap: 10px;
       margin-bottom: 6px;
     }
 
+    .set-input {
+  width: 100%;
+  padding: 0 10px;        
+  height: 44px;           
+  border-radius: 12px;
+  background-color: #000;
+  border: 1px solid #333;
+  color: #fff;
+  font-size: 15px;
+}
+
+.set-input::placeholder {
+  color: #666;
+}
+
+
+    
 .set-fields {
   flex: 1;
   display: flex;
@@ -288,10 +307,11 @@
 }
 
 .round-btn {
-  width: 44px;
+  width: 56px;
   height: 44px;
-  border-radius: 50%;
-  border: none;
+  border-radius: 12px;
+  border: 1px solid #333;
+  background-color: #111;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -299,14 +319,6 @@
   font-weight: 700;
   color: #fff;
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.5);
-}
-
-.round-btn.minus {
-  background-color: var(--danger);
-}
-
-.round-btn.plus {
-  background-color: var(--accent);
 }
 
 .round-btn:active {
