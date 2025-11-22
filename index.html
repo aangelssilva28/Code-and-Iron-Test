@@ -273,10 +273,17 @@
 
     .set-row {
       display: flex;
-      align-items: stretch;
+      align-items: center;
       gap: 10px;
       margin-bottom: 6px;
     }
+
+.set-fields {
+  flex: 1;
+  display: flex;
+  gap: 8px;
+  align-items: center;   /* keep both inputs centered with each other */
+
 
     .set-input {
   width: 100%;
@@ -287,6 +294,7 @@
   border: 1px solid #333;
   color: #fff;
   font-size: 15px;
+  text-align: center;
 }
 
 .set-input::placeholder {
@@ -569,10 +577,13 @@
   weightLabel.textContent = "Weight";
   colWeight.appendChild(weightLabel);
 
+    const colWeight = document.createElement("div");
+  colWeight.className = "set-col";
+
   const weightInput = document.createElement("input");
   weightInput.className = "set-input";
   weightInput.type = "text";
-  weightInput.placeholder = "lbs";
+  weightInput.placeholder = "Weight";   // NEW
   if (setData && setData.weight != null) {
     weightInput.value = setData.weight;
   }
@@ -580,15 +591,12 @@
 
   const colReps = document.createElement("div");
   colReps.className = "set-col";
-  const repsLabel = document.createElement("label");
-  repsLabel.textContent = "Reps";
-  colReps.appendChild(repsLabel);
 
   const repsInput = document.createElement("input");
   repsInput.className = "set-input";
   repsInput.type = "number";
   repsInput.min = "0";
-  repsInput.placeholder = "0";
+  repsInput.placeholder = "Reps";       // NEW
   if (setData && setData.reps != null) {
     repsInput.value = setData.reps;
   }
