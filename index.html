@@ -772,6 +772,7 @@ function createWorkoutCard(parent, workoutData) {
     }
 
     // ---------- Templates (routines screen) ----------
+    // ---------- Templates (routines screen) ----------
 
     const templateNameInput = document.getElementById("templateNameInput");
     const saveTemplateBtn = document.getElementById("saveTemplateBtn");
@@ -803,6 +804,29 @@ function createWorkoutCard(parent, workoutData) {
 
     let templates = loadTemplates();
 
+    function getWorkoutLayoutFrom(container) {
+      const cards = container.querySelectorAll(".workout-card");
+      const workouts = [];
+
+      cards.forEach((card) => {
+        const nameInput = card.querySelector(".workout-name");
+        const sets = [];
+        card.querySelectorAll(".set-box").forEach((box) => {
+          const inputs = box.querySelectorAll(".set-input");
+          sets.push({
+            weight: inputs[0] ? inputs[0].value : "",
+            reps: inputs[1] ? inputs[1].value : "",
+          });
+        });
+        workouts.push({
+          name: nameInput ? nameInput.value : "",
+          sets,
+        });
+      });
+
+      return workouts;
+    }
+
     function buildEditorPanel(panel, tpl) {
       panel.innerHTML = "";
       panel.classList.add("open");
@@ -821,7 +845,7 @@ function createWorkoutCard(parent, workoutData) {
       // Add exercise button inside panel
       const addExerciseBtn = document.createElement("button");
       addExerciseBtn.className = "primary-btn footer-btn";
-      addExerciseBtn.textContent = "+";
+      addExerciseBtn.textContent = "Add exercise";
       addExerciseBtn.addEventListener("click", () => {
         createWorkoutCard(innerContainer);
       });
@@ -888,12 +912,11 @@ function createWorkoutCard(parent, workoutData) {
         delBtn.className = "small-btn delete";
         delBtn.textContent = "Delete";
         delBtn.addEventListener("click", () => {
-          // if its panel is open, close and discard it
           const panel = savedTemplatesList.querySelector(
             `.open-panel[data-index="${index}"]`
           );
           if (panel && panel.classList.contains("open")) {
-            closePanelAndSave(panel); // save then delete
+            closePanelAndSave(panel);
           }
           templates.splice(index, 1);
           saveTemplates(templates);
@@ -911,7 +934,6 @@ function createWorkoutCard(parent, workoutData) {
         wrapper.appendChild(panel);
 
         openBtn.addEventListener("click", () => {
-          // if this panel is already open -> close & save
           if (panel.classList.contains("open")) {
             closePanelAndSave(panel);
             openBtn.textContent = "Open";
@@ -924,10 +946,10 @@ function createWorkoutCard(parent, workoutData) {
             .forEach((p) => {
               if (p !== panel) {
                 const btnIndex = p.dataset.index;
-                const btn = savedTemplatesList.querySelector(
+                const otherBtn = savedTemplatesList.querySelector(
                   `.saved-wrapper:nth-child(${parseInt(btnIndex, 10) + 1}) .small-btn.open`
                 );
-                if (btn) btn.textContent = "Open";
+                if (otherBtn) otherBtn.textContent = "Open";
                 closePanelAndSave(p);
               }
             });
@@ -940,6 +962,7 @@ function createWorkoutCard(parent, workoutData) {
       });
     }
 
+    // SAVE TEMPLATE button logic
     saveTemplateBtn.addEventListener("click", () => {
       const name = templateNameInput.value.trim();
       if (!name) {
@@ -947,17 +970,21 @@ function createWorkoutCard(parent, workoutData) {
         return;
       }
 
+      // Read current layout from home screen
       const workoutsData = getCurrentWorkoutLayout();
-      if (!workoutsData.length) {
-        alert("Create at least one exercise on the main page first.");
-        return;
-      }
+
+      // If nothing on screen, still create an empty routine structure
+      const safeWorkouts =
+        workoutsData && workoutsData.length
+          ? workoutsData
+          : [{ name: "", sets: [{ weight: "", reps: "" }] }];
 
       templates.push({
         id: Date.now(),
         name,
-        workouts: JSON.parse(JSON.stringify(workoutsData)), // deep-ish copy
+        workouts: JSON.parse(JSON.stringify(safeWorkouts)),
       });
+
       saveTemplates(templates);
       renderTemplatesList();
       templateNameInput.value = "";
