@@ -508,14 +508,39 @@
 </main>
 
     <!-- ROUTINES SCREEN -->
-    <main id="workoutsScreen" class="screen">
-      <section class="card">
-        <h2 class="card-title">Workouts</h2>
-        <p class="card-subtitle">
-          Create and save exercise routines you can load later on the main page.
-        </p>
+<!-- ROUTINES SCREEN -->
+<main id="workoutsScreen" class="screen">
+  <section class="card">
+    <h2 class="card-title">Workouts</h2>
+    <p class="card-subtitle">
+      Create and save exercise routines you can load later on the main page.
+    </p>
 
-<!-- PROGRESS SCREEN -->
+    <div class="input-group">
+      <label class="input-label" for="templateNameInput">New routine name</label>
+      <input
+        id="templateNameInput"
+        class="text-input"
+        placeholder="e.g. Chest, Legs, Shoulders, Back"
+      />
+    </div>
+
+    <button id="saveTemplateBtn" class="primary-btn">
+      Create
+    </button>
+
+    <h3 class="card-subtitle" style="margin-top:18px;margin-bottom:4px;">
+      Saved workouts
+    </h3>
+    <div id="savedTemplatesList" class="saved-list"></div>
+
+    <div class="link-back" id="backToLogger">
+      <span>←</span> Back to workout logger
+    </div>
+  </section>
+</main>
+
+<!-- PROGRESS SCREEN (now a separate screen) -->
 <main id="progressScreen" class="screen">
   <section class="card">
     <h2 class="card-title">Progress</h2>
@@ -797,22 +822,26 @@ removeWorkoutBtn.addEventListener("click", () => {
       }
     });
 
-    document.querySelectorAll(".menu-item").forEach((item) => {
+document.querySelectorAll(".menu-item").forEach((item) => {
   item.addEventListener("click", () => {
     const nav = item.dataset.nav;
     if (nav === "workouts" || nav === "progress") {
       showScreen(nav);
       if (nav === "progress") {
         renderProgressList(); // refresh whenever you open Progress
-      const backToLoggerFromProgress = document.getElementById("backToLoggerFromProgress");
-backToLoggerFromProgress.addEventListener("click", () => {
-  showScreen("home");
-});
       }
     }
     closeMenu();
   });
 });
+
+// Back link on Progress screen
+const backToLoggerFromProgress = document.getElementById("backToLoggerFromProgress");
+if (backToLoggerFromProgress) {
+  backToLoggerFromProgress.addEventListener("click", () => {
+    showScreen("home");
+  });
+}
 
     function showScreen(which) {
   if (which === "home") {
