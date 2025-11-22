@@ -496,6 +496,94 @@
       margin: 6px 0 10px;
     }
 
+/* --- Tutorial overlay --- */
+.tutorial-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 100;
+}
+
+.tutorial-overlay.visible {
+  display: flex;
+}
+
+.tutorial-card {
+  width: 100%;
+  max-width: 420px;
+  background-color: #121212;
+  border-radius: 24px;
+  padding: 20px 18px 16px;
+  border: 1px solid #333;
+  box-shadow: var(--shadow-soft);
+}
+
+.tutorial-title {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.tutorial-body {
+  font-size: 14px;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.tutorial-bullets {
+  margin-top: 8px;
+  padding-left: 18px;
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.tutorial-bullets li {
+  margin-bottom: 4px;
+}
+
+.tutorial-actions {
+  margin-top: 16px;
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.tutorial-primary-btn,
+.tutorial-secondary-btn {
+  -webkit-appearance: none;
+  appearance: none;
+  border-radius: 999px;
+  padding: 8px 14px;
+  border: 1px solid #333;
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  background-color: #000;
+}
+
+.tutorial-primary-btn {
+  background-color: var(--accent-soft);
+  border-color: var(--accent-soft);
+}
+
+.tutorial-primary-btn:active,
+.tutorial-secondary-btn:active {
+  transform: translateY(1px);
+  opacity: 0.9;
+}
+
+.tutorial-screen {
+  display: none;
+}
+
+.tutorial-screen.active {
+  display: block;
+}
+
     @media (min-width: 500px) {
       .app-wrapper {
         align-items: center;
@@ -518,6 +606,98 @@
         </div>
       </button>
     </header>
+
+    <!-- Tutorial Overlay (one-time walkthrough) -->
+    <div id="tutorialOverlay" class="tutorial-overlay">
+      <div class="tutorial-card">
+        <!-- Step 0: Welcome / choice -->
+        <div class="tutorial-screen active" data-tutorial-step="0">
+          <div class="tutorial-title">Welcome to Code & Iron</div>
+          <div class="tutorial-body">
+            This is your workout logger, routines builder, and progress tracker —
+            all in one place.
+          </div>
+          <ul class="tutorial-bullets">
+            <li>Log exercises and sets on the home screen</li>
+            <li>Save routines you can reload later</li>
+            <li>Track PRs and progress over time</li>
+          </ul>
+          <div class="tutorial-actions">
+            <button id="tutorialSkipBtn" class="tutorial-secondary-btn">
+              Skip for now
+            </button>
+            <button id="tutorialStartBtn" class="tutorial-primary-btn">
+              Show me around
+            </button>
+          </div>
+        </div>
+
+        <!-- Step 1: Logger -->
+        <div class="tutorial-screen" data-tutorial-step="1">
+          <div class="tutorial-title">1. Log your workout</div>
+          <div class="tutorial-body">
+            On the home screen:
+          </div>
+          <ul class="tutorial-bullets">
+            <li>Type an exercise name (e.g. Bench Press, Push Ups)</li>
+            <li>Use the + / – next to sets to add or remove sets</li>
+            <li>Use the top-right + to add another exercise card</li>
+            <li>Hit “Save progress” when you're done</li>
+          </ul>
+          <div class="tutorial-actions">
+            <button data-tutorial-back class="tutorial-secondary-btn">
+              Back
+            </button>
+            <button data-tutorial-next class="tutorial-primary-btn">
+              Next
+            </button>
+          </div>
+        </div>
+
+        <!-- Step 2: Routines -->
+        <div class="tutorial-screen" data-tutorial-step="2">
+          <div class="tutorial-title">2. Save routines</div>
+          <div class="tutorial-body">
+            In the Routines menu:
+          </div>
+          <ul class="tutorial-bullets">
+            <li>Give your routine a name (e.g. Push Day, Leg Day)</li>
+            <li>Tap “Create” to save the current layout from the home screen</li>
+            <li>Use “Load” to send that routine back to the home screen</li>
+            <li>Use “Open” to edit the template itself</li>
+          </ul>
+          <div class="tutorial-actions">
+            <button data-tutorial-back class="tutorial-secondary-btn">
+              Back
+            </button>
+            <button data-tutorial-next class="tutorial-primary-btn">
+              Next
+            </button>
+          </div>
+        </div>
+
+        <!-- Step 3: Progress & PRs -->
+        <div class="tutorial-screen" data-tutorial-step="3">
+          <div class="tutorial-title">3. Track progress & PRs</div>
+          <div class="tutorial-body">
+            In the Progress menu:
+          </div>
+          <ul class="tutorial-bullets">
+            <li>See your best weight × reps and max reps for each exercise</li>
+            <li>New PRs are tagged when you beat your old best</li>
+            <li>Tap an exercise to see recent history by date</li>
+          </ul>
+          <div class="tutorial-actions">
+            <button data-tutorial-back class="tutorial-secondary-btn">
+              Back
+            </button>
+            <button data-tutorial-done class="tutorial-primary-btn">
+              Got it
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <!-- Menu -->
     <div class="menu-dropdown" id="menuDropdown">
@@ -680,6 +860,92 @@
   box.appendChild(row);
 
   return box;
+  
+  // ---------- One-time tutorial walkthrough ----------
+
+const TUTORIAL_KEY = "codeAndIronTutorialSeen_v1";
+
+function initTutorial() {
+  const overlay = document.getElementById("tutorialOverlay");
+  if (!overlay) return;
+
+  // If already seen, do nothing
+  const seen = localStorage.getItem(TUTORIAL_KEY);
+  if (seen === "true") {
+    overlay.classList.remove("visible");
+    return;
+  }
+
+  const screens = Array.from(
+    overlay.querySelectorAll(".tutorial-screen")
+  );
+  if (!screens.length) return;
+
+  let currentIndex = 0;
+
+  function showStep(index) {
+    screens.forEach((el, i) => {
+      if (i === index) {
+        el.classList.add("active");
+      } else {
+        el.classList.remove("active");
+      }
+    });
+  }
+
+  function finishTutorial() {
+    localStorage.setItem(TUTORIAL_KEY, "true");
+    overlay.classList.remove("visible");
+  }
+
+  // Show overlay + first screen
+  overlay.classList.add("visible");
+  showStep(currentIndex);
+
+  // Buttons: Skip & Start on welcome step
+  const skipBtn = document.getElementById("tutorialSkipBtn");
+  const startBtn = document.getElementById("tutorialStartBtn");
+
+  if (skipBtn) {
+    skipBtn.addEventListener("click", () => {
+      finishTutorial();
+    });
+  }
+
+  if (startBtn) {
+    startBtn.addEventListener("click", () => {
+      currentIndex = 1;
+      showStep(currentIndex);
+    });
+  }
+
+  // Generic next/back/done handlers
+  overlay.querySelectorAll("[data-tutorial-next]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      if (currentIndex < screens.length - 1) {
+        currentIndex++;
+        showStep(currentIndex);
+      } else {
+        finishTutorial();
+      }
+    });
+  });
+
+  overlay.querySelectorAll("[data-tutorial-back]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      if (currentIndex > 0) {
+        currentIndex--;
+        showStep(currentIndex);
+      }
+    });
+  });
+
+  overlay.querySelectorAll("[data-tutorial-done]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      finishTutorial();
+    });
+  });
+}
 }
 
 function createWorkoutCard(parent, workoutData) {
@@ -1360,11 +1626,12 @@ function buildEditorPanel(panel, tpl) {
     // ---------- Init ----------
 
     function init() {
-      createWorkoutCard(workoutsContainer); // one empty exercise by default
-      renderTemplatesList();
-    }
+  createWorkoutCard(workoutsContainer); // one empty exercise by default
+  renderTemplatesList();
+  initTutorial(); // <-- run one-time tutorial if not seen
+}
 
-    init();
+init();
   </script>
 </body>
 </html>
