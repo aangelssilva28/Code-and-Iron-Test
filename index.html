@@ -251,9 +251,48 @@
 
     .set-row {
       display: flex;
-      gap: 8px;
+      align-items: center;
+      gap: 10px;
       margin-bottom: 6px;
     }
+
+.set-fields {
+  flex: 1;
+  display: flex;
+  gap: 8px;
+}
+
+.set-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.round-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  font-weight: 700;
+  color: #fff;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.5);
+}
+
+.round-btn.minus {
+  background-color: var(--danger);
+}
+
+.round-btn.plus {
+  background-color: var(--accent);
+}
+
+.round-btn:active {
+  transform: translateY(1px);
+  opacity: 0.9;
+}
 
     .set-col {
       flex: 1;
@@ -473,75 +512,100 @@
   <script>
     // ---------- Helpers: exercise card + sets ----------
 
-    function createSetBox(card, setData, indexOverride) {
-      const existing = card.querySelectorAll(".set-box").length;
-      const setNumber = indexOverride || existing + 1;
+  function createSetBox(card, setData, indexOverride) {
+  const existing = card.querySelectorAll(".set-box").length;
+  const setNumber = indexOverride || existing + 1;
 
-      const box = document.createElement("div");
-      box.className = "set-box";
+  const box = document.createElement("div");
+  box.className = "set-box";
 
-      const header = document.createElement("div");
-      header.className = "set-header";
-      header.textContent = "Set " + setNumber;
-      box.appendChild(header);
+  // "Set 1"
+  const header = document.createElement("div");
+  header.className = "set-header";
+  header.textContent = "Set " + setNumber;
+  box.appendChild(header);
 
-      const row = document.createElement("div");
-      row.className = "set-row";
+  // Row that holds fields + +/- buttons
+  const row = document.createElement("div");
+  row.className = "set-row";
 
-      const colWeight = document.createElement("div");
-      colWeight.className = "set-col";
-      const weightLabel = document.createElement("label");
-      weightLabel.textContent = "Weight";
-      colWeight.appendChild(weightLabel);
+  // Left side: fields
+  const fields = document.createElement("div");
+  fields.className = "set-fields";
 
-      const weightInput = document.createElement("input");
-      weightInput.className = "set-input";
-      weightInput.type = "text";
-      weightInput.placeholder = "lbs";
-      if (setData && setData.weight != null) {
-        weightInput.value = setData.weight;
-      }
-      colWeight.appendChild(weightInput);
+  const colWeight = document.createElement("div");
+  colWeight.className = "set-col";
+  const weightLabel = document.createElement("label");
+  weightLabel.textContent = "Weight";
+  colWeight.appendChild(weightLabel);
 
-      const colReps = document.createElement("div");
-      colReps.className = "set-col";
-      const repsLabel = document.createElement("label");
-      repsLabel.textContent = "Reps";
-      colReps.appendChild(repsLabel);
+  const weightInput = document.createElement("input");
+  weightInput.className = "set-input";
+  weightInput.type = "text";
+  weightInput.placeholder = "lbs";
+  if (setData && setData.weight != null) {
+    weightInput.value = setData.weight;
+  }
+  colWeight.appendChild(weightInput);
 
-      const repsInput = document.createElement("input");
-      repsInput.className = "set-input";
-      repsInput.type = "number";
-      repsInput.min = "0";
-      repsInput.placeholder = "0";
-      if (setData && setData.reps != null) {
-        repsInput.value = setData.reps;
-      }
-      colReps.appendChild(repsInput);
+  const colReps = document.createElement("div");
+  colReps.className = "set-col";
+  const repsLabel = document.createElement("label");
+  repsLabel.textContent = "Reps";
+  colReps.appendChild(repsLabel);
 
-      row.appendChild(colWeight);
-      row.appendChild(colReps);
-      box.appendChild(row);
+  const repsInput = document.createElement("input");
+  repsInput.className = "set-input";
+  repsInput.type = "number";
+  repsInput.min = "0";
+  repsInput.placeholder = "0";
+  if (setData && setData.reps != null) {
+    repsInput.value = setData.reps;
+  }
+  colReps.appendChild(repsInput);
 
-      const removeSetBtn = document.createElement("button");
-      removeSetBtn.className = "remove-set-btn";
-      removeSetBtn.textContent = "-";
-      removeSetBtn.addEventListener("click", () => {
-        const allSets = card.querySelectorAll(".set-box");
-        if (allSets.length > 1) {
-          box.remove();
-          // renumber
-          card.querySelectorAll(".set-box").forEach((b, i) => {
-            const h = b.querySelector(".set-header");
-            if (h) h.textContent = "Set " + (i + 1);
-          });
-        }
+  fields.appendChild(colWeight);
+  fields.appendChild(colReps);
+
+  // Right side: round +/- buttons
+  const actions = document.createElement("div");
+  actions.className = "set-actions";
+
+  const minusBtn = document.createElement("button");
+  minusBtn.className = "round-btn minus";
+  minusBtn.textContent = "–";
+  minusBtn.addEventListener("click", () => {
+    const allSets = card.querySelectorAll(".set-box");
+    if (allSets.length > 1) {
+      box.remove();
+      // renumber remaining sets
+      card.querySelectorAll(".set-box").forEach((b, i) => {
+        const h = b.querySelector(".set-header");
+        if (h) h.textContent = "Set " + (i + 1);
       });
-
-      box.appendChild(removeSetBtn);
-
-      return box;
     }
+  });
+
+  const plusBtn = document.createElement("button");
+  plusBtn.className = "round-btn plus";
+  plusBtn.textContent = "+";
+  plusBtn.addEventListener("click", () => {
+    const newBox = createSetBox(card);
+    const wrapper =
+      card.querySelector(".sets-wrapper") || card;
+    wrapper.appendChild(newBox);
+  });
+
+  actions.appendChild(minusBtn);
+  actions.appendChild(plusBtn);
+
+  // put left + right into the row
+  row.appendChild(fields);
+  row.appendChild(actions);
+  box.appendChild(row);
+
+  return box;
+}
 
     function createWorkoutCard(parent, workoutData) {
       const card = document.createElement("div");
@@ -578,15 +642,7 @@
         setsWrapper.appendChild(setBox);
       });
 
-      const addSetBtn = document.createElement("button");
-      addSetBtn.className = "primary-btn";
-      addSetBtn.textContent = "+";
-      addSetBtn.addEventListener("click", () => {
-        const newSetBox = createSetBox(card);
-        setsWrapper.appendChild(newSetBox);
-      });
-      card.appendChild(addSetBtn);
-
+      
       parent.appendChild(card);
       return card;
     }
