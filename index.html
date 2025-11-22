@@ -501,6 +501,11 @@
     <main id="homeScreen" class="screen active">
   <section class="card">
     <div id="workoutsContainer" class="workouts-container"></div>
+
+    <p class="card-subtitle" style="margin-top: 4px;">
+      Tip: use the top-right + to add another exercise.
+    </p>
+
     <button id="saveProgressBtn" class="primary-btn footer-btn">
       Save progress
     </button>
@@ -702,11 +707,11 @@ removeWorkoutBtn.addEventListener("click", () => {
 });
 
   // Header "+" = add a new set to this exercise
+    // Header "+" = add a NEW EXERCISE card below
   const addExerciseBtn = document.createElement("button");
   addExerciseBtn.className = "round-btn plus";
   addExerciseBtn.textContent = "+";
   addExerciseBtn.addEventListener("click", () => {
-    const newBox = createSetBox(card);
     createWorkoutCard(parent);
   });
 
