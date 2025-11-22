@@ -243,20 +243,18 @@
     }
 
     .primary-btn {
-      background-color: var(--accent);
-      margin-top: 8px;
-    }
+  width: 100%;
+  border-radius: 12px;  /* keep your pill shape */
+  padding: 11px 16px;
+  font-size: 17px;
+  font-weight: 600;
+  border: 1px solid #333;
+  color: #fff;
+  margin-top: 8px;
 
+  background-color: #000;             /* match +/- buttons */
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.5);
 
-.primary-btn {
-  background-color: #000;          
-  border: 1px solid #333;         
-  color: #fff;                     
-  border-radius: 12px;             
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.5); 
-}
-
-.primary-btn {
   -webkit-tap-highlight-color: transparent;
   -webkit-appearance: none;
   appearance: none;
@@ -265,14 +263,11 @@
 .primary-btn:active {
   transform: translateY(1px);
   opacity: 0.9;
-  background-color: #111; !important;
+  background-color: #111 !important;  /* correct syntax */
   border-color: #333 !important;
 }
 
-    
-    .primary-btn:active {
-      background-color: var(--accent-soft);
-    }
+
 
     .footer-btn {
       margin-top: 10px;
@@ -296,7 +291,7 @@
 
 .set-row {
   display: flex;
-  align-items: center;      /* or stretch if you prefer */
+  align-items: center;      
   gap: 10px;
   margin-bottom: 6px;
 }
@@ -311,7 +306,7 @@
 .set-input {
   width: 100%;
   padding: 0 10px;
-  height: 44px;             /* same height as buttons */
+  height: 44px;             
   border-radius: 12px;
   background-color: #000;
   border: 1px solid #333;
