@@ -410,41 +410,28 @@
       gap: 6px;
     }
 
-    .small-btn {
-      border-radius: 999px;
-      border: none;
-      padding: 6px 10px;
-      font-size: 13px;
-      font-weight: 600;
-      color: #fff;
-    }
+.small-btn {
+  -webkit-appearance: none;
+  appearance: none;
+  -webkit-tap-highlight-color: transparent;
 
-    
-    .small-btn.load {
-      background-color: #2ecc71;
-    }
+  border-radius: 12px;             /* match other buttons */
+  border: 1px solid #333;
+  padding: 6px 12px;               /* keep size similar */
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
 
-    .small-btn.load:active {
-      background-color: #27ae60;
-    }
+  background-color: #000;          /* dark theme like other buttons */
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+}
 
-    
-    .small-btn.open {
-      background-color: var(--accent);
-    }
+.small-btn:active {
+  transform: translateY(1px);
+  opacity: 0.9;
+  background-color: #111;
+}
 
-    .small-btn.open:active {
-      background-color: var(--accent-soft);
-    }
-
-    
-    .small-btn.delete {
-      background-color: #5b1a1a;
-    }
-
-    .small-btn.delete:active {
-      background-color: #3e1010;
-    }
 
     .open-panel {
       margin-top: 8px;
@@ -827,37 +814,22 @@ function createWorkoutCard(parent, workoutData) {
       return workouts;
     }
 
-    function buildEditorPanel(panel, tpl) {
-      panel.innerHTML = "";
-      panel.classList.add("open");
+function buildEditorPanel(panel, tpl) {
+  panel.innerHTML = "";
+  panel.classList.add("open");
 
-      const innerContainer = document.createElement("div");
-      innerContainer.className = "workouts-container";
-      panel.appendChild(innerContainer);
+  const innerContainer = document.createElement("div");
+  innerContainer.className = "workouts-container";
+  panel.appendChild(innerContainer);
 
-      const data =
-        tpl.workouts && tpl.workouts.length
-          ? tpl.workouts
-          : [{ name: "", sets: [{ weight: "", reps: "" }] }];
+  const data =
+    tpl.workouts && tpl.workouts.length
+      ? tpl.workouts
+      : [{ name: "", sets: [{ weight: "", reps: "" }] }];
 
-      data.forEach((w) => createWorkoutCard(innerContainer, w));
+  data.forEach((w) => createWorkoutCard(innerContainer, w));
+}
 
-      // Add exercise button inside panel
-      const addExerciseBtn = document.createElement("button");
-      addExerciseBtn.className = "primary-btn footer-btn";
-      addExerciseBtn.textContent = "Add exercise";
-      addExerciseBtn.addEventListener("click", () => {
-        createWorkoutCard(innerContainer);
-      });
-      panel.appendChild(addExerciseBtn);
-
-      const note = document.createElement("p");
-      note.className = "card-subtitle";
-      note.style.marginTop = "10px";
-      note.textContent =
-        "You’re viewing this template’s layout. Changes here are saved when you close this panel.";
-      panel.appendChild(note);
-    }
 
     function closePanelAndSave(panel) {
       const index = parseInt(panel.dataset.index, 10);
