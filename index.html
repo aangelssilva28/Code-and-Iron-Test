@@ -493,16 +493,19 @@
 
     <!-- Menu -->
     <div class="menu-dropdown" id="menuDropdown">
-      <div class="menu-item" data-nav="workouts">Routines</div>
-    </div>
+  <div class="menu-item" data-nav="workouts">Routines</div>
+  <div class="menu-item" data-nav="progress">Progress</div>
+</div>
 
     <!-- HOME / LOGGER SCREEN -->
     <main id="homeScreen" class="screen active">
-<section class="card">
-  <div id="workoutsContainer" class="workouts-container"></div>
-</section>
-
-    </main>
+  <section class="card">
+    <div id="workoutsContainer" class="workouts-container"></div>
+    <button id="saveProgressBtn" class="primary-btn footer-btn">
+      Save progress
+    </button>
+  </section>
+</main>
 
     <!-- ROUTINES SCREEN -->
     <main id="workoutsScreen" class="screen">
@@ -511,6 +514,22 @@
         <p class="card-subtitle">
           Create and save exercise routines you can load later on the main page.
         </p>
+
+<!-- PROGRESS SCREEN -->
+<main id="progressScreen" class="screen">
+  <section class="card">
+    <h2 class="card-title">Progress</h2>
+    <p class="card-subtitle">
+      Your best sets for each exercise based on saved workouts.
+    </p>
+
+    <div id="progressList" class="saved-list"></div>
+
+    <div class="link-back" id="backToLoggerFromProgress">
+      <span>←</span> Back to workout logger
+    </div>
+  </section>
+</main>
 
         <div class="input-group">
           <label class="input-label" for="templateNameInput">New routine name</label>
@@ -655,13 +674,31 @@ function createWorkoutCard(parent, workoutData) {
   const headerActions = document.createElement("div");
   headerActions.className = "workout-header-actions";
 
-  // Header "-" = remove this exercise card
-  const removeWorkoutBtn = document.createElement("button");
-  removeWorkoutBtn.className = "round-btn minus";
-  removeWorkoutBtn.textContent = "–";
-  removeWorkoutBtn.addEventListener("click", () => {
+  // Header "-" = remove this exercise card,
+// but if it's the only one, just reset it instead of removing
+const removeWorkoutBtn = document.createElement("button");
+removeWorkoutBtn.className = "round-btn minus";
+removeWorkoutBtn.textContent = "–";
+removeWorkoutBtn.addEventListener("click", () => {
+  const allCards = parent.querySelectorAll(".workout-card");
+
+  if (allCards.length <= 1) {
+    // Reset this card instead of removing it
+    // Clear exercise name
+    nameInput.value = "";
+
+    // Reset sets to a single empty Set 1
+    const setsWrapper = card.querySelector(".sets-wrapper");
+    if (setsWrapper) {
+      setsWrapper.innerHTML = "";
+      const setBox = createSetBox(card, { weight: "", reps: "" }, 1);
+      setsWrapper.appendChild(setBox);
+    }
+  } else {
+    // More than one exercise – safe to remove this card
     card.remove();
-  });
+  }
+});
 
   // Header "+" = add a new set to this exercise
   const addExerciseBtn = document.createElement("button");
@@ -703,7 +740,49 @@ function createWorkoutCard(parent, workoutData) {
     const menuDropdown = document.getElementById("menuDropdown");
     const homeScreen = document.getElementById("homeScreen");
     const workoutsScreen = document.getElementById("workoutsScreen");
+    const progressScreen = document.getElementById("progressScreen");
+    
+    function renderProgressList() {
+  const list = document.getElementById("progressList");
+  list.innerHTML = "";
 
+  const entries = Object.values(progressData);
+  if (!entries.length) {
+    const empty = document.createElement("div");
+    empty.className = "card-subtitle";
+    empty.textContent =
+      "No progress saved yet. Log a workout on the home screen and tap 'Save progress'.";
+    list.appendChild(empty);
+    return;
+  }
+
+  // Sort alphabetically by exercise name
+  entries.sort((a, b) => a.name.localeCompare(b.name));
+
+  entries.forEach((ex) => {
+    const row = document.createElement("div");
+    row.className = "saved-item";
+
+    const nameDiv = document.createElement("div");
+    nameDiv.className = "saved-name";
+    nameDiv.textContent = ex.name;
+    row.appendChild(nameDiv);
+
+    const detail = document.createElement("div");
+    detail.style.fontSize = "13px";
+    detail.style.color = "#bbbbbb";
+
+    if (ex.bestWeight !== null) {
+      detail.textContent = `Best: ${ex.bestWeight} x ${ex.bestWeightReps} • Max reps: ${ex.bestReps}`;
+    } else {
+      detail.textContent = `Best: ${ex.bestReps} reps`;
+    }
+
+    row.appendChild(detail);
+    list.appendChild(row);
+  });
+}
+    
     function closeMenu() {
       menuDropdown.classList.remove("open");
     }
@@ -719,30 +798,122 @@ function createWorkoutCard(parent, workoutData) {
     });
 
     document.querySelectorAll(".menu-item").forEach((item) => {
-      item.addEventListener("click", () => {
-        const nav = item.dataset.nav;
-        if (nav === "workouts") {
-          showScreen("workouts");
-        }
-        closeMenu();
-      });
-    });
-
-    function showScreen(which) {
-      if (which === "home") {
-        homeScreen.classList.add("active");
-        workoutsScreen.classList.remove("active");
-      } else if (which === "workouts") {
-        homeScreen.classList.remove("active");
-        workoutsScreen.classList.add("active");
+  item.addEventListener("click", () => {
+    const nav = item.dataset.nav;
+    if (nav === "workouts" || nav === "progress") {
+      showScreen(nav);
+      if (nav === "progress") {
+        renderProgressList(); // refresh whenever you open Progress
+      const backToLoggerFromProgress = document.getElementById("backToLoggerFromProgress");
+backToLoggerFromProgress.addEventListener("click", () => {
+  showScreen("home");
+});
       }
     }
+    closeMenu();
+  });
+});
+
+    function showScreen(which) {
+  if (which === "home") {
+    homeScreen.classList.add("active");
+    workoutsScreen.classList.remove("active");
+    progressScreen.classList.remove("active");
+  } else if (which === "workouts") {
+    homeScreen.classList.remove("active");
+    workoutsScreen.classList.add("active");
+    progressScreen.classList.remove("active");
+  } else if (which === "progress") {
+    homeScreen.classList.remove("active");
+    workoutsScreen.classList.remove("active");
+    progressScreen.classList.add("active");
+  }
+}
 
     // ---------- Logger (home) ----------
 
     const workoutsContainer = document.getElementById("workoutsContainer");
+    const saveProgressBtn = document.getElementById("saveProgressBtn");
+    
+    saveProgressBtn.addEventListener("click", () => {
+  saveCurrentProgress();
+  alert("Progress saved!");
+});
+    
+    function saveCurrentProgress() {
+  const workouts = getCurrentWorkoutLayout();
+  if (!workouts || !workouts.length) return;
 
+  const now = new Date().toISOString();
+  const updated = { ...progressData };
 
+  workouts.forEach((w) => {
+    const rawName = (w.name || "").trim();
+    if (!rawName) return;
+
+    const key = rawName.toLowerCase();
+    let maxReps = 0;
+    let bestWeight = null;
+    let bestWeightReps = 0;
+
+    (w.sets || []).forEach((set) => {
+      const repsNum = parseInt(set.reps, 10);
+      if (!repsNum || isNaN(repsNum)) return;
+
+      const weightStr = (set.weight || "").trim();
+      const weightNum = parseFloat(weightStr);
+
+      // Track max reps (for bodyweight or any type)
+      if (repsNum > maxReps) maxReps = repsNum;
+
+      // If weight is numeric, track best weight x reps
+      if (!isNaN(weightNum)) {
+        if (
+          bestWeight === null ||
+          weightNum > bestWeight ||
+          (weightNum === bestWeight && repsNum > bestWeightReps)
+        ) {
+          bestWeight = weightNum;
+          bestWeightReps = repsNum;
+        }
+      }
+    });
+
+    if (maxReps === 0 && bestWeight === null) return;
+
+    const existing = updated[key] || {
+      name: rawName,
+      bestReps: 0,
+      bestWeight: null,
+      bestWeightReps: 0,
+      lastUpdated: null,
+    };
+
+    if (maxReps > existing.bestReps) {
+      existing.bestReps = maxReps;
+    }
+
+    if (bestWeight !== null) {
+      if (
+        existing.bestWeight === null ||
+        bestWeight > existing.bestWeight ||
+        (bestWeight === existing.bestWeight &&
+          bestWeightReps > existing.bestWeightReps)
+      ) {
+        existing.bestWeight = bestWeight;
+        existing.bestWeightReps = bestWeightReps;
+      }
+    }
+
+    existing.lastUpdated = now;
+    existing.name = rawName; // keep latest capitalization
+    updated[key] = existing;
+  });
+
+  progressData = updated;
+  saveProgress(progressData);
+}
+    
     function getCurrentWorkoutLayout() {
       return getWorkoutLayoutFrom(workoutsContainer);
     }
@@ -767,7 +938,31 @@ function createWorkoutCard(parent, workoutData) {
     const backToLogger = document.getElementById("backToLogger");
 
     const STORAGE_KEY = "codeAndIronTemplates_v2";
+    
+    const PROGRESS_KEY = "codeAndIronProgress_v1";
 
+function loadProgress() {
+  try {
+    const raw = localStorage.getItem(PROGRESS_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch (e) {
+    console.error("Error loading progress", e);
+    return {};
+  }
+}
+
+function saveProgress(progress) {
+  try {
+    localStorage.setItem(PROGRESS_KEY, JSON.stringify(progress));
+  } catch (e) {
+    console.error("Error saving progress", e);
+  }
+}
+
+let progressData = loadProgress();
+    
     function loadTemplates() {
       try {
         const raw = localStorage.getItem(STORAGE_KEY);
@@ -893,6 +1088,7 @@ function buildEditorPanel(panel, tpl) {
           templates.splice(index, 1);
           saveTemplates(templates);
           renderTemplatesList();
+          renderProgressList();
         });
         btnWrap.appendChild(delBtn);
 
