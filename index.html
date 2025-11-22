@@ -774,20 +774,36 @@ removeWorkoutBtn.addEventListener("click", () => {
     detail.style.fontSize = "13px";
     detail.style.color = "#bbbbbb";
 
-    let prText = "";
-
+    // ---- PR flags (today only) ----
+    let prFlags = "";
     if (ex.bestRepsDate && ex.bestRepsDate.startsWith(today)) {
-      prText += " (NEW REP PR!)";
+      prFlags += " (NEW REP PR!)";
+    }
+    if (ex.bestWeightDate && ex.bestWeightDate.startsWith(today)) {
+      prFlags += " (NEW WEIGHT PR!)";
     }
 
-    if (ex.bestWeightDate && ex.bestWeightDate.startsWith(today)) {
-      prText += " (NEW WEIGHT PR!)";
+    // ---- PR date (whenever it happened) ----
+    let dateText = "";
+    const dateSource = ex.bestWeightDate || ex.bestRepsDate;
+    if (dateSource) {
+      const d = new Date(dateSource);
+      // e.g. "11/21/2025"
+      const pretty = d.toLocaleDateString();
+      dateText = ` • PR set on ${pretty}`;
     }
 
     if (ex.bestWeight !== null) {
-      detail.textContent = `Best: ${ex.bestWeight} x ${ex.bestWeightReps} • Max reps: ${ex.bestReps}${prText}`;
+      detail.textContent =
+        `Best: ${ex.bestWeight} x ${ex.bestWeightReps}` +
+        ` • Max reps: ${ex.bestReps}` +
+        dateText +
+        prFlags;
     } else {
-      detail.textContent = `Best: ${ex.bestReps} reps${prText}`;
+      detail.textContent =
+        `Best: ${ex.bestReps} reps` +
+        dateText +
+        prFlags;
     }
 
     row.appendChild(detail);
@@ -900,12 +916,14 @@ if (backToLoggerFromProgress) {
     if (maxReps === 0 && bestWeight === null) return;
 
     const existing = updated[key] || {
-      name: rawName,
-      bestReps: 0,
-      bestWeight: null,
-      bestWeightReps: 0,
-      lastUpdated: null,
-    };
+  name: rawName,
+  bestReps: 0,
+  bestWeight: null,
+  bestWeightReps: 0,
+  bestRepsDate: null,     // <— add this
+  bestWeightDate: null,   // <— and this
+  lastUpdated: null,
+};
 
     if (maxReps > existing.bestReps) {
   existing.bestReps = maxReps;
