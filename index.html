@@ -903,8 +903,13 @@ if (backToLoggerFromProgress) {
     workoutsScreen.classList.remove("active");
     progressScreen.classList.add("active");
   }
-}
 
+  // clear detail panel when not on progress
+  if (which !== "progress" && progressDetail) {
+    progressDetail.classList.remove("open");
+    progressDetail.innerHTML = "";
+  }
+}
     // ---------- Logger (home) ----------
 
     const workoutsContainer = document.getElementById("workoutsContainer");
@@ -914,6 +919,92 @@ if (backToLoggerFromProgress) {
   saveCurrentProgress();
   alert("Progress saved!");
 });
+    
+    // ---------- Progress detail panel (last 5 logs) ----------
+
+function formatDateLabel(isoDate) {
+  // isoDate will be 'YYYY-MM-DD'
+  if (!isoDate) return "";
+  const d = new Date(isoDate);
+  return d.toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+function openProgressDetail(ex) {
+  if (!progressDetail) return;
+
+  progressDetail.classList.add("open");
+  progressDetail.innerHTML = "";
+
+  // Title
+  const title = document.createElement("div");
+  title.className = "card-subtitle";
+  title.style.marginBottom = "8px";
+  title.textContent = ex.name + " — last sessions";
+  progressDetail.appendChild(title);
+
+  // PR info (if available)
+  if (ex.bestRepsDate || ex.bestWeightDate) {
+    const prInfo = document.createElement("div");
+    prInfo.style.fontSize = "13px";
+    prInfo.style.color = "#bbbbbb";
+    prInfo.style.marginBottom = "8px";
+
+    const parts = [];
+    if (ex.bestRepsDate) {
+      parts.push(
+        `Rep PR: ${ex.bestReps} reps on ${formatDateLabel(
+          ex.bestRepsDate.split("T")[0]
+        )}`
+      );
+    }
+    if (ex.bestWeightDate && ex.bestWeight !== null) {
+      parts.push(
+        `Weight PR: ${ex.bestWeight} x ${ex.bestWeightReps} on ${formatDateLabel(
+          ex.bestWeightDate.split("T")[0]
+        )}`
+      );
+    }
+
+    prInfo.textContent = parts.join(" • ");
+    progressDetail.appendChild(prInfo);
+  }
+
+  // History list
+  const history = (ex.history || []).slice(0, 5); // last 5 logs
+  if (!history.length) {
+    const empty = document.createElement("div");
+    empty.style.fontSize = "13px";
+    empty.style.color = "#bbbbbb";
+    empty.textContent =
+      "No detailed history yet. Save progress a few times for this exercise.";
+    progressDetail.appendChild(empty);
+    return;
+  }
+
+  history.forEach((entry) => {
+    const row = document.createElement("div");
+    row.className = "progress-detail-row";
+
+    const left = document.createElement("span");
+    left.textContent = formatDateLabel(entry.date);
+
+    const right = document.createElement("span");
+    if (entry.bestWeight !== null) {
+      right.textContent = `${entry.bestWeight} x ${entry.bestWeightReps} • Max reps: ${entry.bestReps}`;
+    } else {
+      right.textContent = `Best: ${entry.bestReps} reps`;
+    }
+
+    row.appendChild(left);
+    row.appendChild(right);
+    progressDetail.appendChild(row);
+  });
+}
+    
     
     function saveCurrentProgress() {
   const workouts = getCurrentWorkoutLayout();
