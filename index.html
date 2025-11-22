@@ -757,7 +757,8 @@ removeWorkoutBtn.addEventListener("click", () => {
     return;
   }
 
-  // Sort alphabetically by exercise name
+  const today = new Date().toISOString().split("T")[0];
+
   entries.sort((a, b) => a.name.localeCompare(b.name));
 
   entries.forEach((ex) => {
@@ -773,10 +774,20 @@ removeWorkoutBtn.addEventListener("click", () => {
     detail.style.fontSize = "13px";
     detail.style.color = "#bbbbbb";
 
+    let prText = "";
+
+    if (ex.bestRepsDate && ex.bestRepsDate.startsWith(today)) {
+      prText += " (NEW REP PR!)";
+    }
+
+    if (ex.bestWeightDate && ex.bestWeightDate.startsWith(today)) {
+      prText += " (NEW WEIGHT PR!)";
+    }
+
     if (ex.bestWeight !== null) {
-      detail.textContent = `Best: ${ex.bestWeight} x ${ex.bestWeightReps} • Max reps: ${ex.bestReps}`;
+      detail.textContent = `Best: ${ex.bestWeight} x ${ex.bestWeightReps} • Max reps: ${ex.bestReps}${prText}`;
     } else {
-      detail.textContent = `Best: ${ex.bestReps} reps`;
+      detail.textContent = `Best: ${ex.bestReps} reps${prText}`;
     }
 
     row.appendChild(detail);
@@ -860,7 +871,9 @@ if (backToLoggerFromProgress) {
     let maxReps = 0;
     let bestWeight = null;
     let bestWeightReps = 0;
-
+    let newRepPR = false;
+    let newWeightPR = false;
+    
     (w.sets || []).forEach((set) => {
       const repsNum = parseInt(set.reps, 10);
       if (!repsNum || isNaN(repsNum)) return;
@@ -895,8 +908,10 @@ if (backToLoggerFromProgress) {
     };
 
     if (maxReps > existing.bestReps) {
-      existing.bestReps = maxReps;
-    }
+  existing.bestReps = maxReps;
+  existing.bestRepsDate = now;
+  newRepPR = true;
+}
 
     if (bestWeight !== null) {
       if (
@@ -907,6 +922,8 @@ if (backToLoggerFromProgress) {
       ) {
         existing.bestWeight = bestWeight;
         existing.bestWeightReps = bestWeightReps;
+        existing.bestWeightDate = now;
+        newWeightPR = true;
       }
     }
 
