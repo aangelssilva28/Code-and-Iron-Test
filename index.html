@@ -289,6 +289,34 @@
       margin-bottom: 6px;
     }
 
+/* Progress screen letter group headers */
+.progress-letter-header {
+  margin-top: 10px;
+  margin-bottom: 4px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #888;
+  text-transform: uppercase;
+}
+
+/* Rows inside the progress detail panel */
+.progress-detail-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+
+.progress-detail-row span:first-child {
+  color: #bbbbbb;
+}
+
+.progress-detail-row span:last-child {
+  color: #ffffff;
+  font-weight: 600;
+}
+
+
 .set-row {
   display: flex;
   align-items: center;      
@@ -541,7 +569,7 @@
 </main>
 
 <!-- PROGRESS SCREEN (now a separate screen) -->
-<main id="progressScreen" class="screen">
+  <main id="progressScreen" class="screen">
   <section class="card">
     <h2 class="card-title">Progress</h2>
     <p class="card-subtitle">
@@ -550,11 +578,14 @@
 
     <div id="progressList" class="saved-list"></div>
 
+    <!-- Detail panel for a single exercise -->
+    <div id="progressDetail" class="open-panel"></div>
+
     <div class="link-back" id="backToLoggerFromProgress">
       <span>←</span> Back to workout logger
     </div>
   </section>
-</main>     
+</main>
   </div>
 
   <script>
@@ -742,6 +773,7 @@ removeWorkoutBtn.addEventListener("click", () => {
     const homeScreen = document.getElementById("homeScreen");
     const workoutsScreen = document.getElementById("workoutsScreen");
     const progressScreen = document.getElementById("progressScreen");
+    const progressDetail = document.getElementById("progressDetail");
     
     function renderProgressList() {
   const list = document.getElementById("progressList");
@@ -754,14 +786,35 @@ removeWorkoutBtn.addEventListener("click", () => {
     empty.textContent =
       "No progress saved yet. Log a workout on the home screen and tap 'Save progress'.";
     list.appendChild(empty);
+    // also hide detail panel if open
+    if (progressDetail) {
+      progressDetail.classList.remove("open");
+      progressDetail.innerHTML = "";
+    }
     return;
   }
 
   const today = new Date().toISOString().split("T")[0];
 
+  // Sort alphabetically by exercise name
   entries.sort((a, b) => a.name.localeCompare(b.name));
 
+  let currentLetter = null;
+
   entries.forEach((ex) => {
+    if (!ex.name) return;
+
+    const firstLetter = ex.name.charAt(0).toUpperCase();
+
+    // NEW: letter group header
+    if (firstLetter !== currentLetter) {
+      currentLetter = firstLetter;
+      const letterHeader = document.createElement("div");
+      letterHeader.className = "progress-letter-header";
+      letterHeader.textContent = currentLetter;
+      list.appendChild(letterHeader);
+    }
+
     const row = document.createElement("div");
     row.className = "saved-item";
 
@@ -774,39 +827,29 @@ removeWorkoutBtn.addEventListener("click", () => {
     detail.style.fontSize = "13px";
     detail.style.color = "#bbbbbb";
 
-    // ---- PR flags (today only) ----
-    let prFlags = "";
+    let prText = "";
+
     if (ex.bestRepsDate && ex.bestRepsDate.startsWith(today)) {
-      prFlags += " (NEW REP PR!)";
-    }
-    if (ex.bestWeightDate && ex.bestWeightDate.startsWith(today)) {
-      prFlags += " (NEW WEIGHT PR!)";
+      prText += " (NEW REP PR!)";
     }
 
-    // ---- PR date (whenever it happened) ----
-    let dateText = "";
-    const dateSource = ex.bestWeightDate || ex.bestRepsDate;
-    if (dateSource) {
-      const d = new Date(dateSource);
-      // e.g. "11/21/2025"
-      const pretty = d.toLocaleDateString();
-      dateText = ` • PR set on ${pretty}`;
+    if (ex.bestWeightDate && ex.bestWeightDate.startsWith(today)) {
+      prText += " (NEW WEIGHT PR!)";
     }
 
     if (ex.bestWeight !== null) {
-      detail.textContent =
-        `Best: ${ex.bestWeight} x ${ex.bestWeightReps}` +
-        ` • Max reps: ${ex.bestReps}` +
-        dateText +
-        prFlags;
+      detail.textContent = `Best: ${ex.bestWeight} x ${ex.bestWeightReps} • Max reps: ${ex.bestReps}${prText}`;
     } else {
-      detail.textContent =
-        `Best: ${ex.bestReps} reps` +
-        dateText +
-        prFlags;
+      detail.textContent = `Best: ${ex.bestReps} reps${prText}`;
     }
 
     row.appendChild(detail);
+
+    // NEW: tap row to open detail panel
+    row.addEventListener("click", () => {
+      openProgressDetail(ex);
+    });
+
     list.appendChild(row);
   });
 }
@@ -877,6 +920,7 @@ if (backToLoggerFromProgress) {
   if (!workouts || !workouts.length) return;
 
   const now = new Date().toISOString();
+  const today = now.split("T")[0]; // YYYY-MM-DD
   const updated = { ...progressData };
 
   workouts.forEach((w) => {
@@ -887,9 +931,7 @@ if (backToLoggerFromProgress) {
     let maxReps = 0;
     let bestWeight = null;
     let bestWeightReps = 0;
-    let newRepPR = false;
-    let newWeightPR = false;
-    
+
     (w.sets || []).forEach((set) => {
       const repsNum = parseInt(set.reps, 10);
       if (!repsNum || isNaN(repsNum)) return;
@@ -916,21 +958,23 @@ if (backToLoggerFromProgress) {
     if (maxReps === 0 && bestWeight === null) return;
 
     const existing = updated[key] || {
-  name: rawName,
-  bestReps: 0,
-  bestWeight: null,
-  bestWeightReps: 0,
-  bestRepsDate: null,     // <— add this
-  bestWeightDate: null,   // <— and this
-  lastUpdated: null,
-};
+      name: rawName,
+      bestReps: 0,
+      bestRepsDate: null,
+      bestWeight: null,
+      bestWeightReps: 0,
+      bestWeightDate: null,
+      lastUpdated: null,
+      history: []   // NEW: keep per-day snapshots
+    };
 
+    // Update overall best reps
     if (maxReps > existing.bestReps) {
-  existing.bestReps = maxReps;
-  existing.bestRepsDate = now;
-  newRepPR = true;
-}
+      existing.bestReps = maxReps;
+      existing.bestRepsDate = now;
+    }
 
+    // Update overall best weight x reps
     if (bestWeight !== null) {
       if (
         existing.bestWeight === null ||
@@ -941,8 +985,28 @@ if (backToLoggerFromProgress) {
         existing.bestWeight = bestWeight;
         existing.bestWeightReps = bestWeightReps;
         existing.bestWeightDate = now;
-        newWeightPR = true;
       }
+    }
+
+    // --- NEW: store today’s snapshot in history ---
+    const snapshot = {
+      date: today,               // YYYY-MM-DD
+      bestReps: maxReps,
+      bestWeight: bestWeight,
+      bestWeightReps: bestWeightReps
+    };
+
+    existing.history = existing.history || [];
+    // replace entry for this same date if it exists
+    existing.history = existing.history.filter((h) => h.date !== today);
+    existing.history.push(snapshot);
+
+    // keep most recent first
+    existing.history.sort((a, b) => b.date.localeCompare(a.date));
+
+    // (optional) cap history length (e.g. last 30 logs)
+    if (existing.history.length > 30) {
+      existing.history = existing.history.slice(0, 30);
     }
 
     existing.lastUpdated = now;
