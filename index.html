@@ -677,16 +677,16 @@ function createWorkoutCard(parent, workoutData) {
   });
 
   // Header "+" = add a new set to this exercise
-  const addSetBtn = document.createElement("button");
-  addSetBtn.className = "round-btn plus";
-  addSetBtn.textContent = "+";
-  addSetBtn.addEventListener("click", () => {
+  const addExerciseBtn = document.createElement("button");
+  addExerciseBtn.className = "round-btn plus";
+  addExerciseBtn.textContent = "+";
+  addExerciseBtn.addEventListener("click", () => {
     const newBox = createSetBox(card);
-    setsWrapper.appendChild(newBox);
+    createWorkoutCard(parent);
   });
 
   headerActions.appendChild(removeWorkoutBtn);
-  headerActions.appendChild(addSetBtn);
+  headerActions.appendChild(addExerciseBtn);
 
   header.appendChild(nameInput);
   header.appendChild(headerActions);
