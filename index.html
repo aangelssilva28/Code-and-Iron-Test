@@ -197,9 +197,29 @@
     }
 
     .workout-name {
-      margin-bottom: 10px;
+      margin-bottom: 0;
     }
 
+    .workout-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+/* Make the exercise name box about half the card width */
+.workout-header .workout-name {
+  flex: 0 0 50%;   /* 50% of the card */
+}
+
+/* Container for the header + / - buttons */
+.workout-header-actions {
+  display: flex;
+  gap: 8px;
+}
+
+    
     .danger-btn,
     .primary-btn {
       width: 100%;
@@ -607,69 +627,71 @@
   return box;
 }
 
-    function createWorkoutCard(parent, workoutData) {
-      const card = document.createElement("div");
-      card.className = "workout-card";
+function createWorkoutCard(parent, workoutData) {
+  const card = document.createElement("div");
+  card.className = "workout-card";
 
-      const nameInput = document.createElement("input");
-      nameInput.className = "text-input workout-name";
-      nameInput.placeholder = "Enter exercise name";
-      if (workoutData && workoutData.name) {
-        nameInput.value = workoutData.name;
-      }
-      card.appendChild(nameInput);
+  // --- Sets wrapper (we'll need this in the header + button) ---
+  const setsWrapper = document.createElement("div");
+  setsWrapper.className = "sets-wrapper";
 
-      const removeWorkoutBtn = document.createElement("button");
-      removeWorkoutBtn.className = "danger-btn";
-      removeWorkoutBtn.textContent = "-";
-      removeWorkoutBtn.addEventListener("click", () => {
-        card.remove();
-      });
-      card.appendChild(removeWorkoutBtn);
+  // --- HEADER ROW: exercise name + big +/- ---
+  const header = document.createElement("div");
+  header.className = "workout-header";
 
-      // sets wrapper
-      const setsWrapper = document.createElement("div");
-      setsWrapper.className = "sets-wrapper";
-      card.appendChild(setsWrapper);
+  // Exercise name input (now half width via CSS)
+  const nameInput = document.createElement("input");
+  nameInput.className = "text-input workout-name";
+  nameInput.placeholder = "Enter exercise name";
+  if (workoutData && workoutData.name) {
+    nameInput.value = workoutData.name;
+  }
 
-      const setsFromData =
-        workoutData && Array.isArray(workoutData.sets)
-          ? workoutData.sets
-          : [{ weight: "", reps: "" }];
+  // Right side of header: round - and + buttons
+  const headerActions = document.createElement("div");
+  headerActions.className = "workout-header-actions";
 
-      setsFromData.forEach((set, idx) => {
-        const setBox = createSetBox(card, set, idx + 1);
-        setsWrapper.appendChild(setBox);
-      });
+  // Header "-" = remove this exercise card
+  const removeWorkoutBtn = document.createElement("button");
+  removeWorkoutBtn.className = "round-btn minus";
+  removeWorkoutBtn.textContent = "–";
+  removeWorkoutBtn.addEventListener("click", () => {
+    card.remove();
+  });
 
-      
-      parent.appendChild(card);
-      return card;
-    }
+  // Header "+" = add a new set to this exercise
+  const addSetBtn = document.createElement("button");
+  addSetBtn.className = "round-btn plus";
+  addSetBtn.textContent = "+";
+  addSetBtn.addEventListener("click", () => {
+    const newBox = createSetBox(card);
+    setsWrapper.appendChild(newBox);
+  });
 
-    // helper to read layout from any container
-    function getWorkoutLayoutFrom(container) {
-      const cards = container.querySelectorAll(".workout-card");
-      const workouts = [];
+  headerActions.appendChild(removeWorkoutBtn);
+  headerActions.appendChild(addSetBtn);
 
-      cards.forEach((card) => {
-        const nameInput = card.querySelector(".workout-name");
-        const sets = [];
-        card.querySelectorAll(".set-box").forEach((box) => {
-          const inputs = box.querySelectorAll(".set-input");
-          sets.push({
-            weight: inputs[0] ? inputs[0].value : "",
-            reps: inputs[1] ? inputs[1].value : "",
-          });
-        });
-        workouts.push({
-          name: nameInput ? nameInput.value : "",
-          sets,
-        });
-      });
+  header.appendChild(nameInput);
+  header.appendChild(headerActions);
 
-      return workouts;
-    }
+  // Put header and sets wrapper into the card
+  card.appendChild(header);
+  card.appendChild(setsWrapper);
+
+  // --- Initial sets ---
+  const setsFromData =
+    workoutData && Array.isArray(workoutData.sets)
+      ? workoutData.sets
+      : [{ weight: "", reps: "" }];
+
+  setsFromData.forEach((set, idx) => {
+    const setBox = createSetBox(card, set, idx + 1);
+    setsWrapper.appendChild(setBox);
+  });
+
+  parent.appendChild(card);
+  return card;
+}
 
     // ---------- Screens & navigation ----------
 
