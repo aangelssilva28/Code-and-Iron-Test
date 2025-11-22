@@ -315,18 +315,19 @@
 }
 
 .round-btn {
-  width: 56px;
+  -webkit-appearance: none; /* Prevent iOS from forcing white bg */
+  appearance: none;
+  background-color: #111 !important; /* Force dark bg */
+  border: 1px solid #333;
+  min-width: 56px;
   height: 44px;
   border-radius: 12px;
-  border: 1px solid #333;
-  background-color: #111;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 24px;
   font-weight: 700;
   color: #fff;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.5);
 }
 
 .round-btn:active {
