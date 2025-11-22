@@ -210,7 +210,7 @@
 
 /* Make the exercise name box about half the card width */
 .workout-header .workout-name {
-  flex: 0 0 50%;   /* 50% of the card */
+  flex: 1;   /* fill the same flex space as the set fields (weight+reps) */
 }
 
 /* Container for the header + / - buttons */
@@ -488,12 +488,10 @@
 
     <!-- HOME / LOGGER SCREEN -->
     <main id="homeScreen" class="screen active">
-      <section class="card">
-        <div id="workoutsContainer" class="workouts-container"></div>
-        <button id="addWorkoutBtn" class="primary-btn footer-btn">+</button>
-          Add exercise
-        </button>
-      </section>
+<section class="card">
+  <div id="workoutsContainer" class="workouts-container"></div>
+</section>
+
     </main>
 
     <!-- ROUTINES SCREEN -->
@@ -737,11 +735,7 @@ function createWorkoutCard(parent, workoutData) {
     // ---------- Logger (home) ----------
 
     const workoutsContainer = document.getElementById("workoutsContainer");
-    const addWorkoutBtn = document.getElementById("addWorkoutBtn");
 
-    addWorkoutBtn.addEventListener("click", () => {
-      createWorkoutCard(workoutsContainer);
-    });
 
     function getCurrentWorkoutLayout() {
       return getWorkoutLayoutFrom(workoutsContainer);
