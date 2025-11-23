@@ -290,6 +290,33 @@
       font-weight: 700;
       color: #888;
       text-transform: uppercase;
+
+      /* [progress-collapse] make header look clickable */
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    /* [progress-collapse] container for each letter group */
+    .progress-letter-group {
+      margin-top: 4px;
+    }
+
+    /* [progress-collapse] plus/minus indicator on the header */
+    .progress-letter-header::after {
+      content: "–";
+      font-size: 14px;
+      opacity: 0.7;
+    }
+
+    .progress-letter-group.collapsed .progress-letter-header::after {
+      content: "+";
+    }
+
+    /* [progress-collapse] hide rows when collapsed */
+    .progress-letter-group.collapsed .saved-item {
+      display: none;
     }
 
     /* Rows inside the progress detail panel */
@@ -733,7 +760,7 @@
       </section>
     </main>
 
-    <!-- PROGRESS SCREEN (now a separate screen) -->
+    <!-- PROGRESS SCREEN -->
     <main id="progressScreen" class="screen">
       <section class="card">
         <h2 class="card-title">Progress</h2>
@@ -755,7 +782,6 @@
 
   <script>
     // ---------- Helpers: exercise card + sets ----------
-    // NOTE: createSetBox is now clean. Tutorial is NO LONGER inside this function.
 
     function createSetBox(card, setData, indexOverride) {
       const existing = card.querySelectorAll(".set-box").length;
@@ -825,7 +851,8 @@
       plusBtn.textContent = "+";
       plusBtn.addEventListener("click", () => {
         const newBox = createSetBox(card);
-        const wrapper = card.querySelector(".sets-wrapper") || card;
+        const wrapper =
+          card.querySelector(".sets-wrapper") || card;
         wrapper.appendChild(newBox);
       });
 
@@ -839,80 +866,7 @@
       return box;
     }
 
-    function createWorkoutCard(parent, workoutData) {
-      const card = document.createElement("div");
-      card.className = "workout-card";
-
-      const setsWrapper = document.createElement("div");
-      setsWrapper.className = "sets-wrapper";
-
-      const header = document.createElement("div");
-      header.className = "workout-header";
-
-      const nameInput = document.createElement("input");
-      nameInput.className = "text-input workout-name";
-      nameInput.placeholder = "Enter exercise name";
-      if (workoutData && workoutData.name) {
-        nameInput.value = workoutData.name;
-      }
-
-      const headerActions = document.createElement("div");
-      headerActions.className = "workout-header-actions";
-
-      const removeWorkoutBtn = document.createElement("button");
-      removeWorkoutBtn.className = "round-btn minus";
-      removeWorkoutBtn.textContent = "–";
-      removeWorkoutBtn.addEventListener("click", () => {
-        const allCards = parent.querySelectorAll(".workout-card");
-
-        if (allCards.length <= 1) {
-          nameInput.value = "";
-          const setsWrapper = card.querySelector(".sets-wrapper");
-          if (setsWrapper) {
-            setsWrapper.innerHTML = "";
-            const setBox = createSetBox(card, { weight: "", reps: "" }, 1);
-            setsWrapper.appendChild(setBox);
-          }
-        } else {
-          card.remove();
-        }
-      });
-
-      // Header "+" = add a NEW EXERCISE card below (NOT a set)
-      const addExerciseBtn = document.createElement("button");
-      addExerciseBtn.className = "round-btn plus";
-      addExerciseBtn.textContent = "+";
-      addExerciseBtn.addEventListener("click", () => {
-        createWorkoutCard(parent);
-      });
-
-      headerActions.appendChild(removeWorkoutBtn);
-      headerActions.appendChild(addExerciseBtn);
-
-      header.appendChild(nameInput);
-      header.appendChild(headerActions);
-
-      card.appendChild(header);
-      card.appendChild(setsWrapper);
-
-      const setsFromData =
-        workoutData && Array.isArray(workoutData.sets)
-          ? workoutData.sets
-          : [{ weight: "", reps: "" }];
-
-      setsFromData.forEach((set, idx) => {
-        const setBox = createSetBox(card, set, idx + 1);
-        setsWrapper.appendChild(setBox);
-      });
-
-      parent.appendChild(card);
-      return card;
-    }
-
-    // ---------- One-time tutorial walkthrough (GLOBAL) ----------
-    // NOTE: This was previously nested inside createSetBox.
-    // Moving it here makes initTutorial() available to init() at the bottom.
-
+    // ---------- One-time tutorial walkthrough ----------
     const TUTORIAL_KEY = "codeAndIronTutorialSeen_v1";
 
     function initTutorial() {
@@ -934,7 +888,11 @@
 
       function showStep(index) {
         screens.forEach((el, i) => {
-          el.classList.toggle("active", i === index);
+          if (i === index) {
+            el.classList.add("active");
+          } else {
+            el.classList.remove("active");
+          }
         });
       }
 
@@ -989,6 +947,75 @@
       });
     }
 
+    function createWorkoutCard(parent, workoutData) {
+      const card = document.createElement("div");
+      card.className = "workout-card";
+
+      const setsWrapper = document.createElement("div");
+      setsWrapper.className = "sets-wrapper";
+
+      const header = document.createElement("div");
+      header.className = "workout-header";
+
+      const nameInput = document.createElement("input");
+      nameInput.className = "text-input workout-name";
+      nameInput.placeholder = "Enter exercise name";
+      if (workoutData && workoutData.name) {
+        nameInput.value = workoutData.name;
+      }
+
+      const headerActions = document.createElement("div");
+      headerActions.className = "workout-header-actions";
+
+      const removeWorkoutBtn = document.createElement("button");
+      removeWorkoutBtn.className = "round-btn minus";
+      removeWorkoutBtn.textContent = "–";
+      removeWorkoutBtn.addEventListener("click", () => {
+        const allCards = parent.querySelectorAll(".workout-card");
+
+        if (allCards.length <= 1) {
+          nameInput.value = "";
+          const setsWrapper = card.querySelector(".sets-wrapper");
+          if (setsWrapper) {
+            setsWrapper.innerHTML = "";
+            const setBox = createSetBox(card, { weight: "", reps: "" }, 1);
+            setsWrapper.appendChild(setBox);
+          }
+        } else {
+          card.remove();
+        }
+      });
+
+      const addExerciseBtn = document.createElement("button");
+      addExerciseBtn.className = "round-btn plus";
+      addExerciseBtn.textContent = "+";
+      addExerciseBtn.addEventListener("click", () => {
+        createWorkoutCard(parent);
+      });
+
+      headerActions.appendChild(removeWorkoutBtn);
+      headerActions.appendChild(addExerciseBtn);
+
+      header.appendChild(nameInput);
+      header.appendChild(headerActions);
+
+      card.appendChild(header);
+      card.appendChild(setsWrapper);
+
+      const setsFromData =
+        workoutData && Array.isArray(workoutData.sets)
+          ? workoutData.sets
+          : [{ weight: "", reps: "" }];
+
+      setsFromData.forEach((set, idx) => {
+        const setBox = createSetBox(card, set, idx + 1);
+        setsWrapper.appendChild(setBox);
+      });
+
+      parent.appendChild(card);
+      return card;
+    }
+
     // ---------- Screens & navigation ----------
 
     const menuButton = document.getElementById("menuButton");
@@ -998,11 +1025,14 @@
     const progressScreen = document.getElementById("progressScreen");
     const progressDetail = document.getElementById("progressDetail");
 
+    // [progress-collapse] remember which letters are collapsed
+    let progressCollapsedLetters = {};
+
     function renderProgressList() {
       const list = document.getElementById("progressList");
       list.innerHTML = "";
 
-      const entries = Object.values(progressData);
+      const entries = Object.values(progressData).filter((ex) => ex && ex.name);
       if (!entries.length) {
         const empty = document.createElement("div");
         empty.className = "card-subtitle";
@@ -1018,58 +1048,76 @@
 
       const today = new Date().toISOString().split("T")[0];
 
-      entries.sort((a, b) => a.name.localeCompare(b.name));
-
-      let currentLetter = null;
-
+      // [progress-collapse] group exercises by first letter
+      const groups = {};
       entries.forEach((ex) => {
-        if (!ex.name) return;
+        const letter = ex.name.charAt(0).toUpperCase();
+        if (!groups[letter]) groups[letter] = [];
+        groups[letter].push(ex);
+      });
 
-        const firstLetter = ex.name.charAt(0).toUpperCase();
+      const letters = Object.keys(groups).sort();
 
-        if (firstLetter !== currentLetter) {
-          currentLetter = firstLetter;
-          const letterHeader = document.createElement("div");
-          letterHeader.className = "progress-letter-header";
-          letterHeader.textContent = currentLetter;
-          list.appendChild(letterHeader);
+      letters.forEach((letter) => {
+        const groupWrapper = document.createElement("div");
+        groupWrapper.className = "progress-letter-group";
+        if (progressCollapsedLetters[letter]) {
+          groupWrapper.classList.add("collapsed");
         }
 
-        const row = document.createElement("div");
-        row.className = "saved-item";
+        const letterHeader = document.createElement("div");
+        letterHeader.className = "progress-letter-header";
+        letterHeader.textContent = letter;
 
-        const nameDiv = document.createElement("div");
-        nameDiv.className = "saved-name";
-        nameDiv.textContent = ex.name;
-        row.appendChild(nameDiv);
-
-        const detail = document.createElement("div");
-        detail.style.fontSize = "13px";
-        detail.style.color = "#bbbbbb";
-
-        let prText = "";
-
-        if (ex.bestRepsDate && ex.bestRepsDate.startsWith(today)) {
-          prText += " (NEW REP PR!)";
-        }
-
-        if (ex.bestWeightDate && ex.bestWeightDate.startsWith(today)) {
-          prText += " (NEW WEIGHT PR!)";
-        }
-
-        if (ex.bestWeight !== null) {
-          detail.textContent = `Best: ${ex.bestWeight} x ${ex.bestWeightReps} • Max reps: ${ex.bestReps}${prText}`;
-        } else {
-          detail.textContent = `Best: ${ex.bestReps} reps${prText}`;
-        }
-
-        row.appendChild(detail);
-
-        row.addEventListener("click", () => {
-          openProgressDetail(ex);
+        // [progress-collapse] toggle collapsed state on click
+        letterHeader.addEventListener("click", () => {
+          const isCollapsed = groupWrapper.classList.toggle("collapsed");
+          progressCollapsedLetters[letter] = isCollapsed;
         });
 
-        list.appendChild(row);
+        groupWrapper.appendChild(letterHeader);
+
+        // rows for this letter
+        groups[letter].sort((a, b) => a.name.localeCompare(b.name));
+        groups[letter].forEach((ex) => {
+          const row = document.createElement("div");
+          row.className = "saved-item";
+
+          const nameDiv = document.createElement("div");
+          nameDiv.className = "saved-name";
+          nameDiv.textContent = ex.name;
+          row.appendChild(nameDiv);
+
+          const detail = document.createElement("div");
+          detail.style.fontSize = "13px";
+          detail.style.color = "#bbbbbb";
+
+          let prText = "";
+
+          if (ex.bestRepsDate && ex.bestRepsDate.startsWith(today)) {
+            prText += " (NEW REP PR!)";
+          }
+
+          if (ex.bestWeightDate && ex.bestWeightDate.startsWith(today)) {
+            prText += " (NEW WEIGHT PR!)";
+          }
+
+          if (ex.bestWeight !== null) {
+            detail.textContent = `Best: ${ex.bestWeight} x ${ex.bestWeightReps} • Max reps: ${ex.bestReps}${prText}`;
+          } else {
+            detail.textContent = `Best: ${ex.bestReps} reps${prText}`;
+          }
+
+          row.appendChild(detail);
+
+          row.addEventListener("click", () => {
+            openProgressDetail(ex);
+          });
+
+          groupWrapper.appendChild(row);
+        });
+
+        list.appendChild(groupWrapper);
       });
     }
 
@@ -1299,7 +1347,6 @@
         existing.history = existing.history.filter((h) => h.date !== today);
         existing.history.push(snapshot);
         existing.history.sort((a, b) => b.date.localeCompare(a.date));
-
         if (existing.history.length > 30) {
           existing.history = existing.history.slice(0, 30);
         }
@@ -1551,12 +1598,11 @@
     });
 
     // ---------- Init ----------
-    // NOTE: initTutorial() is now defined above, so this call works.
 
     function init() {
       createWorkoutCard(workoutsContainer);
       renderTemplatesList();
-      initTutorial(); // run one-time tutorial if not seen
+      initTutorial();
     }
 
     init();
