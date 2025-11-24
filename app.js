@@ -900,7 +900,20 @@ function renderTemplatesList() {
       buildEditorPanel(panel, tpl);
       openBtn.textContent = "Close";
     });
+// Tutorial menu item: let the user watch the tutorial again
+const tutorialMenuItem = document.getElementById("tutorialMenuItem");
+if (tutorialMenuItem) {
+  tutorialMenuItem.addEventListener("click", () => {
+    // Clear the "seen" flag so initTutorial behaves like first run
+    localStorage.removeItem(TUTORIAL_KEY);
 
+    // Re-open the tutorial overlay
+    initTutorial();
+
+    // Close the dropdown menu
+    closeMenu();
+  });
+}
     savedTemplatesList.appendChild(wrapper);
   });
 }
