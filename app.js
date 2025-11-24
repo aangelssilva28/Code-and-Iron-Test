@@ -2,6 +2,19 @@
     // ---------- Helpers: exercise card + sets ----------
     // NOTE: createSetBox is now clean. Tutorial is NO LONGER inside this function.
 
+document.addEventListener('DOMContentLoaded', () => {
+  const togglePrivacy = document.getElementById('toggle-privacy');
+  const privacyPanel = document.getElementById('privacy-panel');
+
+  if (togglePrivacy && privacyPanel) {
+    togglePrivacy.addEventListener('click', () => {
+      privacyPanel.classList.toggle('hidden');
+    });
+  }
+
+  // ...your existing code for the app can stay below or above this
+});
+
     function createSetBox(card, setData, indexOverride) {
       const existing = card.querySelectorAll(".set-box").length;
       const setNumber = indexOverride || existing + 1;
