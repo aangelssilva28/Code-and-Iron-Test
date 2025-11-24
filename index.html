@@ -31,6 +31,15 @@
   display: none;
 }
 
+/* Collapsed state: only the name pill shows, spacing stays tight */
+.workout-card.collapsed {
+  padding: 8px 14px;       /* slightly tighter when collapsed */
+}
+
+.workout-card.collapsed .workout-header {
+  margin: 0;               /* no extra space at the bottom */
+
+
 /* When a workout card is collapsed... */
 .workout-card.collapsed .sets-wrapper {
   display: none;            /* hide the sets */
@@ -223,21 +232,22 @@
 
     .workout-card {
       background-color: var(--card-inner);
-      border-radius: 20px;
-      padding: 14px 12px 16px;
-      border: 1px solid var(--border-soft);
+      border-radius: 22px;
+      padding: 10px 14px;
+      margin-bottom: 14px;
+      box-shadow: 0 8px 18px rgba(0,0,0,.55);
     }
 
     .workout-name {
-      margin-bottom: 0;
+      flex: 1;
+  width: 100%;
     }
 
     .workout-header {
       display: flex;
-      align-items: stretch;
-      justify-content: space-between;
+      align-items: center;
       gap: 10px;
-      margin-bottom: 10px;
+      margin-bottom: 0px;
     }
 
     .workout-header .workout-name {
