@@ -341,7 +341,8 @@ document.addEventListener("click", (e) => {
   }
 });
 
-document.querySelectorAll(".menu-item").forEach((item) => {
+// Only menu items with data-nav should change screens
+document.querySelectorAll(".menu-item[data-nav]").forEach((item) => {
   item.addEventListener("click", () => {
     const nav = item.dataset.nav;
     if (nav === "workouts" || nav === "progress") {
@@ -946,6 +947,17 @@ saveTemplateBtn.addEventListener("click", () => {
 backToLogger.addEventListener("click", () => {
   showScreen("home");
 });
+
+// Re-open tutorial from the menu
+const tutorialMenu = document.getElementById("menuTutorial");
+if (tutorialMenu) {
+  tutorialMenu.addEventListener("click", () => {
+    // Let the user see the walkthrough again
+    localStorage.removeItem(TUTORIAL_KEY);
+    initTutorial();
+    closeMenu();
+  });
+}
 
 // ---------- Init ----------
 // NOTE: initTutorial() is now defined above, so this call works.
