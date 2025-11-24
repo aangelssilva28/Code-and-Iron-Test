@@ -1,0 +1,6 @@
+This app does not collect, store, or transmit any personal data.
+All workout entries and progress logs are saved locally on your device
+using your browser's localStorage. No data is sent to any server, and
+the developer cannot access your information in any way. By using this
+app you understand that clearing your browser data may erase your saved
+progress.
