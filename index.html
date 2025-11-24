@@ -570,35 +570,35 @@
       display: block;
     }
 
-.legal-footer {
-  font-size: 0.75rem;
-  padding: 0.75rem 1rem 1.25rem;
-  opacity: 0.75;
-  text-align: center;
-}
+    .legal-footer {
+      font-size: 0.75rem;
+      padding: 0.75rem 1rem 1.25rem;
+      opacity: 0.75;
+      text-align: center;
+    }
 
-.legal-link {
-  background: none;
-  border: none;
-  padding: 0;
-  margin-bottom: 0.25rem;
-  font-size: 0.8rem;
-  text-decoration: underline;
-  cursor: pointer;
-  color: var(--text-muted);
-}
+    .legal-link {
+      background: none;
+      border: none;
+      padding: 0;
+      margin-bottom: 0.25rem;
+      font-size: 0.8rem;
+      text-decoration: underline;
+      cursor: pointer;
+      color: var(--text-muted);
+    }
 
-.legal-panel {
-  max-width: 500px;
-  margin: 0.25rem auto 0;
-  line-height: 1.3;
-  font-size: 0.75rem;
-  color: var(--text-muted);
-}
+    .legal-panel {
+      max-width: 500px;
+      margin: 0.25rem auto 0;
+      line-height: 1.3;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
 
-.hidden {
-  display: none;
-}
+    .hidden {
+      display: none;
+    }
 
     @media (min-width: 500px) {
       .app-wrapper {
@@ -763,7 +763,7 @@
       </section>
     </main>
 
-    <!-- PROGRESS SCREEN (now a separate screen) -->
+    <!-- PROGRESS SCREEN -->
     <main id="progressScreen" class="screen">
       <section class="card">
         <h2 class="card-title">Progress</h2>
@@ -771,7 +771,7 @@
           Your best sets for each exercise based on saved workouts.
         </p>
 
-         <div id="progressList" class="saved-list"></div>
+        <div id="progressList" class="saved-list"></div>
 
         <!-- Detail panel for a single exercise -->
         <div id="progressDetail" class="open-panel"></div>
@@ -807,16 +807,11 @@
         </div>
       </section>
     </main>
-      
-        <div class="link-back" id="backToLoggerFromProgress">
-          <span>←</span> Back to workout logger
-        </div>
-      </section>
-    </main>
   </div>
+
   <footer class="legal-footer">
     <button id="toggle-privacy" class="legal-link">
-      Privacy & Data
+      Privacy &amp; Data
     </button>
 
     <div id="privacy-panel" class="legal-panel hidden">
