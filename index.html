@@ -26,7 +26,20 @@
       --radius-pill: 999px;
       --shadow-soft: 0 10px 30px rgba(0, 0, 0, 0.7);
     }
+/* Hide sets when collapsed */
+.sets-wrapper.collapsed {
+  display: none;
+}
 
+/* Optional: slightly dim header when collapsed */
+.workout-card.collapsed .workout-header {
+  opacity: 0.85;
+}
+
+/* Optional: tweak the collapse button look if you want */
+.round-btn.collapse-toggle {
+  font-size: 18px;
+}
     * {
       box-sizing: border-box;
     }
