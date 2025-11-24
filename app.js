@@ -592,6 +592,33 @@ document.addEventListener('DOMContentLoaded', () => {
     const savedTemplatesList = document.getElementById("savedTemplatesList");
     const backToLogger = document.getElementById("backToLogger");
 
+// Backup UI elements (on Progress screen)
+const backupText = document.getElementById("backupText");
+const exportBackupBtn = document.getElementById("exportBackupBtn");
+const importBackupBtn = document.getElementById("importBackupBtn");
+
+// Export backup: generate JSON and dump it into the textarea
+if (exportBackupBtn && backupText) {
+  exportBackupBtn.addEventListener("click", () => {
+    const backupString = createBackupString();
+    if (!backupString) return;
+    backupText.value = backupString;
+    alert("Backup code generated. Copy it and save it somewhere safe.");
+  });
+}
+
+// Import backup: read JSON from textarea and restore
+if (importBackupBtn && backupText) {
+  importBackupBtn.addEventListener("click", () => {
+    const str = backupText.value.trim();
+    if (!str) {
+      alert("Paste a backup code first.");
+      return;
+    }
+    restoreFromBackupString(str);
+  });
+}
+
     const STORAGE_KEY = "codeAndIronTemplates_v2";
     const PROGRESS_KEY = "codeAndIronProgress_v1";
 
@@ -639,6 +666,52 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     let templates = loadTemplates();
+
+// ---------- Backup & restore ----------
+
+function getBackupObject() {
+  // Everything we care about goes in here
+  return {
+    templates,
+    progressData,
+    version: 1,
+  };
+}
+
+function createBackupString() {
+  try {
+    return JSON.stringify(getBackupObject());
+  } catch (e) {
+    console.error("Error creating backup", e);
+    alert("Could not create backup.");
+    return "";
+  }
+}
+
+function restoreFromBackupString(str) {
+  try {
+    const parsed = JSON.parse(str);
+
+    // Restore templates if present
+    if (parsed.templates && Array.isArray(parsed.templates)) {
+      templates = parsed.templates;
+      saveTemplates(templates);
+      renderTemplatesList();
+    }
+
+    // Restore progressData if present
+    if (parsed.progressData && typeof parsed.progressData === "object") {
+      progressData = parsed.progressData;
+      saveProgress(progressData);
+      renderProgressList();
+    }
+
+    alert("Backup restored!");
+  } catch (e) {
+    console.error("Error restoring backup", e);
+    alert("That backup code was invalid. Make sure you pasted the whole thing.");
+  }
+}
 
     function getWorkoutLayoutFrom(container) {
       const cards = container.querySelectorAll(".workout-card");
