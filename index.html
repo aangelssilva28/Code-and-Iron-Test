@@ -31,6 +31,25 @@
   display: none;
 }
 
+/* When a workout card is collapsed... */
+.workout-card.collapsed .sets-wrapper {
+  display: none;            /* hide the sets */
+}
+
+.workout-card.collapsed .workout-header-actions {
+  display: none;            /* hide -, ▼, + buttons */
+}
+
+/* Make the name field act like a big button */
+.workout-card.collapsed .workout-name {
+  cursor: pointer;
+}
+
+/* Optional: no blue outline when tapping it in collapsed mode */
+.workout-card.collapsed .workout-name:focus {
+  outline: none;
+}
+
 /* Optional: slightly dim header when collapsed */
 .workout-card.collapsed .workout-header {
   opacity: 0.85;
