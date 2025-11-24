@@ -26,48 +26,50 @@
       --radius-pill: 999px;
       --shadow-soft: 0 10px 30px rgba(0, 0, 0, 0.7);
     }
-/* Hide sets when collapsed */
-.sets-wrapper.collapsed {
-  display: none;
-}
 
-/* Collapsed state: only the name pill shows, spacing stays tight */
-.workout-card.collapsed {
-  padding: 8px 14px;       /* slightly tighter when collapsed */
-}
+    /* Hide sets when collapsed */
+    .sets-wrapper.collapsed {
+      display: none;
+    }
 
-.workout-card.collapsed .workout-header {
-  margin: 0;               /* no extra space at the bottom */
+    /* Collapsed state: only the name pill shows, spacing stays tight */
+    .workout-card.collapsed {
+      padding: 8px 14px;       /* slightly tighter when collapsed */
+    }
 
+    .workout-card.collapsed .workout-header {
+      margin: 0;               /* no extra space at the bottom */
+    }
 
-/* When a workout card is collapsed... */
-.workout-card.collapsed .sets-wrapper {
-  display: none;            /* hide the sets */
-}
+    /* When a workout card is collapsed... */
+    .workout-card.collapsed .sets-wrapper {
+      display: none;            /* hide the sets */
+    }
 
-.workout-card.collapsed .workout-header-actions {
-  display: none;            /* hide -, ▼, + buttons */
-}
+    .workout-card.collapsed .workout-header-actions {
+      display: none;            /* hide -, ▼, + buttons */
+    }
 
-/* Make the name field act like a big button */
-.workout-card.collapsed .workout-name {
-  cursor: pointer;
-}
+    /* Make the name field act like a big button */
+    .workout-card.collapsed .workout-name {
+      cursor: pointer;
+    }
 
-/* Optional: no blue outline when tapping it in collapsed mode */
-.workout-card.collapsed .workout-name:focus {
-  outline: none;
-}
+    /* Optional: no blue outline when tapping it in collapsed mode */
+    .workout-card.collapsed .workout-name:focus {
+      outline: none;
+    }
 
-/* Optional: slightly dim header when collapsed */
-.workout-card.collapsed .workout-header {
-  opacity: 0.85;
-}
+    /* Optional: slightly dim header when collapsed */
+    .workout-card.collapsed .workout-header {
+      opacity: 0.85;
+    }
 
-/* Optional: tweak the collapse button look if you want */
-.round-btn.collapse-toggle {
-  font-size: 18px;
-}
+    /* Optional: tweak the collapse button look if you want */
+    .round-btn.collapse-toggle {
+      font-size: 18px;
+    }
+
     * {
       box-sizing: border-box;
     }
@@ -240,7 +242,7 @@
 
     .workout-name {
       flex: 1;
-  width: 100%;
+      width: 100%;
     }
 
     .workout-header {
@@ -655,17 +657,16 @@
 <body>
   <div class="app-wrapper">
     <header class="app-header">
-  <div style="display: flex; align-items: baseline; gap: 8px;">
-    <h1>Code and Iron Test</h1>
-    <span style="font-size: 14px; opacity: .6;">
-  </div>
+      <div style="display: flex; align-items: baseline; gap: 8px;">
+        <h1>Code and Iron Test</h1>
+      </div>
 
-  <button class="menu-button" id="menuButton">
-    <div class="menu-icon">
-      <span></span><span></span><span></span>
-    </div>
-  </button>
-</header>
+      <button class="menu-button" id="menuButton">
+        <div class="menu-icon">
+          <span></span><span></span><span></span>
+        </div>
+      </button>
+    </header>
 
     <!-- Tutorial Overlay (one-time walkthrough) -->
     <div id="tutorialOverlay" class="tutorial-overlay">
@@ -761,10 +762,11 @@
 
     <!-- Menu -->
     <div class="menu-dropdown" id="menuDropdown">
-  <div class="menu-item" data-nav="workouts">Routines</div>
-  <div class="menu-item" data-nav="progress">Progress</div>
-  <div class="menu-item" id="menuTutorial">Tutorial</div>
-</div>
+      <div class="menu-item" data-nav="workouts">Routines</div>
+      <div class="menu-item" data-nav="progress">Progress</div>
+      <div class="menu-item" id="menuTutorial">Tutorial</div>
+    </div>
+
     <!-- HOME / LOGGER SCREEN -->
     <main id="homeScreen" class="screen active">
       <section class="card">
@@ -853,35 +855,37 @@
     </main>
   </div>
 
-<footer class="legal-footer">
-  <button id="toggle-privacy" class="legal-link">
-    Privacy &amp; Data
-  </button>
+  <footer class="legal-footer">
+    <button id="toggle-privacy" class="legal-link">
+      Privacy &amp; Data
+    </button>
 
-  <div id="privacy-panel" class="legal-panel hidden">
-    <p>
-      This app does not collect, store, or transmit any personal data.
-      All workout entries and progress logs are saved locally on your device
-      using your browser's localStorage.
-    </p>
-    <p>
-      No data is sent to the developer, and the developer cannot access your
-      information in any way. Clearing your browser data may erase your saved
-      progress.
-    </p>
-    <p>
-      If you have ideas, run into bugs, or want to suggest features,
-      please email me at
-      <a href="mailto:aangel.ssilva28@gmail.com">
-        aangel.ssilva28@gmail.com
-      </a>.
-      I read every message and use your feedback to make this app better.
-    </p>
-    <p style="margin-top: 12px; opacity: .7;">
-    <strong>Version:</strong> v0.9.0 Beta<br>
-    <strong>Last updated:</strong> November 24, 2025
-  </div>
-</footer>
+    <div id="privacy-panel" class="legal-panel hidden">
+      <p>
+        This app does not collect, store, or transmit any personal data.
+        All workout entries and progress logs are saved locally on your device
+        using your browser's localStorage.
+      </p>
+      <p>
+        No data is sent to the developer, and the developer cannot access your
+        information in any way. Clearing your browser data may erase your saved
+        progress.
+      </p>
+      <p>
+        If you have ideas, run into bugs, or want to suggest features,
+        please email me at
+        <a href="mailto:aangel.ssilva28@gmail.com">
+          aangel.ssilva28@gmail.com
+        </a>.
+        I read every message and use your feedback to make this app better.
+      </p>
+      <p style="margin-top: 12px; opacity: .7;">
+        <strong>Version:</strong> v0.9.0 Beta<br>
+        <strong>Last updated:</strong> November 24, 2025
+      </p>
+    </div>
+  </footer>
+
   <script src="app.js"></script>
 </body>
 </html>
