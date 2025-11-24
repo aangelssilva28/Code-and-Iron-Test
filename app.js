@@ -1,5 +1,4 @@
-  <script>
-    // ---------- Helpers: exercise card + sets ----------
+ // ---------- Helpers: exercise card + sets ----------
     // NOTE: createSetBox is now clean. Tutorial is NO LONGER inside this function.
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -818,6 +817,3 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     init();
-  </script>
-</body>
-</html>
