@@ -95,6 +95,32 @@ function createSetBox(card, setData, indexOverride) {
   return box;
 }
 
+function setCardCollapsed(card, collapsed) {
+  const setsWrapper = card.querySelector(".sets-wrapper");
+  const headerActions = card.querySelector(".workout-header-actions");
+  const nameInput = card.querySelector(".workout-name");
+
+  if (collapsed) {
+    card.classList.add("collapsed");
+    if (setsWrapper) setsWrapper.style.display = "none";
+    if (headerActions) headerActions.style.display = "none";
+
+    // Make the name a “button” instead of a text field
+    if (nameInput) {
+      nameInput.readOnly = true; // avoids keyboard popping up
+      nameInput.blur();
+    }
+  } else {
+    card.classList.remove("collapsed");
+    if (setsWrapper) setsWrapper.style.display = "";
+    if (headerActions) headerActions.style.display = "flex";
+
+    if (nameInput) {
+      nameInput.readOnly = false;
+    }
+  }
+}
+
 function createWorkoutCard(parent, workoutData) {
   const card = document.createElement("div");
   card.className = "workout-card";
@@ -112,10 +138,18 @@ function createWorkoutCard(parent, workoutData) {
     nameInput.value = workoutData.name;
   }
 
+  // When collapsed, clicking the name expands the card again
+  nameInput.addEventListener("click", () => {
+    if (card.classList.contains("collapsed")) {
+      setCardCollapsed(card, false);
+    }
+    // if not collapsed, normal input focus behavior happens
+  });
+
   const headerActions = document.createElement("div");
   headerActions.className = "workout-header-actions";
 
-  // Remove entire exercise
+  // Remove exercise card
   const removeWorkoutBtn = document.createElement("button");
   removeWorkoutBtn.className = "round-btn minus";
   removeWorkoutBtn.textContent = "–";
@@ -123,8 +157,8 @@ function createWorkoutCard(parent, workoutData) {
     const allCards = parent.querySelectorAll(".workout-card");
 
     if (allCards.length <= 1) {
-      // If it's the only card, just reset it
       nameInput.value = "";
+      const setsWrapper = card.querySelector(".sets-wrapper");
       if (setsWrapper) {
         setsWrapper.innerHTML = "";
         const setBox = createSetBox(card, { weight: "", reps: "" }, 1);
@@ -135,20 +169,17 @@ function createWorkoutCard(parent, workoutData) {
     }
   });
 
-  // 🔽 NEW: collapse / expand button
+  // Collapse/expand button
   const collapseBtn = document.createElement("button");
-  collapseBtn.className = "round-btn collapse-toggle";
-  collapseBtn.textContent = "▴"; // up arrow = expanded
+  collapseBtn.className = "round-btn collapse-btn";
+  collapseBtn.textContent = "▼";
 
-  let collapsed = false;
   collapseBtn.addEventListener("click", () => {
-    collapsed = !collapsed;
-    setsWrapper.classList.toggle("collapsed", collapsed);
-    card.classList.toggle("collapsed", collapsed);
-    collapseBtn.textContent = collapsed ? "▾" : "▴"; // down arrow when collapsed
+    const isCollapsed = card.classList.contains("collapsed");
+    setCardCollapsed(card, !isCollapsed);
   });
 
-  // Header "+" = add a NEW EXERCISE card below (NOT a set)
+  // Add new exercise card
   const addExerciseBtn = document.createElement("button");
   addExerciseBtn.className = "round-btn plus";
   addExerciseBtn.textContent = "+";
@@ -156,7 +187,6 @@ function createWorkoutCard(parent, workoutData) {
     createWorkoutCard(parent);
   });
 
-  // Order: remove | collapse | add
   headerActions.appendChild(removeWorkoutBtn);
   headerActions.appendChild(collapseBtn);
   headerActions.appendChild(addExerciseBtn);
@@ -178,6 +208,12 @@ function createWorkoutCard(parent, workoutData) {
   });
 
   parent.appendChild(card);
+
+  // If you ever want to restore a "collapsed" state from saved data:
+  if (workoutData && workoutData.collapsed) {
+    setCardCollapsed(card, true);
+  }
+
   return card;
 }
 
