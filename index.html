@@ -311,12 +311,19 @@
     /* Set row pill */
 .set-box {
   width: 100%;
-  background-color: #000;
+  max-width: 100%;
+  background-color: transparent;   /* ← remove black background */
   border: 1px solid #333;
   border-radius: 20px;
-  padding: 10px 12px;
-  margin-top: 12px;
+  padding: 10px;
 
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+
+  box-sizing: border-box;
+}
   /* grid so everything lines up in columns */
   display: grid;
   grid-template-columns: auto 1fr 1fr 56px 56px; /* Set | Weight | Reps | - | + */
