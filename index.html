@@ -345,6 +345,25 @@
   box-sizing: border-box;
 }
 
+.set-weight-group {
+  flex: 1;             /* takes remaining space */
+}
+
+.set-weight-group .set-input {
+  width: 100%;
+}
+
+/* Right side: Reps, –, + under –, ▼, + */
+.set-right-group {
+  display: flex;
+  gap: 8px;            /* same as .workout-header-actions gap */
+  margin-left: auto;   /* pushes this group to the far right */
+}
+
+/* Make Reps same width as the buttons */
+.set-right-group .set-input {
+  width: 56px;
+
     .set-input::placeholder {
       color: #666;
     }
