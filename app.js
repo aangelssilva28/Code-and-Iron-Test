@@ -21,14 +21,18 @@ function createSetBox(card, setData, indexOverride) {
   const setNumber = indexOverride || existingCount + 1;
   setLabel.textContent = `Set ${setNumber}`;
 
-  // --- Weight input ---
+  // --- Weight input (left, under exercise input) ---
   const weightInput = document.createElement("input");
   weightInput.className = "set-input";
   weightInput.placeholder = "Weight";
   weightInput.type = "text";
   weightInput.value = setData?.weight ?? "";
 
-  // --- Reps input ---
+  const weightGroup = document.createElement("div");
+  weightGroup.className = "set-weight-group";
+  weightGroup.appendChild(weightInput);
+
+  // --- Reps input (under header minus) ---
   const repsInput = document.createElement("input");
   repsInput.className = "set-input";
   repsInput.placeholder = "Reps";
@@ -36,7 +40,7 @@ function createSetBox(card, setData, indexOverride) {
   repsInput.min = "0";
   repsInput.value = setData?.reps ?? "";
 
-  // --- Minus button ---
+  // --- Minus button (under header arrow) ---
   const minusBtn = document.createElement("button");
   minusBtn.className = "round-btn";
   minusBtn.textContent = "–";
@@ -46,7 +50,7 @@ function createSetBox(card, setData, indexOverride) {
     }
   });
 
-  // --- Plus button ---
+  // --- Plus button (under header plus) ---
   const plusBtn = document.createElement("button");
   plusBtn.className = "round-btn";
   plusBtn.textContent = "+";
@@ -55,12 +59,17 @@ function createSetBox(card, setData, indexOverride) {
     wrapper.appendChild(createSetBox(card));
   });
 
-  // Build row: [Set 1] [Weight] [Reps] [–] [+]
+  // Right-side group: [Reps][–][+]
+  const rightGroup = document.createElement("div");
+  rightGroup.className = "set-right-group";
+  rightGroup.appendChild(repsInput);
+  rightGroup.appendChild(minusBtn);
+  rightGroup.appendChild(plusBtn);
+
+  // Build row: [Set 1] [Weight....] ............ [Reps][–][+]
   box.appendChild(setLabel);
-  box.appendChild(weightInput);
-  box.appendChild(repsInput);
-  box.appendChild(minusBtn);
-  box.appendChild(plusBtn);
+  box.appendChild(weightGroup);
+  box.appendChild(rightGroup);
 
   return box;
 }
