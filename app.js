@@ -13,9 +13,22 @@ document.addEventListener("DOMContentLoaded", () => {
 // ---------- Helpers: exercise card + sets ----------
 // NOTE: createSetBox is now clean. Tutorial is NO LONGER inside this function.
 
+// ---------- Helpers: exercise card + sets ----------
+// NOTE: createSetBox is now clean. Tutorial is NO LONGER inside this function.
+
 function createSetBox(card, setData, indexOverride) {
   const box = document.createElement("div");
   box.className = "set-box";
+
+  // Figure out set number
+  const existingCount = card.querySelectorAll(".set-box").length;
+  const setNumber = indexOverride || existingCount + 1;
+
+  // "Set X" label
+  const label = document.createElement("div");
+  label.className = "set-label";
+  label.textContent = "Set " + setNumber;
+  box.appendChild(label);
 
   // Weight input
   const weightInput = document.createElement("input");
@@ -23,6 +36,7 @@ function createSetBox(card, setData, indexOverride) {
   weightInput.placeholder = "Weight";
   weightInput.type = "text";
   weightInput.value = setData?.weight ?? "";
+  box.appendChild(weightInput);
 
   // Reps input
   const repsInput = document.createElement("input");
@@ -31,14 +45,20 @@ function createSetBox(card, setData, indexOverride) {
   repsInput.type = "number";
   repsInput.min = "0";
   repsInput.value = setData?.reps ?? "";
+  box.appendChild(repsInput);
 
   // Minus button
   const minusBtn = document.createElement("button");
   minusBtn.className = "round-btn";
   minusBtn.textContent = "–";
   minusBtn.addEventListener("click", () => {
-    if (card.querySelectorAll(".set-box").length > 1) {
+    const allBoxes = card.querySelectorAll(".set-box");
+    if (allBoxes.length > 1) {
       box.remove();
+      // Renumber remaining sets so they stay 1,2,3,...
+      card.querySelectorAll(".set-box .set-label").forEach((lab, idx) => {
+        lab.textContent = "Set " + (idx + 1);
+      });
     }
   });
 
@@ -48,7 +68,8 @@ function createSetBox(card, setData, indexOverride) {
   plusBtn.textContent = "+";
   plusBtn.addEventListener("click", () => {
     const wrapper = card.querySelector(".sets-wrapper") || card;
-    wrapper.appendChild(createSetBox(card));
+    const newBox = createSetBox(card);
+    wrapper.appendChild(newBox);
   });
 
   // Right-side actions container
@@ -57,14 +78,10 @@ function createSetBox(card, setData, indexOverride) {
   actions.appendChild(minusBtn);
   actions.appendChild(plusBtn);
 
-  // Build row
-  box.appendChild(weightInput);
-  box.appendChild(repsInput);
   box.appendChild(actions);
 
   return box;
 }
-
 function setCardCollapsed(card, collapsed) {
   const setsWrapper = card.querySelector(".sets-wrapper");
   const headerActions = card.querySelector(".workout-header-actions");
