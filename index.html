@@ -305,50 +305,67 @@
       margin-top: 10px;
     }
 
-    /* -------- SET ROW (updated) -------- */
+    /* ---------- SET ROW: 5-column grid (Set | Weight | Reps | – | +) ---------- */
 
-    /* One-line pill under the header row */
-    /* Set row pill */
-/* Set row: 5 equal columns perfectly aligned under top controls */
-.set-box {
-  width: 100%;
-  margin-top: 12px;
+    .set-box {
+      width: 100%;
+      margin-top: 12px;
+      background-color: transparent; /* no black bar behind */
+      border: none;
 
-  /* no black background or border */
-  background-color: transparent;
-  border: none;
+      display: grid;
+      grid-template-columns: auto 1fr 1fr 56px 56px;
+      /* Set | Weight | Reps | - | + */
+      column-gap: 10px;
+      align-items: center;
+      box-sizing: border-box;
+    }
 
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-}
-  /* grid so everything lines up in columns */
-  display: grid;
-  grid-template-columns: auto 1fr 1fr 56px 56px; /* Set | Weight | Reps | - | + */
-  column-gap: 10px;
-  align-items: center;
-  box-sizing: border-box;
-}
+    .set-label {
+      font-size: 20px;
+      color: #fff;
+      font-family: "Germania One", -apple-system, BlinkMacSystemFont,
+        "Segoe UI", Roboto, sans-serif;
+      white-space: nowrap;
+    }
 
-/* "Set 1" label – same font/color family as the header */
-.set-label {
-  font-family: "Creepster", cursive; /* same font as your header */
-  font-size: 22px;
-  color: white;
-  line-height: 22px;
-}
+    .set-input {
+      width: 100%;
+      height: 44px;
+      border-radius: 12px;
+      background-color: #000;
+      border: 1px solid #333;
+      color: #fff;
+      font-size: 16px;
+      text-align: center;
+      box-sizing: border-box;
+    }
 
-.set-fields {
-  flex: 1;
-  display: flex;
-  gap: 10px;
-}
+    .set-input::placeholder {
+      color: #666;
+    }
 
-.set-actions {
-  display: flex;
-  gap: 10px;
-}
+    /* Header buttons AND set +/- buttons share this */
+    .round-btn {
+      background-color: #000;
+      border: 1px solid #333;
+      color: #fff;
+      height: 44px;
+      width: 56px;
+      border-radius: 12px;
+      font-size: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .round-btn:active {
+      transform: translateY(1px);
+      opacity: 0.9;
+      background-color: #111;
+    }
+
+    /* -------- rest of progress / misc styles -------- */
 
     .set-header {
       font-size: 15px;
@@ -380,112 +397,6 @@
     .progress-detail-row span:last-child {
       color: #ffffff;
       font-weight: 600;
-    }
-
-    .set-row {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 6px;
-    }
-
-    .set-fields {
-      flex: 1;
-      display: flex;
-      gap: 8px;
-      align-items: center;
-    }
-
-    /* Weight / Reps boxes – same height/width as header buttons */
-    /* Weight & reps boxes match the same style as input/btns above */
-.set-input {
-  height: 44px;
-  border-radius: 12px;
-  background-color: #000;
-  border: 1px solid #333;
-  color: #fff;
-  font-size: 15px;
-  text-align: center;
-  box-sizing: border-box;
-}
-
-.set-label {
-  font-size: 20px;
-  color: #fff;
-  font-family: "Germania One", -apple-system, BlinkMacSystemFont,
-    "Segoe UI", Roboto, sans-serif;
-}
-
-.set-right-group {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-
-  /* this matches the width of the 3 top buttons:
-     56px * 3 + 8px gaps * 2 = 184px */
-  width: 184px;
-}
-
-.set-right-group .set-input,
-.set-right-group .round-btn {
-  flex: 0 0 56px;   /* same width as the header buttons */
-}
-
-    .set-input::placeholder {
-      color: #666;
-    }
-
-    .set-actions {
-      display: flex;
-      gap: 8px;
-    }
-
-    /* Header buttons AND set +/- share this */
-    /* +/- buttons match top row */
-.round-btn {
-  width: 60px;
-  height: 40px;
-  border-radius: 14px;
-  background: #000;
-  border: 2px solid #333;
-  color: white;
-  font-size: 22px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-    .round-btn:active {
-      transform: translateY(1px);
-      opacity: 0.9;
-      background-color: #111;
-    }
-
-    .set-col {
-      flex: 1;
-    }
-
-    .set-col label {
-      display: block;
-      font-size: 12px;
-      color: var(--text-muted);
-      margin-bottom: 2px;
-    }
-
-    .remove-set-btn {
-      width: 100%;
-      margin-top: 4px;
-      padding: 8px 10px;
-      border-radius: 999px;
-      border: none;
-      background-color: #802121;
-      color: #fff;
-      font-size: 14px;
-      font-weight: 600;
-    }
-
-    .remove-set-btn:active {
-      background-color: #5c1818;
     }
 
     .saved-list {
