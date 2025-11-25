@@ -307,19 +307,23 @@
 
     /* ---------- SET ROW: 5-column grid (Set | Weight | Reps | – | +) ---------- */
 
-    .set-box {
-      width: 100%;
-      margin-top: 12px;
-      background-color: transparent; /* no black bar behind */
-      border: none;
+    /* SET ROW — 5 perfect alignment columns */
+.set-box {
+  width: 100%;
+  margin-top: 12px;
 
-      display: grid;
-      grid-template-columns: auto 1fr 1fr 56px 56px;
-      /* Set | Weight | Reps | - | + */
-      column-gap: 10px;
-      align-items: center;
-      box-sizing: border-box;
-    }
+  /* No background behind items */
+  background: transparent;
+  border: none;
+
+  /* 5 equal columns under top row:
+     [ Set | Weight | Reps | – | + ]
+  */
+  display: grid;
+  grid-template-columns: auto 1fr 1fr 56px 56px;
+  column-gap: 10px;
+  align-items: center;
+}
 
     .set-label {
       font-size: 20px;
