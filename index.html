@@ -309,13 +309,18 @@
 
     /* One-line pill under the header row */
     /* Set row pill */
+/* Set row: 5 equal columns perfectly aligned under top controls */
 .set-box {
-  width: 100%;
-  max-width: 100%;
-  display: flex;
+  display: grid;
+  grid-template-columns: 
+      80px     /* Set label (same width as name input left edge alignment) */
+      90px     /* Weight box aligns under exercise box edge */
+      90px     /* Reps aligns under minus button above */
+      60px     /* minus button */
+      60px;    /* plus button */
   align-items: center;
-  gap: 12px;
-  padding: 6px 0;
+  gap: 10px;
+  margin-top: 10px;
 }
 
   /* grid so everything lines up in columns */
@@ -394,17 +399,16 @@
     }
 
     /* Weight / Reps boxes – same height/width as header buttons */
-    .set-input {
-      height: 44px;
-      width: 56px;          /* matches .round-btn width */
-      border-radius: 12px;
-      background-color: #000;
-      border: 1px solid #333;
-      color: #fff;
-      font-size: 15px;
-      text-align: center;
-      box-sizing: border-box;
-    }
+    /* Weight & reps boxes match the same style as input/btns above */
+.set-input {
+  height: 40px;
+  border-radius: 14px;
+  background: #000;
+  border: 2px solid #333;
+  color: #e5e5e5;
+  text-align: center;
+  font-size: 16px;
+}
 
     .set-input::placeholder {
       color: #666;
@@ -416,18 +420,19 @@
     }
 
     /* Header buttons AND set +/- share this */
-    .round-btn {
-      background-color: #000;
-      border: 1px solid #333;
-      color: #fff;
-      height: 44px;
-      width: 56px;
-      border-radius: 12px;
-      font-size: 20px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
+    /* +/- buttons match top row */
+.round-btn {
+  width: 60px;
+  height: 40px;
+  border-radius: 14px;
+  background: #000;
+  border: 2px solid #333;
+  color: white;
+  font-size: 22px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
 
     .round-btn:active {
       transform: translateY(1px);
