@@ -330,9 +330,23 @@
 
 /* "Set 1" label – same font/color family as the header */
 .set-label {
-  font-size: 18px;
-  font-weight: 800;
+  width: 48px;                      /* gives Set # its own fixed column */
+  font-size: 20px;
+  font-weight: 700;
   color: #fff;
+  text-align: center;
+  font-family: "Germania One";
+}
+
+.set-fields {
+  flex: 1;
+  display: flex;
+  gap: 10px;
+}
+
+.set-actions {
+  display: flex;
+  gap: 10px;
 }
 
     .set-header {
