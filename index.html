@@ -308,26 +308,29 @@
     /* -------- SET ROW (updated) -------- */
 
     /* One-line pill under the header row */
-    .set-box {
-      background-color: #000;
-      border: 1px solid #333;
-      border-radius: 20px;
-      padding: 10px 12px;
-      margin-top: 12px;
+    /* Set row pill */
+.set-box {
+  width: 100%;
+  background-color: #000;
+  border: 1px solid #333;
+  border-radius: 20px;
+  padding: 10px 12px;
+  margin-top: 12px;
 
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
+  /* grid so everything lines up in columns */
+  display: grid;
+  grid-template-columns: auto 1fr 1fr 56px 56px; /* Set | Weight | Reps | - | + */
+  column-gap: 10px;
+  align-items: center;
+  box-sizing: border-box;
+}
 
-    /* "Set 1" label – same font/color vibe as header title */
-    .set-label {
-      font-family: "Germania One", -apple-system, BlinkMacSystemFont,
-        "Segoe UI", Roboto, sans-serif;
-      font-size: 18px;
-      color: #fff;
-      min-width: 70px;
-    }
+/* "Set 1" label – same font/color family as the header */
+.set-label {
+  font-size: 18px;
+  font-weight: 800;
+  color: #fff;
+}
 
     .set-header {
       font-size: 15px;
