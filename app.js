@@ -14,12 +14,13 @@ function createSetBox(card, setData, indexOverride) {
   const box = document.createElement("div");
   box.className = "set-box";
 
-  // Set label ("Set 1", "Set 2", etc.)
-  const setLabel = document.createElement("div");
-  setLabel.className = "set-label";
-
+  // Figure out which set number this is
   const existingCount = card.querySelectorAll(".set-box").length;
   const setNumber = indexOverride || existingCount + 1;
+
+  // "Set 1", "Set 2", etc.
+  const setLabel = document.createElement("div");
+  setLabel.className = "set-label";
   setLabel.textContent = `Set ${setNumber}`;
 
   // Weight input
@@ -56,15 +57,26 @@ function createSetBox(card, setData, indexOverride) {
     wrapper.appendChild(createSetBox(card));
   });
 
-  // Add everything to the row in column order
-  box.appendChild(setLabel);    // col 1
-  box.appendChild(weightInput); // col 2
-  box.appendChild(repsInput);   // col 3
-  box.appendChild(minusBtn);    // col 4 (under arrow)
-  box.appendChild(plusBtn);     // col 5 (under +)
+  // Middle group: Weight + Reps inputs
+  const fields = document.createElement("div");
+  fields.className = "set-fields";
+  fields.appendChild(weightInput);
+  fields.appendChild(repsInput);
+
+  // Right group: - and + buttons
+  const actions = document.createElement("div");
+  actions.className = "set-actions";
+  actions.appendChild(minusBtn);
+  actions.appendChild(plusBtn);
+
+  // Final row layout: [ Set n ] [ Weight | Reps ] [ -  + ]
+  box.appendChild(setLabel);
+  box.appendChild(fields);
+  box.appendChild(actions);
 
   return box;
 }
+
 function setCardCollapsed(card, collapsed) {
   const setsWrapper = card.querySelector(".sets-wrapper");
   const headerActions = card.querySelector(".workout-header-actions");
