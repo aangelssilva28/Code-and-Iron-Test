@@ -308,19 +308,19 @@
     /* ---------- SET ROW: 5-column grid (Set | Weight | Reps | – | +) ---------- */
 
     /* SET ROW — 5 perfect alignment columns */
+/* -------- SET ROW: 5-column grid (Set | Weight | Reps | – | +) -------- */
 .set-box {
   width: 100%;
   margin-top: 12px;
 
-  /* No background behind items */
+  /* no extra pill background */
   background: transparent;
   border: none;
+  padding: 0;
 
-  /* 5 equal columns under top row:
-     [ Set | Weight | Reps | – | + ]
-  */
+  /* 5 columns that line up with the header buttons */
   display: grid;
-  grid-template-columns: auto 1fr 1fr 56px 56px;
+  grid-template-columns: auto 1fr 1fr 60px 60px; /* Set | Weight | Reps | - | + */
   column-gap: 10px;
   align-items: center;
 }
