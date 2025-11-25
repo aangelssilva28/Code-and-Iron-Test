@@ -311,18 +311,18 @@
     /* Set row pill */
 /* Set row: 5 equal columns perfectly aligned under top controls */
 .set-box {
-  display: grid;
-  grid-template-columns: 
-      80px     /* Set label (same width as name input left edge alignment) */
-      90px     /* Weight box aligns under exercise box edge */
-      90px     /* Reps aligns under minus button above */
-      60px     /* minus button */
-      60px;    /* plus button */
-  align-items: center;
-  gap: 10px;
-  margin-top: 10px;
-}
+  width: 100%;
+  margin-top: 12px;
 
+  /* no black background or border */
+  background-color: transparent;
+  border: none;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
   /* grid so everything lines up in columns */
   display: grid;
   grid-template-columns: auto 1fr 1fr 56px 56px; /* Set | Weight | Reps | - | + */
@@ -399,13 +399,36 @@
     /* Weight / Reps boxes – same height/width as header buttons */
     /* Weight & reps boxes match the same style as input/btns above */
 .set-input {
-  height: 40px;
-  border-radius: 14px;
-  background: #000;
-  border: 2px solid #333;
-  color: #e5e5e5;
+  height: 44px;
+  border-radius: 12px;
+  background-color: #000;
+  border: 1px solid #333;
+  color: #fff;
+  font-size: 15px;
   text-align: center;
-  font-size: 16px;
+  box-sizing: border-box;
+}
+
+.set-label {
+  font-size: 20px;
+  color: #fff;
+  font-family: "Germania One", -apple-system, BlinkMacSystemFont,
+    "Segoe UI", Roboto, sans-serif;
+}
+
+.set-right-group {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  /* this matches the width of the 3 top buttons:
+     56px * 3 + 8px gaps * 2 = 184px */
+  width: 184px;
+}
+
+.set-right-group .set-input,
+.set-right-group .round-btn {
+  flex: 0 0 56px;   /* same width as the header buttons */
 }
 
     .set-input::placeholder {
