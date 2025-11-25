@@ -21,14 +21,14 @@ function createSetBox(card, setData, indexOverride) {
   const setNumber = indexOverride || existingCount + 1;
   setLabel.textContent = `Set ${setNumber}`;
 
-  // --- Weight input (free on the left) ---
+  // --- Weight input ---
   const weightInput = document.createElement("input");
   weightInput.className = "set-input";
   weightInput.placeholder = "Weight";
   weightInput.type = "text";
   weightInput.value = setData?.weight ?? "";
 
-  // --- Reps input (will sit under the top minus) ---
+  // --- Reps input ---
   const repsInput = document.createElement("input");
   repsInput.className = "set-input";
   repsInput.placeholder = "Reps";
@@ -55,17 +55,12 @@ function createSetBox(card, setData, indexOverride) {
     wrapper.appendChild(createSetBox(card));
   });
 
-  // Right-side group: [Reps][–][+]
-  const rightGroup = document.createElement("div");
-  rightGroup.className = "set-right-group";
-  rightGroup.appendChild(repsInput);
-  rightGroup.appendChild(minusBtn);
-  rightGroup.appendChild(plusBtn);
-
-  // Build row: [Set 1] [Weight] .......... [Reps][–][+]
+  // Build row: [Set 1] [Weight] [Reps] [–] [+]
   box.appendChild(setLabel);
   box.appendChild(weightInput);
-  box.appendChild(rightGroup);
+  box.appendChild(repsInput);
+  box.appendChild(minusBtn);
+  box.appendChild(plusBtn);
 
   return box;
 }
