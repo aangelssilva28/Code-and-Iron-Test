@@ -34,38 +34,33 @@
 
     /* Collapsed state: only the name pill shows, spacing stays tight */
     .workout-card.collapsed {
-      padding: 8px 14px;       /* slightly tighter when collapsed */
+      padding: 8px 14px;
     }
 
     .workout-card.collapsed .workout-header {
-      margin: 0;               /* no extra space at the bottom */
+      margin: 0;
     }
 
-    /* When a workout card is collapsed... */
     .workout-card.collapsed .sets-wrapper {
-      display: none;            /* hide the sets */
+      display: none;
     }
 
     .workout-card.collapsed .workout-header-actions {
-      display: none;            /* hide -, ▼, + buttons */
+      display: none;
     }
 
-    /* Make the name field act like a big button */
     .workout-card.collapsed .workout-name {
       cursor: pointer;
     }
 
-    /* Optional: no blue outline when tapping it in collapsed mode */
     .workout-card.collapsed .workout-name:focus {
       outline: none;
     }
 
-    /* Optional: slightly dim header when collapsed */
     .workout-card.collapsed .workout-header {
       opacity: 0.85;
     }
 
-    /* Optional: tweak the collapse button look if you want */
     .round-btn.collapse-toggle {
       font-size: 18px;
     }
@@ -310,16 +305,17 @@
       margin-top: 10px;
     }
 
+    /* Set row pill */
     .set-box {
-  background-color: #000;
-  border: 1px solid #333;
-  border-radius: 20px;
-  padding: 10px 12px;
-  margin-top: 12px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
+      background-color: #000;
+      border: 1px solid #333;
+      border-radius: 20px;
+      padding: 10px 12px;
+      margin-top: 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
 
     .set-header {
       font-size: 15px;
@@ -328,7 +324,6 @@
       margin-bottom: 6px;
     }
 
-    /* Progress screen letter group headers */
     .progress-letter-header {
       margin-top: 10px;
       margin-bottom: 4px;
@@ -338,7 +333,6 @@
       text-transform: uppercase;
     }
 
-    /* Rows inside the progress detail panel */
     .progress-detail-row {
       display: flex;
       justify-content: space-between;
@@ -370,37 +364,37 @@
     }
 
     .set-input {
-  flex: 1;
-  height: 44px;
-  border-radius: 12px;
-  background-color: #000;
-  border: 1px solid #333;
-  color: #fff;
-  font-size: 15px;
-  text-align: center;
-}
+      flex: 1;
+      height: 44px;
+      border-radius: 12px;
+      background-color: #000;
+      border: 1px solid #333;
+      color: #fff;
+      font-size: 15px;
+      text-align: center;
+    }
 
     .set-input::placeholder {
       color: #666;
     }
 
     .set-actions {
-  display: flex;
-  gap: 8px;
-}
+      display: flex;
+      gap: 8px;
+    }
 
     .round-btn {
-  background-color: #000;
-  border: 1px solid #333;
-  color: #fff;
-  height: 44px;
-  width: 56px;
-  border-radius: 12px;
-  font-size: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
+      background-color: #000;
+      border: 1px solid #333;
+      color: #fff;
+      height: 44px;
+      width: 56px;
+      border-radius: 12px;
+      font-size: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    } /* <-- THIS was missing */
 
     .round-btn:active {
       transform: translateY(1px);
@@ -815,10 +809,8 @@
 
         <div id="progressList" class="saved-list"></div>
 
-        <!-- Detail panel for a single exercise -->
         <div id="progressDetail" class="open-panel"></div>
 
-        <!-- Backup & Restore section -->
         <h3 class="card-subtitle" style="margin-top:18px;margin-bottom:4px;">
           Backup &amp; Restore
         </h3>
