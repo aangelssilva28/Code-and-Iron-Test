@@ -14,83 +14,53 @@ document.addEventListener("DOMContentLoaded", () => {
 // NOTE: createSetBox is now clean. Tutorial is NO LONGER inside this function.
 
 function createSetBox(card, setData, indexOverride) {
-  const existing = card.querySelectorAll(".set-box").length;
-  const setNumber = indexOverride || existing + 1;
-
   const box = document.createElement("div");
   box.className = "set-box";
 
-  const header = document.createElement("div");
-  header.className = "set-header";
-  header.textContent = "Set " + setNumber;
-  box.appendChild(header);
-
-  const row = document.createElement("div");
-  row.className = "set-row";
-
-  const fields = document.createElement("div");
-  fields.className = "set-fields";
-
-  const colWeight = document.createElement("div");
-  colWeight.className = "set-col";
-
+  // Weight input
   const weightInput = document.createElement("input");
   weightInput.className = "set-input";
-  weightInput.type = "text";
   weightInput.placeholder = "Weight";
-  if (setData && setData.weight != null) {
-    weightInput.value = setData.weight;
-  }
-  colWeight.appendChild(weightInput);
+  weightInput.type = "text";
+  weightInput.value = setData?.weight ?? "";
 
-  const colReps = document.createElement("div");
-  colReps.className = "set-col";
-
+  // Reps input
   const repsInput = document.createElement("input");
   repsInput.className = "set-input";
+  repsInput.placeholder = "Reps";
   repsInput.type = "number";
   repsInput.min = "0";
-  repsInput.placeholder = "Reps";
-  if (setData && setData.reps != null) {
-    repsInput.value = setData.reps;
-  }
-  colReps.appendChild(repsInput);
+  repsInput.value = setData?.reps ?? "";
 
-  fields.appendChild(colWeight);
-  fields.appendChild(colReps);
-
-  const actions = document.createElement("div");
-  actions.className = "set-actions";
-
+  // Minus button
   const minusBtn = document.createElement("button");
-  minusBtn.className = "round-btn minus";
+  minusBtn.className = "round-btn";
   minusBtn.textContent = "–";
   minusBtn.addEventListener("click", () => {
-    const allSets = card.querySelectorAll(".set-box");
-    if (allSets.length > 1) {
+    if (card.querySelectorAll(".set-box").length > 1) {
       box.remove();
-      card.querySelectorAll(".set-box").forEach((b, i) => {
-        const h = b.querySelector(".set-header");
-        if (h) h.textContent = "Set " + (i + 1);
-      });
     }
   });
 
+  // Plus button
   const plusBtn = document.createElement("button");
-  plusBtn.className = "round-btn plus";
+  plusBtn.className = "round-btn";
   plusBtn.textContent = "+";
   plusBtn.addEventListener("click", () => {
-    const newBox = createSetBox(card);
     const wrapper = card.querySelector(".sets-wrapper") || card;
-    wrapper.appendChild(newBox);
+    wrapper.appendChild(createSetBox(card));
   });
 
+  // Right-side actions container
+  const actions = document.createElement("div");
+  actions.className = "set-actions";
   actions.appendChild(minusBtn);
   actions.appendChild(plusBtn);
 
-  row.appendChild(fields);
-  row.appendChild(actions);
-  box.appendChild(row);
+  // Build row
+  box.appendChild(weightInput);
+  box.appendChild(repsInput);
+  box.appendChild(actions);
 
   return box;
 }
