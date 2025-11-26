@@ -310,14 +310,13 @@
     /* SET ROW — 5 perfect alignment columns */
 /* -------- SET ROW: 5-column grid (Set | Weight | Reps | – | +) -------- */
 .set-box {
-  display: flex;
-  margin-top: 12px;
+  display: grid;
+  grid-template-columns: auto 1fr auto;  /* label | stretch | right buttons */
+  column-gap: 10px;                      /* same as .workout-header gap */
   align-items: center;
-  gap: 10px;
-  background: transparent;
-  border: none;
-  padding: 0;
+  margin-top: 12px;
 }
+
   /* 5 columns that line up with the header buttons */
   display: grid;
   grid-template-columns: auto 1fr 1fr 60px 60px; /* Set | Weight | Reps | - | + */
@@ -344,7 +343,7 @@
 }
 
 .set-weight-group {
-  width: 56px;             /* takes remaining space */
+  justify-self: end;    /* 🔥 pushes the 56px Weight box to the right edge */
 }
 
 .set-weight-group .set-input {
@@ -355,7 +354,6 @@
 .set-right-group {
   display: flex;
   gap: 8px;            /* same as .workout-header-actions gap */
-  margin-left: auto;   /* pushes this group to the far right */
 }
 
 /* Make Reps same width as the buttons */
