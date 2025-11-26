@@ -17,7 +17,7 @@
       --card-inner: #1a1a1a;
       --text-main: #fff;
       --text-muted: #bbbbbb;
-      --accent: #b87333;
+      --accent: #0a84ff;
       --accent-soft: #005fd1;
       --danger: #d93030;
       --danger-soft: #a52424;
@@ -65,7 +65,7 @@
       font-size: 18px;
     }
 
-    {
+    * {
       box-sizing: border-box;
     }
 
@@ -206,7 +206,7 @@
     }
 
     .text-input {
-      width: 90%;
+      width: 100%;
       padding: 10px 12px;
       border-radius: 14px;
       border: 1px solid #333;
@@ -302,7 +302,7 @@
     }
 
     .footer-btn {
-      margin-top: -5px;
+      margin-top: 10px;
     }
 
     /* ---------- SET ROW: 5-column grid (Set | Weight | Reps | – | +) ---------- */
@@ -310,23 +310,23 @@
     /* SET ROW — 5 perfect alignment columns */
 /* -------- SET ROW: 5-column grid (Set | Weight | Reps | – | +) -------- */
 .set-box {
-  display: grid;
-  grid-template-columns: auto 1fr auto;  /* label | stretch | right buttons */
-  column-gap: 10px;                      /* same as .workout-header gap */
-  align-items: center;
+  display: flex;
   margin-top: 12px;
+  align-items: center;
+  gap: 10px;
+  background: transparent;
+  border: none;
+  padding: 0;
 }
-
   /* 5 columns that line up with the header buttons */
   display: grid;
   grid-template-columns: auto 1fr 1fr 60px 60px; /* Set | Weight | Reps | - | + */
   column-gap: 10px;
   align-items: center;
 }
-
 .set-label {
-  font-size: 2px;
-  color: #7c4821;
+  font-size: 20px;
+  color: #fff;
   font-family: "Germania One", -apple-system, BlinkMacSystemFont,
     "Segoe UI", Roboto, sans-serif;
 }
@@ -337,24 +337,25 @@
   border-radius: 12px;
   background-color: #000;
   border: 1px solid #333;
-  color: #7c4821;
+  color: #fff;
   font-size: 15px;
   text-align: center;
   box-sizing: border-box;
 }
 
 .set-weight-group {
-  justify-self: end;    /* 🔥 pushes the 56px Weight box to the right edge */
+  width: 56px;             /* takes remaining space */
 }
 
 .set-weight-group .set-input {
-  width: 56px;
+  width: 100%;
 }
 
 /* Right side: Reps, –, + under –, ▼, + */
 .set-right-group {
   display: flex;
   gap: 8px;            /* same as .workout-header-actions gap */
+  margin-left: auto;   /* pushes this group to the far right */
 }
 
 /* Make Reps same width as the buttons */
@@ -362,7 +363,7 @@
   width: 56px;
 }
     .set-input::placeholder {
-      color: #7c4821;
+      color: #666;
     }
 
     /* Header buttons AND set +/- buttons share this */
