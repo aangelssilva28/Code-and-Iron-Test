@@ -45,19 +45,22 @@ function createSetBox(card, setData, indexOverride) {
   minusBtn.className = "round-btn";
   minusBtn.textContent = "–";
   minusBtn.addEventListener("click", () => {
-    if (card.querySelectorAll(".set-box").length > 1) {
-      box.remove();
-    }
-  });
+  const boxes = card.querySelectorAll(".set-box");
+  if (boxes.length > 1) {
+    box.remove();
+    renumberSets(card);   // 🔥 re-label the remaining sets
+  }
+});
 
   // --- Plus button (under header plus) ---
   const plusBtn = document.createElement("button");
   plusBtn.className = "round-btn";
   plusBtn.textContent = "+";
   plusBtn.addEventListener("click", () => {
-    const wrapper = card.querySelector(".sets-wrapper") || card;
-    wrapper.appendChild(createSetBox(card));
-  });
+  const wrapper = card.querySelector(".sets-wrapper") || card;
+  wrapper.appendChild(createSetBox(card));
+  renumberSets(card);   // 🔥 make sure numbers stay in order
+});
 
   // Right-side group: [Reps][–][+]
   const rightGroup = document.createElement("div");
@@ -73,6 +76,21 @@ function createSetBox(card, setData, indexOverride) {
 
   return box;
 }
+
+function renumberSets(card) {
+  const boxes = card.querySelectorAll(".set-box");
+  boxes.forEach((box, index) => {
+    const label = box.querySelector(".set-label");
+    if (label) {
+      // If you want "Set 1", "Set 2", etc:
+      // label.textContent = `Set ${index + 1}`;
+
+      // If you just want the number:
+      label.textContent = index + 1;
+    }
+  });
+}
+
 function setCardCollapsed(card, collapsed) {
   const setsWrapper = card.querySelector(".sets-wrapper");
   const headerActions = card.querySelector(".workout-header-actions");
