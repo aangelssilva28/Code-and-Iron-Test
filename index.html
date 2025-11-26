@@ -236,10 +236,12 @@
   background: #000 !important;   /* ← Pure black */
   border-radius: 12px;
   box-shadow: none;
+  color: #fff;
 }
 
 .round-btn,
-.set-input {
+.set-input,
+.primary-btn {
   border: 2px solid #b87333;  /* Copper border */
   background-color: #000;     /* Black inside */
   box-shadow: none;           /* Removes glow entirely */
@@ -329,7 +331,14 @@
       -webkit-tap-highlight-color: transparent;
       -webkit-appearance: none;
       appearance: none;
+      border: 2px solid #b87333;
+      box-shadow: none;
     }
+
+.primary-btn:active {
+  transform: translateY(1px);
+  opacity: 0.85;
+}
 
     .primary-btn:active {
       transform: translateY(1px);
