@@ -243,7 +243,12 @@
   border: 2px solid #b87333;  /* Copper border */
   background-color: #000;     /* Black inside */
   box-shadow: none;           /* Removes glow entirely */
+/* Very soft bevel instead of glow */
+  box-shadow:
+    inset 0 1px 2px rgba(255,255,255,0.05),
+    inset 0 -1px 2px rgba(0,0,0,0.4);
 }
+
 
     .set-input::placeholder,
     .text-input::placeholder {
