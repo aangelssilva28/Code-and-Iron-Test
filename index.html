@@ -10,686 +10,693 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Germania+One&display=swap" rel="stylesheet">
 
-  <style>
-    :root {
-      --bg: #000;
-      --card: #121212;
-      --card-inner: #1a1a1a;
-      --text-main: #fff;
-      --text-muted: #bbbbbb;
-      --accent: #0a84ff;
-      --accent-soft: #005fd1;
-      --danger: #d93030;
-      --danger-soft: #a52424;
-      --border-soft: #2a2a2a;
-      --radius-card: 24px;
-      --radius-pill: 999px;
-      --shadow-soft: 0 10px 30px rgba(0, 0, 0, 0.7);
-    }
+<style>
+  :root {
+    --bg: #000;
+    --card: #121212;
+    --card-inner: #1a1a1a;
+    --text-main: #fff;
+    --text-muted: #bbbbbb;
+    --accent: #0a84ff;
+    --accent-soft: #005fd1;
+    --danger: #d93030;
+    --danger-soft: #a52424;
+    --border-soft: #2a2a2a;
+    --radius-card: 24px;
+    --radius-pill: 999px;
+    --shadow-soft: 0 10px 30px rgba(0, 0, 0, 0.7);
+  }
 
-.set-input:focus,
-.text-input:focus {
-  outline: #7c4821;
-     box-shadow: none !important;
-}
+  * {
+    box-sizing: border-box;
+  }
 
-    /* Hide sets when collapsed */
-    .sets-wrapper.collapsed {
-      display: none;
-    }
+  body {
+    margin: 0;
+    padding: 0;
+    font-family: "Germania One", -apple-system, BlinkMacSystemFont,
+      "Segoe UI", Roboto, sans-serif;
+    background-color: var(--bg);
+    color: var(--text-main);
+  }
 
-.neumorphic-inset {
-  background: #1a1a1a;
-  border-radius: 12px;
+  /* --------------------------
+     COLLAPSE / CARD STATES
+  --------------------------- */
 
-  /* Concave / inset shadow magic */
-  box-shadow:
+  /* Hide sets when collapsed */
+  .sets-wrapper.collapsed {
+    display: none;
+  }
+
+  /* Collapsed state: only the name pill shows, spacing stays tight */
+  .workout-card.collapsed {
+    padding: 8px 14px;
+  }
+
+  .workout-card.collapsed .workout-header {
+    margin: 0;
+    opacity: 0.85;
+  }
+
+  .workout-card.collapsed .sets-wrapper {
+    display: none;
+  }
+
+  .workout-card.collapsed .workout-header-actions {
+    display: none;
+  }
+
+  .workout-card.collapsed .workout-name {
+    cursor: pointer;
+  }
+
+  .workout-card.collapsed .workout-name:focus {
+    outline: none;
+  }
+
+  /* Arrow button in exercise card header */
+  .round-btn.collapse-btn {
+    font-size: 18px;
+  }
+
+  /* Optional concave style (not currently used) */
+  .neumorphic-inset {
+    background: #1a1a1a;
+    border-radius: 12px;
+    box-shadow:
       inset 3px 3px 6px rgba(0, 0, 0, 0.6),
       inset -3px -3px 6px rgba(70, 70, 70, 0.15);
-}
+  }
 
-.neumorphic-outset {
-  background: #1a1a1a;
-  border-radius: 12px;
-  box-shadow:
-      -4px -4px 8px rgba(60, 60, 60, 0.25),   /* top-left highlight */
-      4px 4px 8px rgba(0, 0, 0, 0.7);         /* bottom-right shadow */
-}
+  /* Optional convex style (not currently used) */
+  .neumorphic-outset {
+    background: #1a1a1a;
+    border-radius: 12px;
+    box-shadow:
+      -4px -4px 8px rgba(60, 60, 60, 0.25),
+      4px 4px 8px rgba(0, 0, 0, 0.7);
+  }
 
-    /* Collapsed state: only the name pill shows, spacing stays tight */
-    .workout-card.collapsed {
-      padding: 8px 14px;
-    }
+  /* --------------------------
+     LAYOUT SHELL
+  --------------------------- */
 
-    .workout-card.collapsed .workout-header {
-      margin: 0;
-    }
+  .app-wrapper {
+    min-height: 100vh;
+    padding: 12px 12px 32px;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+  }
 
-    .workout-card.collapsed .sets-wrapper {
-      display: none;
-    }
+  .app-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 8px 4px 16px;
+  }
 
-    .workout-card.collapsed .workout-header-actions {
-      display: none;
-    }
+  .app-header h1 {
+    font-size: 32px;
+    font-weight: 800;
+    margin: 0;
+    letter-spacing: 0.5px;
+  }
 
-    .workout-card.collapsed .workout-name {
-      cursor: pointer;
-    }
+  .menu-button {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    border: 1px solid #333;
+    background-color: #111;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+  }
 
-    .workout-card.collapsed .workout-name:focus {
-      outline: none;
-    }
+  .menu-button:active {
+    background-color: #222;
+  }
 
-    .workout-card.collapsed .workout-header {
-      opacity: 0.85;
-    }
+  .menu-icon {
+    width: 18px;
+    height: 18px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
 
-    .round-btn.collapse-toggle {
-      font-size: 18px;
-    }
+  .menu-icon span {
+    display: block;
+    height: 3px;
+    border-radius: 999px;
+    background-color: #fff;
+  }
 
-    * {
-      box-sizing: border-box;
-    }
+  .menu-dropdown {
+    position: absolute;
+    right: 16px;
+    top: 64px;
+    background-color: #111;
+    border-radius: 16px;
+    box-shadow: var(--shadow-soft);
+    overflow: hidden;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(-8px);
+    transition: opacity 0.18s ease, transform 0.18s ease;
+    min-width: 220px;
+    z-index: 20;
+  }
 
-    body {
-      margin: 0;
-      padding: 0;
-      font-family: "Germania One", -apple-system, BlinkMacSystemFont,
-        "Segoe UI", Roboto, sans-serif;
-      background-color: var(--bg);
-      color: var(--text-main);
-    }
+  .menu-dropdown.open {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
+  }
 
+  .menu-item {
+    padding: 14px 18px;
+    font-size: 16px;
+    border-bottom: 1px solid #222;
+  }
+
+  .menu-item:last-child {
+    border-bottom: none;
+  }
+
+  .menu-item:active {
+    background-color: #1f1f1f;
+  }
+
+  main.screen {
+    display: none;
+    flex: 1;
+  }
+
+  main.screen.active {
+    display: block;
+  }
+
+  .card {
+    max-width: 480px;
+    margin: 0 auto;
+    background-color: var(--card);
+    border-radius: var(--radius-card);
+    padding: 18px 16px 24px;
+    box-shadow: var(--shadow-soft);
+  }
+
+  .card-title {
+    font-size: 22px;
+    font-weight: 700;
+    margin: 4px 4px 8px;
+  }
+
+  .card-subtitle {
+    font-size: 14px;
+    color: var(--text-muted);
+    margin: 0 4px 16px;
+    line-height: 1.4;
+  }
+
+  .input-label {
+    display: block;
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+  }
+
+  /* --------------------------
+     INPUTS & BUTTONS (GLOBAL)
+  --------------------------- */
+
+  /* Exercise name input + set inputs share this base */
+  .text-input,
+  .set-input {
+    width: 100%;
+    height: 44px;
+    border-radius: 12px;
+    background: #000;                 /* pure black inside */
+    border: 1px solid #8b5a2b;        /* copper border */
+    color: #fff;
+    font-size: 15px;
+    text-align: center;
+    box-sizing: border-box;
+  }
+
+  .text-input::placeholder,
+  .set-input::placeholder {
+    color: #777;
+    text-shadow: 0 0 4px rgba(255, 255, 255, 0.15);
+  }
+
+  /* Focus state for text/number inputs */
+  .set-input:focus,
+  .text-input:focus {
+    outline: 1px solid #7c4821;       /* copper-ish focus ring */
+    box-shadow: none !important;
+  }
+
+  /* Round buttons: exercise header + set +/- */
+  .round-btn {
+    background-color: #000;
+    border: 1px solid #8b5a2b;        /* copper border */
+    color: #fff;
+    height: 44px;
+    width: 56px;
+    border-radius: 12px;
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .round-btn:active {
+    outline: 1px solid #7c4821;
+    transform: translateY(1px);
+    opacity: 0.9;
+    background-color: #111;
+  }
+
+  /* Minus button for exercise card */
+  .round-btn.minus {
+    /* inherits visuals from .round-btn */
+  }
+
+  /* Arrow button for exercise card (collapse/expand) */
+  .round-btn.collapse-btn {
+    /* inherits .round-btn; font-size set above */
+  }
+
+  /* Plus button for exercise card */
+  .round-btn.plus {
+    /* inherits visuals from .round-btn */
+  }
+
+  /* Primary big buttons (Save progress / Create / Generate / Restore) */
+  .primary-btn {
+    width: 100%;
+    height: 44px;
+    border-radius: 12px;
+    background-color: #000;
+    border: 1px solid #8b5a2b;        /* copper border */
+    box-shadow: none;
+    color: #fff;
+    font-size: 17px;
+    font-weight: 600;
+    margin-top: 8px;
+  }
+
+  .primary-btn:active {
+    outline: 1px solid #7c4821;
+    transform: translateY(1px);
+    opacity: 0.9;
+    background-color: #111;
+  }
+
+  .footer-btn {
+    margin-top: 10px;
+  }
+
+  /* Delete workout card button */
+  .danger-btn {
+    width: 100%;
+    border-radius: var(--radius-pill);
+    padding: 11px 16px;
+    font-size: 17px;
+    font-weight: 600;
+    border: none;
+    color: #fff;
+    background-color: var(--danger);
+    margin: 4px 0 10px;
+  }
+
+  .danger-btn:active {
+    background-color: var(--danger-soft);
+    outline: 1px solid #7c4821;
+  }
+
+  /* --------------------------
+     WORKOUT CARD (EXERCISE)
+  --------------------------- */
+
+  .workouts-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 4px;
+    margin-bottom: 12px;
+  }
+
+  .workout-card {
+    background-color: var(--card-inner);
+    border-radius: 22px;
+    padding: 10px 14px;
+    margin-bottom: 14px;
+    box-shadow: none;
+  }
+
+  .workout-name {
+    flex: 1;
+    width: 100%;
+  }
+
+  .workout-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 0;
+  }
+
+  /* Exercise name input box */
+  .workout-header .workout-name {
+    flex: 1;
+    height: 44px;
+    padding: 0 12px;
+  }
+
+  /* Header button group: minus / arrow / plus (exercise card) */
+  .workout-header-actions {
+    display: flex;
+    gap: 8px;
+  }
+
+  /* --------------------------
+     SET ROW (Set #, Weight, Reps, –, +)
+  --------------------------- */
+
+  /* One row of "Set 1 | Weight | Reps – +" */
+  .set-box {
+    display: grid;
+    grid-template-columns: auto 1fr auto;  /* Set label | weight | right group */
+    column-gap: 10px;
+    align-items: center;
+    margin-top: 12px;
+  }
+
+  /* "Set 1 / Set 2" label */
+  .set-label {
+    font-size: 18px;
+    color: #b87333;                       /* copper */
+    font-family: "Germania One", sans-serif;
+    font-weight: 700;
+  }
+
+  /* Weight input wrapper (left of reps/minus/plus) */
+  .set-weight-group {
+    justify-self: end;                    /* pushes weight to align right under header buttons */
+  }
+
+  /* Weight input box on set card */
+  .set-weight-group .set-input {
+    width: 56px;                          /* fixed width for weight */
+  }
+
+  /* Right side group: [Reps][–][+] on set card */
+  .set-right-group {
+    display: flex;
+    gap: 8px;                             /* same as .workout-header-actions gap */
+    margin-left: auto;
+  }
+
+  /* Reps input box on set card */
+  .set-right-group .set-input {
+    width: 56px;                          /* same width as buttons */
+  }
+
+  /* Minus button for set card */
+  .set-right-group .round-btn.minus {
+    /* inherits visuals from .round-btn */
+  }
+
+  /* Plus button for set card */
+  .set-right-group .round-btn.plus {
+    /* inherits visuals from .round-btn */
+  }
+
+  /* --------------------------
+     PROGRESS LIST & MISC
+  --------------------------- */
+
+  .set-header {
+    font-size: 15px;
+    font-weight: 700;
+    color: #ffb74d;
+    margin-bottom: 6px;
+  }
+
+  .progress-letter-header {
+    margin-top: 10px;
+    margin-bottom: 4px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #888;
+    text-transform: uppercase;
+  }
+
+  .progress-detail-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    margin-bottom: 4px;
+  }
+
+  .progress-detail-row span:first-child {
+    color: #bbbbbb;
+  }
+
+  .progress-detail-row span:last-child {
+    color: #ffffff;
+    font-weight: 600;
+  }
+
+  .saved-list {
+    margin-top: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .saved-wrapper {
+    margin-top: 4px;
+  }
+
+  .saved-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    border-radius: 14px;
+    background-color: #151515;
+    border: 1px solid #262626;
+    font-size: 15px;
+  }
+
+  .saved-name {
+    flex: 1;
+    margin-right: 10px;
+  }
+
+  .saved-buttons {
+    display: flex;
+    gap: 6px;
+  }
+
+  .small-btn {
+    -webkit-appearance: none;
+    appearance: none;
+    -webkit-tap-highlight-color: transparent;
+    border-radius: 12px;
+    border: 1px solid #333;
+    padding: 6px 12px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #fff;
+    background-color: #000;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+  }
+
+  .small-btn:active {
+    transform: translateY(1px);
+    opacity: 0.9;
+    background-color: #111;
+    outline: 1px solid #7c4821;
+  }
+
+  .open-panel {
+    margin-top: 8px;
+    padding: 10px 10px 14px;
+    border-radius: 18px;
+    background-color: #101010;
+    border: 1px solid #262626;
+    display: none;
+  }
+
+  .open-panel.open {
+    display: block;
+  }
+
+  .link-back {
+    margin-top: 18px;
+    font-size: 15px;
+    color: var(--text-muted);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .link-back span {
+    font-size: 18px;
+    line-height: 1;
+  }
+
+  .link-back:active {
+    color: #ffffff;
+  }
+
+  .input-group {
+    margin: 6px 0 10px;
+  }
+
+  /* --------------------------
+     TUTORIAL OVERLAY
+  --------------------------- */
+
+  .tutorial-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.85);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    z-index: 100;
+  }
+
+  .tutorial-overlay.visible {
+    display: flex;
+  }
+
+  .tutorial-card {
+    width: 100%;
+    max-width: 420px;
+    background-color: #121212;
+    border-radius: 24px;
+    padding: 20px 18px 16px;
+    border: 1px solid #333;
+    box-shadow: var(--shadow-soft);
+  }
+
+  .tutorial-title {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+
+  .tutorial-body {
+    font-size: 14px;
+    color: var(--text-muted);
+    line-height: 1.5;
+  }
+
+  .tutorial-bullets {
+    margin-top: 8px;
+    padding-left: 18px;
+    font-size: 14px;
+    color: var(--text-muted);
+  }
+
+  .tutorial-bullets li {
+    margin-bottom: 4px;
+  }
+
+  .tutorial-actions {
+    margin-top: 16px;
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+  }
+
+  .tutorial-primary-btn,
+  .tutorial-secondary-btn {
+    -webkit-appearance: none;
+    appearance: none;
+    border-radius: 999px;
+    padding: 8px 14px;
+    border: 1px solid #333;
+    font-size: 14px;
+    font-weight: 600;
+    color: #fff;
+    background-color: #000;
+  }
+
+  .tutorial-primary-btn {
+    background-color: var(--accent-soft);
+    border-color: var(--accent-soft);
+  }
+
+  .tutorial-primary-btn:active,
+  .tutorial-secondary-btn:active {
+    transform: translateY(1px);
+    opacity: 0.9;
+  }
+
+  .tutorial-screen {
+    display: none;
+  }
+
+  .tutorial-screen.active {
+    display: block;
+  }
+
+  /* --------------------------
+     FOOTER / LEGAL
+  --------------------------- */
+
+  .legal-footer {
+    font-size: 0.75rem;
+    padding: 0.75rem 1rem 1.25rem;
+    opacity: 0.75;
+    text-align: center;
+  }
+
+  .legal-link {
+    background: none;
+    border: none;
+    padding: 0;
+    margin-bottom: 0.25rem;
+    font-size: 0.8rem;
+    text-decoration: underline;
+    cursor: pointer;
+    color: var(--text-muted);
+  }
+
+  .legal-panel {
+    max-width: 500px;
+    margin: 0.25rem auto 0;
+    line-height: 1.3;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+  }
+
+  .hidden {
+    display: none;
+  }
+
+  @media (min-width: 500px) {
     .app-wrapper {
-      min-height: 100vh;
-      padding: 12px 12px 32px;
-      display: flex;
-      flex-direction: column;
-      align-items: stretch;
-    }
-
-    .app-header {
-      display: flex;
       align-items: center;
-      justify-content: space-between;
-      margin: 8px 4px 16px;
-    }
-
-    .app-header h1 {
-      font-size: 32px;
-      font-weight: 800;
-      margin: 0;
-      letter-spacing: 0.5px;
-    }
-
-    .menu-button {
-      width: 44px;
-      height: 44px;
-      border-radius: 12px;
-      border: 1px solid #333;
-      background-color: #111;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 0;
-    }
-
-    .menu-button:active {
-      background-color: #222;
-    }
-
-    .menu-icon {
-      width: 18px;
-      height: 18px;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-    }
-
-    .menu-icon span {
-      display: block;
-      height: 3px;
-      border-radius: 999px;
-      background-color: #fff;
-    }
-
-    .menu-dropdown {
-      position: absolute;
-      right: 16px;
-      top: 64px;
-      background-color: #111;
-      border-radius: 16px;
-      box-shadow: var(--shadow-soft);
-      overflow: hidden;
-      opacity: 0;
-      pointer-events: none;
-      transform: translateY(-8px);
-      transition: opacity 0.18s ease, transform 0.18s ease;
-      min-width: 220px;
-      z-index: 20;
-    }
-
-    .menu-dropdown.open {
-      opacity: 1;
-      pointer-events: auto;
-      transform: translateY(0);
-    }
-
-    .menu-item {
-      padding: 14px 18px;
-      font-size: 16px;
-      border-bottom: 1px solid #222;
-    }
-
-    .menu-item:last-child {
-      border-bottom: none;
-    }
-
-    .menu-item:active {
-      background-color: #1f1f1f;
-    }
-
-    main.screen {
-      display: none;
-      flex: 1;
-    }
-
-    main.screen.active {
-      display: block;
     }
 
     .card {
-      max-width: 480px;
-      margin: 0 auto;
-      background-color: var(--card);
-      border-radius: var(--radius-card);
-      padding: 18px 16px 24px;
-      box-shadow: var(--shadow-soft);
+      width: 430px;
     }
+  }
+</style>
 
-    .card-title {
-      font-size: 22px;
-      font-weight: 700;
-      margin: 4px 4px 8px;
-    }
-
-    .card-subtitle {
-      font-size: 14px;
-      color: var(--text-muted);
-      margin: 0 4px 16px;
-      line-height: 1.4;
-    }
-
-    .input-label {
-      display: block;
-      font-size: 13px;
-      color: var(--text-muted);
-      margin-bottom: 4px;
-    }
-    
-    
-    
-  .set-input,
-  .text-input {
-  background: #000 !important;   /* ← Pure black */
-  border-radius: 12px;
-  box-shadow: none;
-  color: #fff;
-}
-
-.round-btn,
-.set-input,
-.primary-btn {
-  border: 2px solid #8b5a2b;  /* Copper border */
-  background-color: #000;     /* Black inside */
-  box-shadow:
-    0 0 0 1px #754d27,   
-    0 4px 0 #000;
-}
-
-
-    .set-input::placeholder,
-    .text-input::placeholder {
-      color: #777;
-      text-shadow: 0 0 4px rgba(255,255,255,0.15);
-    }
-
-    .workouts-container {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      margin-top: 4px;
-      margin-bottom: 12px;
-    }
-
-    .workout-card {
-      background-color: var(--card-inner);
-      border-radius: 22px;
-      padding: 10px 14px;
-      margin-bottom: 14px;
-      box-shadow: none;
-    }
-
-    .workout-name {
-      flex: 1;
-      width: 100%;
-    }
-
-    .workout-header {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 0px;
-    }
-
-    .workout-header .workout-name {
-      flex: 1;
-      height: 44px;
-      padding: 0 12px;
-    }
-
-    .workout-header-actions {
-      display: flex;
-      gap: 8px;
-    }
-
-    .danger-btn, {
-      width: 100%;
-      border-radius: var(--radius-pill);
-      padding: 11px 16px;
-      font-size: 17px;
-      font-weight: 600;
-      border: none;
-      color: #fff;
-    }
-
-    .danger-btn {
-      background-color: var(--danger);
-      margin: 4px 0 10px;
-    }
-
-    .danger-btn:active {
-      background-color: var(--danger-soft);
-      outline: #7c4821;
-    }
-
-    .primary-btn {
-      width: 100%;
-      height: 44px;
-      border-radius: 12px;
-      background-color: #000; !important;
-      border: 1px solid #8b5a2b; !important;
-      box-shadow: none; !important;
-      color: #fff;
-      font-size: 17px;
-      font-weight: 600;
-      margin-top: 8px;
-      background: #000;
-    }
-
-    .footer-btn {
-      margin-top: 10px;
-    }
-
-    /* ---------- SET ROW: 5-column grid (Set | Weight | Reps | – | +) ---------- */
-
-    /* SET ROW — 5 perfect alignment columns */
-/* -------- SET ROW: 5-column grid (Set | Weight | Reps | – | +) -------- */
-.set-box {
-  display: flex;
-  margin-top: 12px;
-  align-items: center;
-  gap: 10px;
-  background: transparent;
-  border: none;
-  padding: 0;
-}
-  /* 5 columns that line up with the header buttons */
-  display: grid;
-  grid-template-columns: auto 1fr 1fr 60px 60px; /* Set | Weight | Reps | - | + */
-  column-gap: 10px;
-  align-items: center;
-}
-.set-label {
-  font-size: 18px;
-  color: #b87333; 
-  font-family: "Germania One", sans-serif;
-  font-weight: 700;
-  width; 20px:
-}
-
-
-.round-btn,
-.text-input,
-.set-input {
-  width: 100%;
-  height: 44px;
-  border-radius: 12px;
-  background-color: #000;
-  border: 1px solid #333;
-  color: #fff;
-  font-size: 15px;
-  text-align: center;
-  box-sizing: border-box;
-  background: #1a1a1a;
-}
-
-/* Copper convex glow ONLY when not focused/pressed */
-.text-input:not(:focus),
-.set-input:not(:focus),
-.round-btn:not(:active) {
-  box-shadow: 
-  0 0 0 1px #754d27,   
-    0 4px 0 #000;
-    outline: #7c4821;
-}
-
-.set-weight-group {
-  justify-self: end;             /* takes remaining space */
-}
-
-.set-weight-group .set-input {
-  width: 56px;
-}
-
-.set-weight-group .set-input {
-  width: 100%;
-}
-
-/* Right side: Reps, –, + under –, ▼, + */
-.set-right-group {
-  display: flex;
-  gap: 8px;            /* same as .workout-header-actions gap */
-  margin-left: auto;   /* pushes this group to the far right */
-}
-
-/* Make Reps same width as the buttons */
-.set-right-group .set-input {
-  width: 56px;
-}
-    .set-input::placeholder {
-      color: #666;
-    }
-
-    /* Header buttons AND set +/- buttons share this */
-    .round-btn {
-      background-color: #000;
-      border: 1px solid #333;
-      color: #fff;
-      height: 44px;
-      width: 56px;
-      border-radius: 12px;
-      font-size: 20px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-.text-input:focus,
-.set-input:focus,
-.round-btn:active {
-  outline: #7c4821;
-  box-shadow: none !important;   /* make sure glow disappears */
-}
-
-    .round-btn:active {
-      outline: #7c4821;
-      transform: translateY(1px);
-      opacity: 0.9;
-      background-color: #111;
-    }
-
-    /* -------- rest of progress / misc styles -------- */
-
-    .set-header {
-      font-size: 15px;
-      font-weight: 700;
-      color: #ffb74d;
-      margin-bottom: 6px;
-    }
-
-    .progress-letter-header {
-      margin-top: 10px;
-      margin-bottom: 4px;
-      font-size: 13px;
-      font-weight: 700;
-      color: #888;
-      text-transform: uppercase;
-    }
-
-    .progress-detail-row {
-      display: flex;
-      justify-content: space-between;
-      font-size: 13px;
-      margin-bottom: 4px;
-    }
-
-    .progress-detail-row span:first-child {
-      color: #bbbbbb;
-    }
-
-    .progress-detail-row span:last-child {
-      color: #ffffff;
-      font-weight: 600;
-    }
-
-    .saved-list {
-      margin-top: 12px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .saved-wrapper {
-      margin-top: 4px;
-    }
-
-    .saved-item {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 10px 12px;
-      border-radius: 14px;
-      background-color: #151515;
-      border: 1px solid #262626;
-      font-size: 15px;
-    }
-
-    .saved-name {
-      flex: 1;
-      margin-right: 10px;
-    }
-
-    .saved-buttons {
-      display: flex;
-      gap: 6px;
-    }
-
-    .small-btn {
-      -webkit-appearance: none;
-      appearance: none;
-      -webkit-tap-highlight-color: transparent;
-      border-radius: 12px;
-      border: 1px solid #333;
-      padding: 6px 12px;
-      font-size: 13px;
-      font-weight: 600;
-      color: #fff;
-      background-color: #000;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
-    }
-
-    .small-btn:active {
-      transform: translateY(1px);
-      opacity: 0.9;
-      background-color: #111;
-      outline: #7c4821;
-    }
-
-    .open-panel {
-      margin-top: 8px;
-      padding: 10px 10px 14px;
-      border-radius: 18px;
-      background-color: #101010;
-      border: 1px solid #262626;
-      display: none;
-    }
-
-    .open-panel.open {
-      display: block;
-    }
-
-    .link-back {
-      margin-top: 18px;
-      font-size: 15px;
-      color: var(--text-muted);
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .link-back span {
-      font-size: 18px;
-      line-height: 1;
-    }
-
-    .link-back:active {
-      color: #ffffff;
-    }
-
-    .input-group {
-      margin: 6px 0 10px;
-    }
-
-    /* --- Tutorial overlay --- */
-    .tutorial-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.85);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      padding: 16px;
-      z-index: 100;
-    }
-
-    .tutorial-overlay.visible {
-      display: flex;
-    }
-
-    .tutorial-card {
-      width: 100%;
-      max-width: 420px;
-      background-color: #121212;
-      border-radius: 24px;
-      padding: 20px 18px 16px;
-      border: 1px solid #333;
-      box-shadow: var(--shadow-soft);
-    }
-
-    .tutorial-title {
-      font-size: 20px;
-      font-weight: 700;
-      margin-bottom: 6px;
-    }
-
-    .tutorial-body {
-      font-size: 14px;
-      color: var(--text-muted);
-      line-height: 1.5;
-    }
-
-    .tutorial-bullets {
-      margin-top: 8px;
-      padding-left: 18px;
-      font-size: 14px;
-      color: var(--text-muted);
-    }
-
-    .tutorial-bullets li {
-      margin-bottom: 4px;
-    }
-
-    .tutorial-actions {
-      margin-top: 16px;
-      display: flex;
-      gap: 8px;
-      justify-content: flex-end;
-    }
-
-    .tutorial-primary-btn,
-    .tutorial-secondary-btn {
-      -webkit-appearance: none;
-      appearance: none;
-      border-radius: 999px;
-      padding: 8px 14px;
-      border: 1px solid #333;
-      font-size: 14px;
-      font-weight: 600;
-      color: #fff;
-      background-color: #000;
-    }
-
-    .tutorial-primary-btn {
-      background-color: var(--accent-soft);
-      border-color: var(--accent-soft);
-    }
-
-    .tutorial-primary-btn:active,
-    .tutorial-secondary-btn:active {
-      transform: translateY(1px);
-      opacity: 0.9;
-    }
-
-    .tutorial-screen {
-      display: none;
-    }
-
-    .tutorial-screen.active {
-      display: block;
-    }
-
-    .legal-footer {
-      font-size: 0.75rem;
-      padding: 0.75rem 1rem 1.25rem;
-      opacity: 0.75;
-      text-align: center;
-    }
-
-    .legal-link {
-      background: none;
-      border: none;
-      padding: 0;
-      margin-bottom: 0.25rem;
-      font-size: 0.8rem;
-      text-decoration: underline;
-      cursor: pointer;
-      color: var(--text-muted);
-    }
-
-    .legal-panel {
-      max-width: 500px;
-      margin: 0.25rem auto 0;
-      line-height: 1.3;
-      font-size: 0.75rem;
-      color: var(--text-muted);
-    }
-
-    .hidden {
-      display: none;
-    }
-
-    @media (min-width: 500px) {
-      .app-wrapper {
-        align-items: center;
-      }
-      .card {
-        width: 430px;
-      }
-    }
-  </style>
 </head>
 <body>
   <div class="app-wrapper">
