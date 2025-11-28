@@ -690,6 +690,29 @@
         <h1>Code and Iron Test</h1>
       </div>
 
+<!-- Simple auth bar -->
+  <div id="authBar" style="display:flex; gap:8px; align-items:center;">
+    <button id="loginBtn" class="small-btn">Sign in</button>
+    <button id="logoutBtn" class="small-btn hidden">Sign out</button>
+  </div>
+</header>
+
+<!-- Modal-ish login form (super basic) -->
+<div id="authModal" class="tutorial-overlay hidden">
+  <div class="tutorial-card">
+    <div class="tutorial-title">Sign in</div>
+    <div class="tutorial-body">
+      <input id="authEmail" class="text-input" placeholder="Email" />
+      <input id="authPassword" class="text-input" type="password" placeholder="Password" style="margin-top:8px;" />
+    </div>
+    <div class="tutorial-actions">
+      <button id="authCancel" class="tutorial-secondary-btn">Cancel</button>
+      <button id="authSignup" class="tutorial-secondary-btn">Sign up</button>
+      <button id="authLogin" class="tutorial-primary-btn">Sign in</button>
+    </div>
+  </div>
+</div>
+
       <button class="menu-button" id="menuButton">
         <div class="menu-icon">
           <span></span><span></span><span></span>
@@ -913,6 +936,11 @@
       </p>
     </div>
   </footer>
+
+<!-- Firebase (compat SDK so we can use firebase.* in app.js) -->
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 
   <script src="app.js"></script>
 </body>
