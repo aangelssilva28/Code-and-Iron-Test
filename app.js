@@ -19,7 +19,7 @@ function createSetBox(card, setData, indexOverride) {
   setLabel.className = "set-label";
   const existingCount = card.querySelectorAll(".set-box").length;
   const setNumber = indexOverride || existingCount + 1;
-  setLabel.textContent = setNumber;
+  setLabel.textContent = `Set ${setNumber}`;
 
   // --- Weight input (left, under exercise input) ---
   const weightInput = document.createElement("input");
