@@ -86,7 +86,7 @@ function renumberSets(card) {
       // label.textContent = `Set ${index + 1}`;
 
       // If you just want the number:
-      label.textContent = `Set ${index + 1}`;
+      label.textContent = `Set ${setNumber + 1}`;
     }
   });
 }
