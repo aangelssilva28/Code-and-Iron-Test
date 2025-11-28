@@ -45,22 +45,22 @@ function createSetBox(card, setData, indexOverride) {
   minusBtn.className = "round-btn";
   minusBtn.textContent = "–";
   minusBtn.addEventListener("click", () => {
-  const boxes = card.querySelectorAll(".set-box");
-  if (boxes.length > 1) {
-    box.remove();
-    renumberSets(card);   // 🔥 re-label the remaining sets
-  }
-});
+    const boxes = card.querySelectorAll(".set-box");
+    if (boxes.length > 1) {
+      box.remove();
+      renumberSets(card);   // re-label remaining sets
+    }
+  });
 
   // --- Plus button (under header plus) ---
   const plusBtn = document.createElement("button");
   plusBtn.className = "round-btn";
   plusBtn.textContent = "+";
   plusBtn.addEventListener("click", () => {
-  const wrapper = card.querySelector(".sets-wrapper") || card;
-  wrapper.appendChild(createSetBox(card));
-  wrapper.appendChildrenumberSets(card);   // 🔥 make sure numbers stay in order
-});
+    const wrapper = card.querySelector(".sets-wrapper") || card;
+    wrapper.appendChild(createSetBox(card));
+    renumberSets(card);     // make sure numbers stay in order
+  });
 
   // Right-side group: [Reps][–][+]
   const rightGroup = document.createElement("div");
@@ -82,11 +82,7 @@ function renumberSets(card) {
   boxes.forEach((box, index) => {
     const label = box.querySelector(".set-label");
     if (label) {
-      // If you want "Set 1", "Set 2", etc:
-      // label.textContent = `Set ${index + 1}`;
-
-      // If you just want the number:
-      label.textContent = `Set ${setNumber + 1}`;
+      label.textContent = `Set ${index + 1}`;   // "Set 1", "Set 2", ...
     }
   });
 }
@@ -139,7 +135,6 @@ function createWorkoutCard(parent, workoutData) {
     if (card.classList.contains("collapsed")) {
       setCardCollapsed(card, false);
     }
-    // if not collapsed, normal input focus behavior happens
   });
 
   const headerActions = document.createElement("div");
@@ -205,7 +200,6 @@ function createWorkoutCard(parent, workoutData) {
 
   parent.appendChild(card);
 
-  // If you ever want to restore a "collapsed" state from saved data:
   if (workoutData && workoutData.collapsed) {
     setCardCollapsed(card, true);
   }
@@ -214,8 +208,6 @@ function createWorkoutCard(parent, workoutData) {
 }
 
 // ---------- One-time tutorial walkthrough (GLOBAL) ----------
-// NOTE: This was previously nested inside createSetBox.
-// Moving it here makes initTutorial() available to init() at the bottom.
 
 const TUTORIAL_KEY = "codeAndIronTutorialSeen_v1";
 
@@ -662,17 +654,14 @@ function loadProgress() {
 
     const parsed = JSON.parse(raw);
 
-    // Old format: plain object with no version (what your current users have)
     if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
       return {};
     }
 
     if (!Object.prototype.hasOwnProperty.call(parsed, "version")) {
-      // Treat entire object as the original data
       return parsed;
     }
 
-    // New format: { version, data }
     if (parsed.version === PROGRESS_VERSION) {
       return parsed.data || {};
     }
@@ -708,7 +697,6 @@ function loadTemplates() {
 
     const parsed = JSON.parse(raw);
 
-    // Old format: templates were stored as a plain array
     if (Array.isArray(parsed)) {
       return parsed;
     }
@@ -718,7 +706,6 @@ function loadTemplates() {
     }
 
     if (!Object.prototype.hasOwnProperty.call(parsed, "version")) {
-      // Unversioned but object-shaped? Try to treat as array-ish, else empty.
       return [];
     }
 
@@ -773,7 +760,6 @@ if (importBackupBtn && backupText) {
 }
 
 function getBackupObject() {
-  // Everything we care about goes in here
   return {
     templates,
     progressData,
@@ -795,14 +781,12 @@ function restoreFromBackupString(str) {
   try {
     const parsed = JSON.parse(str);
 
-    // Restore templates if present
     if (parsed.templates && Array.isArray(parsed.templates)) {
       templates = parsed.templates;
       saveTemplates(templates);
       renderTemplatesList();
     }
 
-    // Restore progressData if present
     if (parsed.progressData && typeof parsed.progressData === "object") {
       progressData = parsed.progressData;
       saveProgress(progressData);
@@ -987,7 +971,6 @@ backToLogger.addEventListener("click", () => {
 const tutorialMenu = document.getElementById("menuTutorial");
 if (tutorialMenu) {
   tutorialMenu.addEventListener("click", () => {
-    // Let the user see the walkthrough again
     localStorage.removeItem(TUTORIAL_KEY);
     initTutorial();
     closeMenu();
@@ -995,12 +978,11 @@ if (tutorialMenu) {
 }
 
 // ---------- Init ----------
-// NOTE: initTutorial() is now defined above, so this call works.
 
 function init() {
   createWorkoutCard(workoutsContainer);
   renderTemplatesList();
-  initTutorial(); // run one-time tutorial if not seen
+  initTutorial();
 }
 
 init();
