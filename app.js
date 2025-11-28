@@ -59,7 +59,7 @@ function createSetBox(card, setData, indexOverride) {
   plusBtn.addEventListener("click", () => {
   const wrapper = card.querySelector(".sets-wrapper") || card;
   wrapper.appendChild(createSetBox(card));
-  renumberSets(card);   // 🔥 make sure numbers stay in order
+  wrapper.appendChildrenumberSets(card);   // 🔥 make sure numbers stay in order
 });
 
   // Right-side group: [Reps][–][+]
