@@ -802,33 +802,69 @@ function restoreFromBackupString(str) {
 
 // ---------- Routine share codes ----------
 
-const ROUTINE_SHARE_PREFIX = "CIROUTINEv1:";
+const ROUTINE_SHARE_PREFIX = "C1:";
 
 function makeShareCode(tpl) {
   const payload = {
-    name: tpl.name || "Shared routine",
-    workouts: tpl.workouts || [],
+    // routine name
+    n: tpl.name || "Shared routine",
+    // workouts
+    w: (tpl.workouts || []).map((ex) => ({
+      // exercise name
+      n: ex.name || "",
+      // sets
+      s: (ex.sets || []).map((set) => ({
+        w: set.weight ?? "",
+        r: set.reps ?? "",
+      })),
+    })),
   };
+
   return ROUTINE_SHARE_PREFIX + btoa(JSON.stringify(payload));
 }
 
 function tryImportShareCode(rawCode) {
-  if (!rawCode.startsWith(ROUTINE_SHARE_PREFIX)) return null;
-
   try {
-    const encoded = rawCode.slice(ROUTINE_SHARE_PREFIX.length);
-    const payload = JSON.parse(atob(encoded));
+    // 1) New compact codes: "C1:..."
+    if (rawCode.startsWith(ROUTINE_SHARE_PREFIX)) {
+      const encoded = rawCode.slice(ROUTINE_SHARE_PREFIX.length);
+      const payload = JSON.parse(atob(encoded));
 
-    const tplName = payload.name || "Shared routine";
-    const safeWorkouts =
-      payload.workouts && payload.workouts.length
-        ? payload.workouts
-        : [{ name: "", sets: [{ weight: "", reps: "" }] }];
+      const workouts = (payload.w || []).map((ex) => ({
+        name: ex.n || "",
+        sets: (ex.s || []).map((set) => ({
+          weight: set.w ?? "",
+          reps: set.r ?? "",
+        })),
+      }));
 
-    return {
-      name: tplName,
-      workouts: safeWorkouts,
-    };
+      return {
+        name: payload.n || "Shared routine",
+        workouts:
+          workouts && workouts.length
+            ? workouts
+            : [{ name: "", sets: [{ weight: "", reps: "" }] }],
+      };
+    }
+
+    // 2) Legacy long codes: "CIROUTINEv1:..."
+    if (rawCode.startsWith(LEGACY_SHARE_PREFIX)) {
+      const encoded = rawCode.slice(LEGACY_SHARE_PREFIX.length);
+      const payload = JSON.parse(atob(encoded));
+
+      const safeWorkouts =
+        payload.workouts && payload.workouts.length
+          ? payload.workouts
+          : [{ name: "", sets: [{ weight: "", reps: "" }] }];
+
+      return {
+        name: payload.name || "Shared routine",
+        workouts: safeWorkouts,
+      };
+    }
+
+    // Not a valid share code
+    return null;
   } catch (e) {
     console.error("Bad share code", e);
     return null;
