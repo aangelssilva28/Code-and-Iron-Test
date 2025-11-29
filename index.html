@@ -22,7 +22,7 @@
     --accent: #39ff14;        /* bright neon */
     --accent-soft: #00c853;   /* softer emerald for buttons/tutorial */
     --accent-dark: #00b34a;   /* darker green for outlines/focus */
-
+    --copper: #8b5a2b;
     --danger: #d93030;
     --danger-soft: #a52424;
     --border-soft: #262626;
@@ -43,6 +43,10 @@
     background-color: var(--bg);
     color: var(--text-main);
   }
+
+.workout-card, .set-box {
+    box-shadow: 0 0 12px rgba(139, 90, 43, 0.4);
+}
 
   /* --------------------------
      COLLAPSE / CARD STATES
@@ -348,9 +352,10 @@
   }
 
   .workout-card {
+    border: 2px solid var(--copper);      /* COPPER OUTLINE */
+    border-radius: 22px;                  /* matches your rounded look */
+    padding: 20px; 
     background-color: var(--card-inner);
-    border-radius: 22px;
-    padding: 10px 14px;
     margin-bottom: 14px;
     box-shadow:
       0 0 0 1px #1b1c20,
@@ -390,6 +395,9 @@
     column-gap: 10px;
     align-items: center;
     margin-top: 12px;
+    border: 2px solid var(--copper);     /* COPPER OUTLINE */
+    border-radius: 14px;
+    padding: 10px;
   }
 
   .set-label {
