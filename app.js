@@ -48,7 +48,7 @@ function createSetBox(card, setData, indexOverride) {
     const boxes = card.querySelectorAll(".set-box");
     if (boxes.length > 1) {
       box.remove();
-      renumberSets(card);   // re-label remaining sets
+      renumberSets(card); // re-label remaining sets
     }
   });
 
@@ -59,7 +59,7 @@ function createSetBox(card, setData, indexOverride) {
   plusBtn.addEventListener("click", () => {
     const wrapper = card.querySelector(".sets-wrapper") || card;
     wrapper.appendChild(createSetBox(card));
-    renumberSets(card);     // make sure numbers stay in order
+    renumberSets(card); // make sure numbers stay in order
   });
 
   // Right-side group: [Reps][–][+]
@@ -82,7 +82,7 @@ function renumberSets(card) {
   boxes.forEach((box, index) => {
     const label = box.querySelector(".set-label");
     if (label) {
-      label.textContent = `Set ${index + 1}`;   // "Set 1", "Set 2", ...
+      label.textContent = `Set ${index + 1}`; // "Set 1", "Set 2", ...
     }
   });
 }
@@ -787,20 +787,24 @@ function restoreFromBackupString(str) {
       renderTemplatesList();
     }
 
-
-
     if (parsed.progressData && typeof parsed.progressData === "object") {
       progressData = parsed.progressData;
       saveProgress(progressData);
       renderProgressList();
     }
 
+    alert("Backup restored!");
+  } catch (e) {
+    console.error("Error restoring backup", e);
+    alert("That backup code was invalid. Make sure you pasted the whole thing.");
+  }
+}
+
 // ---------- Routine share codes ----------
 
 const ROUTINE_SHARE_PREFIX = "CIROUTINEv1:";
 
 function makeShareCode(tpl) {
-  // Only include the bits we care about
   const payload = {
     name: tpl.name || "Shared routine",
     workouts: tpl.workouts || [],
@@ -828,13 +832,6 @@ function tryImportShareCode(rawCode) {
   } catch (e) {
     console.error("Bad share code", e);
     return null;
-  }
-}
-
-    alert("Backup restored!");
-  } catch (e) {
-    console.error("Error restoring backup", e);
-    alert("That backup code was invalid. Make sure you pasted the whole thing.");
   }
 }
 
@@ -906,59 +903,60 @@ function renderTemplatesList() {
     const name = document.createElement("div");
     name.className = "saved-name";
     name.textContent = tpl.name || "Untitled routine";
+    name.title = tpl.name || "Untitled routine";
     row.appendChild(name);
 
-const btnWrap = document.createElement("div");
-btnWrap.className = "saved-buttons";
+    const btnWrap = document.createElement("div");
+    btnWrap.className = "saved-buttons";
 
-const loadBtn = document.createElement("button");
-loadBtn.className = "small-btn load";
-loadBtn.textContent = "Load";
-loadBtn.addEventListener("click", () => {
-  applyTemplateToHome(tpl.workouts || []);
-  showScreen("home");
-});
-btnWrap.appendChild(loadBtn);
+    // 🆕 Share FIRST
+    const shareBtn = document.createElement("button");
+    shareBtn.className = "small-btn share";
+    shareBtn.textContent = "Share";
+    shareBtn.addEventListener("click", () => {
+      const code = makeShareCode(tpl);
+      templateNameInput.value = code;
+      alert(
+        "Share code generated and placed in the 'New routine name' box.\n\n" +
+          "Copy it and send it to your friend. They can paste it into the same box " +
+          "and tap Create to import this routine."
+      );
+    });
+    btnWrap.appendChild(shareBtn);
 
-const openBtn = document.createElement("button");
-openBtn.className = "small-btn open";
-openBtn.textContent = "Open";
-btnWrap.appendChild(openBtn);
+    // Then Load
+    const loadBtn = document.createElement("button");
+    loadBtn.className = "small-btn load";
+    loadBtn.textContent = "Load";
+    loadBtn.addEventListener("click", () => {
+      applyTemplateToHome(tpl.workouts || []);
+      showScreen("home");
+    });
+    btnWrap.appendChild(loadBtn);
 
-// 🆕 SHARE button
-const shareBtn = document.createElement("button");
-shareBtn.className = "small-btn share";
-shareBtn.textContent = "Share";
-shareBtn.addEventListener("click", () => {
-  const code = makeShareCode(tpl);
+    // Then Open
+    const openBtn = document.createElement("button");
+    openBtn.className = "small-btn open";
+    openBtn.textContent = "Open";
+    btnWrap.appendChild(openBtn);
 
-  // Put the code into the "New routine name" box so it’s easy to copy
-  templateNameInput.value = code;
-
-  alert(
-    "Share code generated and placed in the 'New routine name' box.\n\n" +
-    "Copy it and send it to your friend. They can paste it into the same box " +
-    "and tap Create to import this routine."
-  );
-});
-btnWrap.appendChild(shareBtn);
-
-const delBtn = document.createElement("button");
-delBtn.className = "small-btn delete";
-delBtn.textContent = "Delete";
-delBtn.addEventListener("click", () => {
-  const panel = savedTemplatesList.querySelector(
-    `.open-panel[data-index="${index}"]`
-  );
-  if (panel && panel.classList.contains("open")) {
-    closePanelAndSave(panel);
-  }
-  templates.splice(index, 1);
-  saveTemplates(templates);
-  renderTemplatesList();
-  renderProgressList();
-});
-btnWrap.appendChild(delBtn);
+    // Finally Delete
+    const delBtn = document.createElement("button");
+    delBtn.className = "small-btn delete";
+    delBtn.textContent = "Delete";
+    delBtn.addEventListener("click", () => {
+      const panel = savedTemplatesList.querySelector(
+        `.open-panel[data-index="${index}"]`
+      );
+      if (panel && panel.classList.contains("open")) {
+        closePanelAndSave(panel);
+      }
+      templates.splice(index, 1);
+      saveTemplates(templates);
+      renderTemplatesList();
+      renderProgressList();
+    });
+    btnWrap.appendChild(delBtn);
 
     row.appendChild(btnWrap);
     wrapper.appendChild(row);
@@ -1034,6 +1032,10 @@ saveTemplateBtn.addEventListener("click", () => {
   saveTemplates(templates);
   renderTemplatesList();
   templateNameInput.value = "";
+});
+
+backToLogger.addEventListener("click", () => {
+  showScreen("home");
 });
 
 // Re-open tutorial from the menu
