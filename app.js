@@ -335,18 +335,19 @@ if (backToLoggerFromProgress) {
   });
 }
 
+// ***** FIXED: safely handle missing workoutsScreen *****
 function showScreen(which) {
   if (which === "home") {
     homeScreen.classList.add("active");
-    workoutsScreen.classList.remove("active");
+    if (workoutsScreen) workoutsScreen.classList.remove("active");
     progressScreen.classList.remove("active");
   } else if (which === "workouts") {
     homeScreen.classList.remove("active");
-    workoutsScreen.classList.add("active");
+    if (workoutsScreen) workoutsScreen.classList.add("active");
     progressScreen.classList.remove("active");
   } else if (which === "progress") {
     homeScreen.classList.remove("active");
-    workoutsScreen.classList.remove("active");
+    if (workoutsScreen) workoutsScreen.classList.remove("active");
     progressScreen.classList.add("active");
   }
 
@@ -413,7 +414,9 @@ function renderProgressList() {
   const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 
   letters.forEach((letter) => {
-    const hasAny = !!(progressByLetter[letter] && progressByLetter[letter].length);
+    const hasAny = !!(
+      progressByLetter[letter] && progressByLetter[letter].length
+    );
     const btn = document.createElement("button");
     btn.className = "progress-letter-btn";
     if (!hasAny) btn.classList.add("disabled");
@@ -763,7 +766,7 @@ function loadTemplates() {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return [];
 
-  const parsed = JSON.parse(raw);
+    const parsed = JSON.parse(raw);
 
     if (Array.isArray(parsed)) {
       return parsed;
@@ -868,7 +871,7 @@ function restoreFromBackupString(str) {
 
 // ---------- Routine share codes (compact) ----------
 
-const ROUTINE_SHARE_PREFIX = "C1:";          // new compact prefix
+const ROUTINE_SHARE_PREFIX = "C1:"; // new compact prefix
 const LEGACY_SHARE_PREFIX = "CIROUTINEv1:"; // old long prefix (still accepted)
 
 function makeShareCode(tpl) {
