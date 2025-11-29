@@ -787,11 +787,49 @@ function restoreFromBackupString(str) {
       renderTemplatesList();
     }
 
+
+
     if (parsed.progressData && typeof parsed.progressData === "object") {
       progressData = parsed.progressData;
       saveProgress(progressData);
       renderProgressList();
     }
+
+// ---------- Routine share codes ----------
+
+const ROUTINE_SHARE_PREFIX = "CIROUTINEv1:";
+
+function makeShareCode(tpl) {
+  // Only include the bits we care about
+  const payload = {
+    name: tpl.name || "Shared routine",
+    workouts: tpl.workouts || [],
+  };
+  return ROUTINE_SHARE_PREFIX + btoa(JSON.stringify(payload));
+}
+
+function tryImportShareCode(rawCode) {
+  if (!rawCode.startsWith(ROUTINE_SHARE_PREFIX)) return null;
+
+  try {
+    const encoded = rawCode.slice(ROUTINE_SHARE_PREFIX.length);
+    const payload = JSON.parse(atob(encoded));
+
+    const tplName = payload.name || "Shared routine";
+    const safeWorkouts =
+      payload.workouts && payload.workouts.length
+        ? payload.workouts
+        : [{ name: "", sets: [{ weight: "", reps: "" }] }];
+
+    return {
+      name: tplName,
+      workouts: safeWorkouts,
+    };
+  } catch (e) {
+    console.error("Bad share code", e);
+    return null;
+  }
+}
 
     alert("Backup restored!");
   } catch (e) {
@@ -870,39 +908,57 @@ function renderTemplatesList() {
     name.textContent = tpl.name || "Untitled routine";
     row.appendChild(name);
 
-    const btnWrap = document.createElement("div");
-    btnWrap.className = "saved-buttons";
+const btnWrap = document.createElement("div");
+btnWrap.className = "saved-buttons";
 
-    const loadBtn = document.createElement("button");
-    loadBtn.className = "small-btn load";
-    loadBtn.textContent = "Load";
-    loadBtn.addEventListener("click", () => {
-      applyTemplateToHome(tpl.workouts || []);
-      showScreen("home");
-    });
-    btnWrap.appendChild(loadBtn);
+const loadBtn = document.createElement("button");
+loadBtn.className = "small-btn load";
+loadBtn.textContent = "Load";
+loadBtn.addEventListener("click", () => {
+  applyTemplateToHome(tpl.workouts || []);
+  showScreen("home");
+});
+btnWrap.appendChild(loadBtn);
 
-    const openBtn = document.createElement("button");
-    openBtn.className = "small-btn open";
-    openBtn.textContent = "Open";
-    btnWrap.appendChild(openBtn);
+const openBtn = document.createElement("button");
+openBtn.className = "small-btn open";
+openBtn.textContent = "Open";
+btnWrap.appendChild(openBtn);
 
-    const delBtn = document.createElement("button");
-    delBtn.className = "small-btn delete";
-    delBtn.textContent = "Delete";
-    delBtn.addEventListener("click", () => {
-      const panel = savedTemplatesList.querySelector(
-        `.open-panel[data-index="${index}"]`
-      );
-      if (panel && panel.classList.contains("open")) {
-        closePanelAndSave(panel);
-      }
-      templates.splice(index, 1);
-      saveTemplates(templates);
-      renderTemplatesList();
-      renderProgressList();
-    });
-    btnWrap.appendChild(delBtn);
+// 🆕 SHARE button
+const shareBtn = document.createElement("button");
+shareBtn.className = "small-btn share";
+shareBtn.textContent = "Share";
+shareBtn.addEventListener("click", () => {
+  const code = makeShareCode(tpl);
+
+  // Put the code into the "New routine name" box so it’s easy to copy
+  templateNameInput.value = code;
+
+  alert(
+    "Share code generated and placed in the 'New routine name' box.\n\n" +
+    "Copy it and send it to your friend. They can paste it into the same box " +
+    "and tap Create to import this routine."
+  );
+});
+btnWrap.appendChild(shareBtn);
+
+const delBtn = document.createElement("button");
+delBtn.className = "small-btn delete";
+delBtn.textContent = "Delete";
+delBtn.addEventListener("click", () => {
+  const panel = savedTemplatesList.querySelector(
+    `.open-panel[data-index="${index}"]`
+  );
+  if (panel && panel.classList.contains("open")) {
+    closePanelAndSave(panel);
+  }
+  templates.splice(index, 1);
+  saveTemplates(templates);
+  renderTemplatesList();
+  renderProgressList();
+});
+btnWrap.appendChild(delBtn);
 
     row.appendChild(btnWrap);
     wrapper.appendChild(row);
@@ -939,12 +995,29 @@ function renderTemplatesList() {
 }
 
 saveTemplateBtn.addEventListener("click", () => {
-  const name = templateNameInput.value.trim();
-  if (!name) {
-    alert("Give this routine a name first.");
+  const raw = templateNameInput.value.trim();
+  if (!raw) {
+    alert("Give this routine a name first, or paste a share code.");
     return;
   }
 
+  // 1️⃣ Try to treat the input as a share code
+  const imported = tryImportShareCode(raw);
+  if (imported) {
+    templates.push({
+      id: Date.now(),
+      name: imported.name,
+      workouts: JSON.parse(JSON.stringify(imported.workouts)),
+    });
+    saveTemplates(templates);
+    renderTemplatesList();
+    templateNameInput.value = "";
+    alert(`Shared routine imported as "${imported.name}".`);
+    return;
+  }
+
+  // 2️⃣ Normal behaviour – create from current layout using the typed name
+  const name = raw;
   const workoutsData = getCurrentWorkoutLayout();
 
   const safeWorkouts =
@@ -961,10 +1034,6 @@ saveTemplateBtn.addEventListener("click", () => {
   saveTemplates(templates);
   renderTemplatesList();
   templateNameInput.value = "";
-});
-
-backToLogger.addEventListener("click", () => {
-  showScreen("home");
 });
 
 // Re-open tutorial from the menu
