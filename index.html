@@ -17,12 +17,12 @@
     --card-inner: #141518;
     --text-main: #ffffff;
     --text-muted: #b3b3b3;
-
     /* Neon green theme */
     --accent: #39ff14;        /* bright neon */
     --accent-soft: #00c853;   /* softer emerald for buttons/tutorial */
     --accent-dark: #00b34a;   /* darker green for outlines/focus */
     --copper: #8b5a2b;
+    --gunmental: #1A1E2C;
     --danger: #d93030;
     --danger-soft: #a52424;
     --border-soft: #262626;
@@ -55,7 +55,7 @@
   }
 
   .workout-card.collapsed {
-    padding: 8px 14px;
+    display: none;
   }
 
   .workout-card.collapsed .workout-header {
@@ -210,6 +210,9 @@
     border-radius: var(--radius-card);
     padding: 18px 16px 24px;
     box-shadow: var(--shadow-soft);
+    border: 2px solid var(--gunmetal);      /* COPPER OUTLINE */
+    border-radius: 22px;                  /* matches your rounded look */
+    padding: 20px;
   }
 
   .card-title {
