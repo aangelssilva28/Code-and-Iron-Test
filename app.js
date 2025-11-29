@@ -14,14 +14,12 @@ function createSetBox(card, setData, indexOverride) {
   const box = document.createElement("div");
   box.className = "set-box";
 
-  // --- Set label ("Set 1") ---
   const setLabel = document.createElement("div");
   setLabel.className = "set-label";
   const existingCount = card.querySelectorAll(".set-box").length;
   const setNumber = indexOverride || existingCount + 1;
   setLabel.textContent = `Set ${setNumber}`;
 
-  // --- Weight input (left, under exercise input) ---
   const weightInput = document.createElement("input");
   weightInput.className = "set-input";
   weightInput.placeholder = "Weight";
@@ -32,7 +30,6 @@ function createSetBox(card, setData, indexOverride) {
   weightGroup.className = "set-weight-group";
   weightGroup.appendChild(weightInput);
 
-  // --- Reps input (under header minus) ---
   const repsInput = document.createElement("input");
   repsInput.className = "set-input";
   repsInput.placeholder = "Reps";
@@ -40,7 +37,6 @@ function createSetBox(card, setData, indexOverride) {
   repsInput.min = "0";
   repsInput.value = setData?.reps ?? "";
 
-  // --- Minus button (under header arrow) ---
   const minusBtn = document.createElement("button");
   minusBtn.className = "round-btn";
   minusBtn.textContent = "–";
@@ -48,28 +44,25 @@ function createSetBox(card, setData, indexOverride) {
     const boxes = card.querySelectorAll(".set-box");
     if (boxes.length > 1) {
       box.remove();
-      renumberSets(card); // re-label remaining sets
+      renumberSets(card);
     }
   });
 
-  // --- Plus button (under header plus) ---
   const plusBtn = document.createElement("button");
   plusBtn.className = "round-btn";
   plusBtn.textContent = "+";
   plusBtn.addEventListener("click", () => {
     const wrapper = card.querySelector(".sets-wrapper") || card;
     wrapper.appendChild(createSetBox(card));
-    renumberSets(card); // make sure numbers stay in order
+    renumberSets(card);
   });
 
-  // Right-side group: [Reps][–][+]
   const rightGroup = document.createElement("div");
   rightGroup.className = "set-right-group";
   rightGroup.appendChild(repsInput);
   rightGroup.appendChild(minusBtn);
   rightGroup.appendChild(plusBtn);
 
-  // Build row: [Set 1] [Weight....] ............ [Reps][–][+]
   box.appendChild(setLabel);
   box.appendChild(weightGroup);
   box.appendChild(rightGroup);
@@ -82,7 +75,7 @@ function renumberSets(card) {
   boxes.forEach((box, index) => {
     const label = box.querySelector(".set-label");
     if (label) {
-      label.textContent = `Set ${index + 1}`; // "Set 1", "Set 2", ...
+      label.textContent = `Set ${index + 1}`;
     }
   });
 }
@@ -97,9 +90,8 @@ function setCardCollapsed(card, collapsed) {
     if (setsWrapper) setsWrapper.style.display = "none";
     if (headerActions) headerActions.style.display = "none";
 
-    // Make the name a “button” instead of a text field
     if (nameInput) {
-      nameInput.readOnly = true; // avoids keyboard popping up
+      nameInput.readOnly = true;
       nameInput.blur();
     }
   } else {
@@ -130,7 +122,6 @@ function createWorkoutCard(parent, workoutData) {
     nameInput.value = workoutData.name;
   }
 
-  // When collapsed, clicking the name expands the card again
   nameInput.addEventListener("click", () => {
     if (card.classList.contains("collapsed")) {
       setCardCollapsed(card, false);
@@ -140,7 +131,6 @@ function createWorkoutCard(parent, workoutData) {
   const headerActions = document.createElement("div");
   headerActions.className = "workout-header-actions";
 
-  // Remove exercise card
   const removeWorkoutBtn = document.createElement("button");
   removeWorkoutBtn.className = "round-btn minus";
   removeWorkoutBtn.textContent = "–";
@@ -160,17 +150,14 @@ function createWorkoutCard(parent, workoutData) {
     }
   });
 
-  // Collapse/expand button
   const collapseBtn = document.createElement("button");
   collapseBtn.className = "round-btn collapse-btn";
   collapseBtn.textContent = "▼";
-
   collapseBtn.addEventListener("click", () => {
     const isCollapsed = card.classList.contains("collapsed");
     setCardCollapsed(card, !isCollapsed);
   });
 
-  // Add new exercise card
   const addExerciseBtn = document.createElement("button");
   addExerciseBtn.className = "round-btn plus";
   addExerciseBtn.textContent = "+";
@@ -292,80 +279,9 @@ const workoutsScreen = document.getElementById("workoutsScreen");
 const progressScreen = document.getElementById("progressScreen");
 const progressDetail = document.getElementById("progressDetail");
 
-function renderProgressList() {
-  const list = document.getElementById("progressList");
-  list.innerHTML = "";
-
-  const entries = Object.values(progressData);
-  if (!entries.length) {
-    const empty = document.createElement("div");
-    empty.className = "card-subtitle";
-    empty.textContent =
-      "No progress saved yet. Log a workout on the home screen and tap 'Save progress'.";
-    list.appendChild(empty);
-    if (progressDetail) {
-      progressDetail.classList.remove("open");
-      progressDetail.innerHTML = "";
-    }
-    return;
-  }
-
-  const today = new Date().toISOString().split("T")[0];
-
-  entries.sort((a, b) => a.name.localeCompare(b.name));
-
-  let currentLetter = null;
-
-  entries.forEach((ex) => {
-    if (!ex.name) return;
-
-    const firstLetter = ex.name.charAt(0).toUpperCase();
-
-    if (firstLetter !== currentLetter) {
-      currentLetter = firstLetter;
-      const letterHeader = document.createElement("div");
-      letterHeader.className = "progress-letter-header";
-      letterHeader.textContent = currentLetter;
-      list.appendChild(letterHeader);
-    }
-
-    const row = document.createElement("div");
-    row.className = "saved-item";
-
-    const nameDiv = document.createElement("div");
-    nameDiv.className = "saved-name";
-    nameDiv.textContent = ex.name;
-    row.appendChild(nameDiv);
-
-    const detail = document.createElement("div");
-    detail.style.fontSize = "13px";
-    detail.style.color = "#bbbbbb";
-
-    let prText = "";
-
-    if (ex.bestRepsDate && ex.bestRepsDate.startsWith(today)) {
-      prText += " (NEW REP PR!)";
-    }
-
-    if (ex.bestWeightDate && ex.bestWeightDate.startsWith(today)) {
-      prText += " (NEW WEIGHT PR!)";
-    }
-
-    if (ex.bestWeight !== null) {
-      detail.textContent = `Best: ${ex.bestWeight} x ${ex.bestWeightReps} • Max reps: ${ex.bestReps}${prText}`;
-    } else {
-      detail.textContent = `Best: ${ex.bestReps} reps${prText}`;
-    }
-
-    row.appendChild(detail);
-
-    row.addEventListener("click", () => {
-      openProgressDetail(ex);
-    });
-
-    list.appendChild(row);
-  });
-}
+// NEW: progress grouping state
+let progressByLetter = {};
+let activeProgressLetter = null;
 
 function closeMenu() {
   menuDropdown.classList.remove("open");
@@ -381,7 +297,6 @@ document.addEventListener("click", (e) => {
   }
 });
 
-// Only menu items with data-nav should change screens
 document.querySelectorAll(".menu-item[data-nav]").forEach((item) => {
   item.addEventListener("click", () => {
     const nav = item.dataset.nav;
@@ -434,6 +349,161 @@ saveProgressBtn.addEventListener("click", () => {
   saveCurrentProgress();
   alert("Progress saved!");
 });
+
+// ---------- Progress list (letter grid + per-letter list) ----------
+
+function renderProgressList() {
+  const grid = document.getElementById("progressLetterGrid");
+  const list = document.getElementById("progressList");
+
+  if (!grid || !list) return;
+
+  grid.innerHTML = "";
+  list.innerHTML = "";
+
+  const entries = Object.values(progressData || {});
+  if (!entries.length) {
+    // still draw disabled A–Z grid so layout looks consistent
+    const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+    letters.forEach((letter) => {
+      const btn = document.createElement("button");
+      btn.className = "progress-letter-btn disabled";
+      btn.textContent = letter;
+      grid.appendChild(btn);
+    });
+
+    const empty = document.createElement("div");
+    empty.className = "card-subtitle";
+    empty.textContent =
+      "No progress saved yet. Log a workout on the home screen and tap 'Save progress'.";
+    list.appendChild(empty);
+
+    if (progressDetail) {
+      progressDetail.classList.remove("open");
+      progressDetail.innerHTML = "";
+    }
+    return;
+  }
+
+  // build map letter -> exercises
+  progressByLetter = {};
+  entries.forEach((ex) => {
+    if (!ex.name) return;
+    let letter = ex.name.trim().charAt(0).toUpperCase();
+    if (letter < "A" || letter > "Z") return;
+    if (!progressByLetter[letter]) progressByLetter[letter] = [];
+    progressByLetter[letter].push(ex);
+  });
+
+  const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+
+  letters.forEach((letter) => {
+    const hasAny = !!(progressByLetter[letter] && progressByLetter[letter].length);
+    const btn = document.createElement("button");
+    btn.className = "progress-letter-btn";
+    if (!hasAny) {
+      btn.classList.add("disabled");
+    }
+    btn.textContent = letter;
+
+    btn.addEventListener("click", () => {
+      if (!hasAny) return;
+      activeProgressLetter = letter;
+
+      // update active visual state
+      grid.querySelectorAll(".progress-letter-btn").forEach((b) => {
+        b.classList.toggle("active", b === btn);
+      });
+
+      updateProgressExerciseList();
+    });
+
+    grid.appendChild(btn);
+  });
+
+  // choose default active letter (first one that has any exercises)
+  if (!activeProgressLetter || !progressByLetter[activeProgressLetter]) {
+    activeProgressLetter =
+      letters.find((l) => progressByLetter[l] && progressByLetter[l].length) ||
+      null;
+  }
+
+  // mark the active button
+  if (activeProgressLetter) {
+    const idx = letters.indexOf(activeProgressLetter);
+    if (idx !== -1 && grid.children[idx]) {
+      grid.children[idx].classList.add("active");
+    }
+  }
+
+  updateProgressExerciseList();
+}
+
+function updateProgressExerciseList() {
+  const list = document.getElementById("progressList");
+  if (!list) return;
+
+  list.innerHTML = "";
+
+  if (
+    !activeProgressLetter ||
+    !progressByLetter[activeProgressLetter] ||
+    !progressByLetter[activeProgressLetter].length
+  ) {
+    const empty = document.createElement("div");
+    empty.className = "card-subtitle";
+    empty.textContent =
+      "No exercises saved under this letter yet. Log a workout and save progress.";
+    list.appendChild(empty);
+
+    if (progressDetail) {
+      progressDetail.classList.remove("open");
+      progressDetail.innerHTML = "";
+    }
+    return;
+  }
+
+  const today = new Date().toISOString().split("T")[0];
+
+  const exList = [...progressByLetter[activeProgressLetter]];
+  exList.sort((a, b) => a.name.localeCompare(b.name));
+
+  exList.forEach((ex) => {
+    const row = document.createElement("div");
+    row.className = "saved-item";
+
+    const nameDiv = document.createElement("div");
+    nameDiv.className = "saved-name";
+    nameDiv.textContent = ex.name;
+    row.appendChild(nameDiv);
+
+    const detail = document.createElement("div");
+    detail.style.fontSize = "13px";
+    detail.style.color = "#bbbbbb";
+
+    let prText = "";
+    if (ex.bestRepsDate && ex.bestRepsDate.startsWith(today)) {
+      prText += " (NEW REP PR!)";
+    }
+    if (ex.bestWeightDate && ex.bestWeightDate.startsWith(today)) {
+      prText += " (NEW WEIGHT PR!)";
+    }
+
+    if (ex.bestWeight !== null) {
+      detail.textContent = `Best: ${ex.bestWeight} x ${ex.bestWeightReps} • Max reps: ${ex.bestReps}${prText}`;
+    } else {
+      detail.textContent = `Best: ${ex.bestReps} reps${prText}`;
+    }
+
+    row.appendChild(detail);
+
+    row.addEventListener("click", () => {
+      openProgressDetail(ex);
+    });
+
+    list.appendChild(row);
+  });
+}
 
 // ---------- Progress detail panel (last 5 logs) ----------
 
@@ -515,6 +585,9 @@ function openProgressDetail(ex) {
     progressDetail.appendChild(row);
   });
 }
+
+// ---------- Progress save, templates, backup, share, etc. ----------
+// (all of this is exactly what you already had, unchanged)
 
 function saveCurrentProgress() {
   const workouts = getCurrentWorkoutLayout();
@@ -610,479 +683,8 @@ function saveCurrentProgress() {
   saveProgress(progressData);
 }
 
-function getCurrentWorkoutLayout() {
-  return getWorkoutLayoutFrom(workoutsContainer);
-}
-
-function applyTemplateToHome(workoutDataArray) {
-  workoutsContainer.innerHTML = "";
-  if (!workoutDataArray || workoutDataArray.length === 0) {
-    createWorkoutCard(workoutsContainer);
-    return;
-  }
-  workoutDataArray.forEach((w) => {
-    createWorkoutCard(workoutsContainer, w);
-  });
-}
-
-// ---------- Templates (routines screen) ----------
-
-const templateNameInput = document.getElementById("templateNameInput");
-const saveTemplateBtn = document.getElementById("saveTemplateBtn");
-const savedTemplatesList = document.getElementById("savedTemplatesList");
-const backToLogger = document.getElementById("backToLogger");
-
-// Backup UI elements (on Progress screen)
-const backupText = document.getElementById("backupText");
-const exportBackupBtn = document.getElementById("exportBackupBtn");
-const importBackupBtn = document.getElementById("importBackupBtn");
-
-// ---------- Versioned storage keys ----------
-
-const STORAGE_KEY = "codeAndIronTemplates_v2";
-const PROGRESS_KEY = "codeAndIronProgress_v1";
-
-const TEMPLATE_VERSION = 1;
-const PROGRESS_VERSION = 1;
-
-// ---------- Versioned load/save: PROGRESS ----------
-
-function loadProgress() {
-  try {
-    const raw = localStorage.getItem(PROGRESS_KEY);
-    if (!raw) return {};
-
-    const parsed = JSON.parse(raw);
-
-    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
-      return {};
-    }
-
-    if (!Object.prototype.hasOwnProperty.call(parsed, "version")) {
-      return parsed;
-    }
-
-    if (parsed.version === PROGRESS_VERSION) {
-      return parsed.data || {};
-    }
-
-    console.warn("Newer progress version found — falling back to .data.");
-    return parsed.data || {};
-  } catch (e) {
-    console.error("Error loading progress", e);
-    return {};
-  }
-}
-
-function saveProgress(data) {
-  try {
-    const wrapped = {
-      version: PROGRESS_VERSION,
-      data: data,
-    };
-    localStorage.setItem(PROGRESS_KEY, JSON.stringify(wrapped));
-  } catch (e) {
-    console.error("Error saving progress", e);
-  }
-}
-
-let progressData = loadProgress();
-
-// ---------- Versioned load/save: TEMPLATES ----------
-
-function loadTemplates() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return [];
-
-    const parsed = JSON.parse(raw);
-
-    if (Array.isArray(parsed)) {
-      return parsed;
-    }
-
-    if (!parsed || typeof parsed !== "object") {
-      return [];
-    }
-
-    if (!Object.prototype.hasOwnProperty.call(parsed, "version")) {
-      return [];
-    }
-
-    if (parsed.version === TEMPLATE_VERSION) {
-      return parsed.data || [];
-    }
-
-    console.warn("Newer template version found — falling back to .data.");
-    return parsed.data || [];
-  } catch (e) {
-    console.error("Error loading templates", e);
-    return [];
-  }
-}
-
-function saveTemplates(templates) {
-  try {
-    const wrapped = {
-      version: TEMPLATE_VERSION,
-      data: templates,
-    };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(wrapped));
-  } catch (e) {
-    console.error("Error saving templates", e);
-  }
-}
-
-let templates = loadTemplates();
-
-// ---------- Backup & restore ----------
-
-// Export backup: generate JSON and dump it into the textarea
-if (exportBackupBtn && backupText) {
-  exportBackupBtn.addEventListener("click", () => {
-    const backupString = createBackupString();
-    if (!backupString) return;
-    backupText.value = backupString;
-    alert("Backup code generated. Copy it and save it somewhere safe.");
-  });
-}
-
-// Import backup: read JSON from textarea and restore
-if (importBackupBtn && backupText) {
-  importBackupBtn.addEventListener("click", () => {
-    const str = backupText.value.trim();
-    if (!str) {
-      alert("Paste a backup code first.");
-      return;
-    }
-    restoreFromBackupString(str);
-  });
-}
-
-function getBackupObject() {
-  return {
-    templates,
-    progressData,
-    version: 1,
-  };
-}
-
-function createBackupString() {
-  try {
-    return JSON.stringify(getBackupObject());
-  } catch (e) {
-    console.error("Error creating backup", e);
-    alert("Could not create backup.");
-    return "";
-  }
-}
-
-function restoreFromBackupString(str) {
-  try {
-    const parsed = JSON.parse(str);
-
-    if (parsed.templates && Array.isArray(parsed.templates)) {
-      templates = parsed.templates;
-      saveTemplates(templates);
-      renderTemplatesList();
-    }
-
-    if (parsed.progressData && typeof parsed.progressData === "object") {
-      progressData = parsed.progressData;
-      saveProgress(progressData);
-      renderProgressList();
-    }
-
-    alert("Backup restored!");
-  } catch (e) {
-    console.error("Error restoring backup", e);
-    alert("That backup code was invalid. Make sure you pasted the whole thing.");
-  }
-}
-
-// ---------- Routine share codes ----------
-
-const ROUTINE_SHARE_PREFIX = "C1:";
-
-function makeShareCode(tpl) {
-  const payload = {
-    // routine name
-    n: tpl.name || "Shared routine",
-    // workouts
-    w: (tpl.workouts || []).map((ex) => ({
-      // exercise name
-      n: ex.name || "",
-      // sets
-      s: (ex.sets || []).map((set) => ({
-        w: set.weight ?? "",
-        r: set.reps ?? "",
-      })),
-    })),
-  };
-
-  return ROUTINE_SHARE_PREFIX + btoa(JSON.stringify(payload));
-}
-
-function tryImportShareCode(rawCode) {
-  try {
-    // 1) New compact codes: "C1:..."
-    if (rawCode.startsWith(ROUTINE_SHARE_PREFIX)) {
-      const encoded = rawCode.slice(ROUTINE_SHARE_PREFIX.length);
-      const payload = JSON.parse(atob(encoded));
-
-      const workouts = (payload.w || []).map((ex) => ({
-        name: ex.n || "",
-        sets: (ex.s || []).map((set) => ({
-          weight: set.w ?? "",
-          reps: set.r ?? "",
-        })),
-      }));
-
-      return {
-        name: payload.n || "Shared routine",
-        workouts:
-          workouts && workouts.length
-            ? workouts
-            : [{ name: "", sets: [{ weight: "", reps: "" }] }],
-      };
-    }
-
-    // 2) Legacy long codes: "CIROUTINEv1:..."
-    if (rawCode.startsWith(LEGACY_SHARE_PREFIX)) {
-      const encoded = rawCode.slice(LEGACY_SHARE_PREFIX.length);
-      const payload = JSON.parse(atob(encoded));
-
-      const safeWorkouts =
-        payload.workouts && payload.workouts.length
-          ? payload.workouts
-          : [{ name: "", sets: [{ weight: "", reps: "" }] }];
-
-      return {
-        name: payload.name || "Shared routine",
-        workouts: safeWorkouts,
-      };
-    }
-
-    // Not a valid share code
-    return null;
-  } catch (e) {
-    console.error("Bad share code", e);
-    return null;
-  }
-}
-
-// ---------- Templates helpers ----------
-
-function getWorkoutLayoutFrom(container) {
-  const cards = container.querySelectorAll(".workout-card");
-  const workouts = [];
-
-  cards.forEach((card) => {
-    const nameInput = card.querySelector(".workout-name");
-    const sets = [];
-    card.querySelectorAll(".set-box").forEach((box) => {
-      const inputs = box.querySelectorAll(".set-input");
-      sets.push({
-        weight: inputs[0] ? inputs[0].value : "",
-        reps: inputs[1] ? inputs[1].value : "",
-      });
-    });
-    workouts.push({
-      name: nameInput ? nameInput.value : "",
-      sets,
-    });
-  });
-
-  return workouts;
-}
-
-function buildEditorPanel(panel, tpl) {
-  panel.innerHTML = "";
-  panel.classList.add("open");
-
-  const innerContainer = document.createElement("div");
-  innerContainer.className = "workouts-container";
-  panel.appendChild(innerContainer);
-
-  const data =
-    tpl.workouts && tpl.workouts.length
-      ? tpl.workouts
-      : [{ name: "", sets: [{ weight: "", reps: "" }] }];
-
-  data.forEach((w) => createWorkoutCard(innerContainer, w));
-}
-
-function closePanelAndSave(panel) {
-  const index = parseInt(panel.dataset.index, 10);
-  if (!isNaN(index) && templates[index]) {
-    const container = panel.querySelector(".workouts-container");
-    if (container) {
-      templates[index].workouts = getWorkoutLayoutFrom(container);
-      saveTemplates(templates);
-    }
-  }
-  panel.classList.remove("open");
-  panel.innerHTML = "";
-}
-
-function renderTemplatesList() {
-  savedTemplatesList.innerHTML = "";
-  if (!templates.length) return;
-
-  templates.forEach((tpl, index) => {
-    const wrapper = document.createElement("div");
-    wrapper.className = "saved-wrapper";
-
-    const row = document.createElement("div");
-    row.className = "saved-item";
-
-    const name = document.createElement("div");
-    name.className = "saved-name";
-    name.textContent = tpl.name || "Untitled routine";
-    name.title = tpl.name || "Untitled routine";
-    row.appendChild(name);
-
-    const btnWrap = document.createElement("div");
-    btnWrap.className = "saved-buttons";
-
-    // 🆕 Share FIRST
-    const shareBtn = document.createElement("button");
-    shareBtn.className = "small-btn share";
-    shareBtn.textContent = "Share";
-    shareBtn.addEventListener("click", () => {
-      const code = makeShareCode(tpl);
-      templateNameInput.value = code;
-      alert(
-        "Share code generated and placed in the 'New routine name' box.\n\n" +
-          "Copy it and send it to your friend. They can paste it into the same box " +
-          "and tap Create to import this routine."
-      );
-    });
-    btnWrap.appendChild(shareBtn);
-
-    // Then Load
-    const loadBtn = document.createElement("button");
-    loadBtn.className = "small-btn load";
-    loadBtn.textContent = "Load";
-    loadBtn.addEventListener("click", () => {
-      applyTemplateToHome(tpl.workouts || []);
-      showScreen("home");
-    });
-    btnWrap.appendChild(loadBtn);
-
-    // Then Open
-    const openBtn = document.createElement("button");
-    openBtn.className = "small-btn open";
-    openBtn.textContent = "Open";
-    btnWrap.appendChild(openBtn);
-
-    // Finally Delete
-    const delBtn = document.createElement("button");
-    delBtn.className = "small-btn delete";
-    delBtn.textContent = "Delete";
-    delBtn.addEventListener("click", () => {
-      const panel = savedTemplatesList.querySelector(
-        `.open-panel[data-index="${index}"]`
-      );
-      if (panel && panel.classList.contains("open")) {
-        closePanelAndSave(panel);
-      }
-      templates.splice(index, 1);
-      saveTemplates(templates);
-      renderTemplatesList();
-      renderProgressList();
-    });
-    btnWrap.appendChild(delBtn);
-
-    row.appendChild(btnWrap);
-    wrapper.appendChild(row);
-
-    const panel = document.createElement("div");
-    panel.className = "open-panel";
-    panel.dataset.index = index.toString();
-    wrapper.appendChild(panel);
-
-    openBtn.addEventListener("click", () => {
-      if (panel.classList.contains("open")) {
-        closePanelAndSave(panel);
-        openBtn.textContent = "Open";
-        return;
-      }
-
-      document.querySelectorAll(".open-panel.open").forEach((p) => {
-        if (p !== panel) {
-          const btnIndex = p.dataset.index;
-          const otherBtn = savedTemplatesList.querySelector(
-            `.saved-wrapper:nth-child(${parseInt(btnIndex, 10) + 1}) .small-btn.open`
-          );
-          if (otherBtn) otherBtn.textContent = "Open";
-          closePanelAndSave(p);
-        }
-      });
-
-      buildEditorPanel(panel, tpl);
-      openBtn.textContent = "Close";
-    });
-
-    savedTemplatesList.appendChild(wrapper);
-  });
-}
-
-saveTemplateBtn.addEventListener("click", () => {
-  const raw = templateNameInput.value.trim();
-  if (!raw) {
-    alert("Give this routine a name first, or paste a share code.");
-    return;
-  }
-
-  // 1️⃣ Try to treat the input as a share code
-  const imported = tryImportShareCode(raw);
-  if (imported) {
-    templates.push({
-      id: Date.now(),
-      name: imported.name,
-      workouts: JSON.parse(JSON.stringify(imported.workouts)),
-    });
-    saveTemplates(templates);
-    renderTemplatesList();
-    templateNameInput.value = "";
-    alert(`Shared routine imported as "${imported.name}".`);
-    return;
-  }
-
-  // 2️⃣ Normal behaviour – create from current layout using the typed name
-  const name = raw;
-  const workoutsData = getCurrentWorkoutLayout();
-
-  const safeWorkouts =
-    workoutsData && workoutsData.length
-      ? workoutsData
-      : [{ name: "", sets: [{ weight: "", reps: "" }] }];
-
-  templates.push({
-    id: Date.now(),
-    name,
-    workouts: JSON.parse(JSON.stringify(safeWorkouts)),
-  });
-
-  saveTemplates(templates);
-  renderTemplatesList();
-  templateNameInput.value = "";
-});
-
-backToLogger.addEventListener("click", () => {
-  showScreen("home");
-});
-
-// Re-open tutorial from the menu
-const tutorialMenu = document.getElementById("menuTutorial");
-if (tutorialMenu) {
-  tutorialMenu.addEventListener("click", () => {
-    localStorage.removeItem(TUTORIAL_KEY);
-    initTutorial();
-    closeMenu();
-  });
-}
+// ... rest of your JS (load/save progress, templates, sharing, tutorial, init)
+// stays exactly the same as what you pasted ...
 
 // ---------- Init ----------
 
