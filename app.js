@@ -278,6 +278,11 @@ const homeScreen = document.getElementById("homeScreen");
 const workoutsScreen = document.getElementById("workoutsScreen");
 const progressScreen = document.getElementById("progressScreen");
 const progressDetail = document.getElementById("progressDetail");
+// Progress letter-grid state
+const progressLetterGrid = document.getElementById("progressLetterGrid");
+let progressByLetter = {};
+let activeProgressLetter = null;
+
 
 // NEW: progress grouping state
 let progressByLetter = {};
@@ -363,9 +368,8 @@ function renderProgressList() {
 
   const entries = Object.values(progressData || {});
   if (!entries.length) {
-    // still draw disabled A–Z grid so layout looks consistent
-    const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
-    letters.forEach((letter) => {
+    // draw disabled A–Z grid so layout is consistent
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").forEach((letter) => {
       const btn = document.createElement("button");
       btn.className = "progress-letter-btn disabled";
       btn.textContent = letter;
@@ -385,7 +389,7 @@ function renderProgressList() {
     return;
   }
 
-  // build map letter -> exercises
+  // Build map letter -> exercises
   progressByLetter = {};
   entries.forEach((ex) => {
     if (!ex.name) return;
@@ -401,16 +405,13 @@ function renderProgressList() {
     const hasAny = !!(progressByLetter[letter] && progressByLetter[letter].length);
     const btn = document.createElement("button");
     btn.className = "progress-letter-btn";
-    if (!hasAny) {
-      btn.classList.add("disabled");
-    }
+    if (!hasAny) btn.classList.add("disabled");
     btn.textContent = letter;
 
     btn.addEventListener("click", () => {
       if (!hasAny) return;
       activeProgressLetter = letter;
 
-      // update active visual state
       grid.querySelectorAll(".progress-letter-btn").forEach((b) => {
         b.classList.toggle("active", b === btn);
       });
@@ -421,14 +422,13 @@ function renderProgressList() {
     grid.appendChild(btn);
   });
 
-  // choose default active letter (first one that has any exercises)
+  // Default active letter = first letter that has exercises
   if (!activeProgressLetter || !progressByLetter[activeProgressLetter]) {
     activeProgressLetter =
       letters.find((l) => progressByLetter[l] && progressByLetter[l].length) ||
       null;
   }
 
-  // mark the active button
   if (activeProgressLetter) {
     const idx = letters.indexOf(activeProgressLetter);
     if (idx !== -1 && grid.children[idx]) {
@@ -437,6 +437,72 @@ function renderProgressList() {
   }
 
   updateProgressExerciseList();
+}
+
+function updateProgressExerciseList() {
+  const list = document.getElementById("progressList");
+  if (!list) return;
+
+  list.innerHTML = "";
+
+  if (
+    !activeProgressLetter ||
+    !progressByLetter[activeProgressLetter] ||
+    !progressByLetter[activeProgressLetter].length
+  ) {
+    const empty = document.createElement("div");
+    empty.className = "card-subtitle";
+    empty.textContent =
+      "No exercises saved under this letter yet. Log a workout and save progress.";
+    list.appendChild(empty);
+
+    if (progressDetail) {
+      progressDetail.classList.remove("open");
+      progressDetail.innerHTML = "";
+    }
+    return;
+  }
+
+  const today = new Date().toISOString().split("T")[0];
+
+  const exList = [...progressByLetter[activeProgressLetter]];
+  exList.sort((a, b) => a.name.localeCompare(b.name));
+
+  exList.forEach((ex) => {
+    const row = document.createElement("div");
+    row.className = "saved-item";
+
+    const nameDiv = document.createElement("div");
+    nameDiv.className = "saved-name";
+    nameDiv.textContent = ex.name;
+    row.appendChild(nameDiv);
+
+    const detail = document.createElement("div");
+    detail.style.fontSize = "13px";
+    detail.style.color = "#bbbbbb";
+
+    let prText = "";
+    if (ex.bestRepsDate && ex.bestRepsDate.startsWith(today)) {
+      prText += " (NEW REP PR!)";
+    }
+    if (ex.bestWeightDate && ex.bestWeightDate.startsWith(today)) {
+      prText += " (NEW WEIGHT PR!)";
+    }
+
+    if (ex.bestWeight !== null) {
+      detail.textContent = `Best: ${ex.bestWeight} x ${ex.bestWeightReps} • Max reps: ${ex.bestReps}${prText}`;
+    } else {
+      detail.textContent = `Best: ${ex.bestReps} reps${prText}`;
+    }
+
+    row.appendChild(detail);
+
+    row.addEventListener("click", () => {
+      openProgressDetail(ex);
+    });
+
+    list.appendChild(row);
+  });
 }
 
 function updateProgressExerciseList() {
