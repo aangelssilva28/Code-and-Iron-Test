@@ -11,766 +11,696 @@
   <link href="https://fonts.googleapis.com/css2?family=Germania+One&display=swap" rel="stylesheet">
 
   <style>
-  :root {
-    --bg: #000000;
-    --card: #111214;
-    --card-inner: #141518;
-    --text-main: #ffffff;
-    --text-muted: #b3b3b3;
-    /* Neon green theme */
-    --accent: #39ff14;        /* bright neon */
-    --accent-soft: #00c853;   /* softer emerald for buttons/tutorial */
-    --accent-dark: #00b34a;   /* darker green for outlines/focus */
-    --copper: #8b5a2b;
-    --gunmetal: #1A1E2C;
-    --danger: #d93030;
-    --danger-soft: #a52424;
-    --border-soft: #262626;
-    --radius-card: 24px;
-    --radius-pill: 999px;
-    --shadow-soft: 0 10px 30px rgba(0, 0, 0, 0.7);
-  }
+    :root {
+      --bg: #000000;
+      --card: #111214;
+      --card-inner: #141518;
+      --text-main: #ffffff;
+      --text-muted: #b3b3b3;
+      --accent: #39ff14;
+      --accent-soft: #00c853;
+      --accent-dark: #00b34a;
+      --copper: #8b5a2b;
+      --gunmetal: #1A1E2C;
+      --danger: #d93030;
+      --danger-soft: #a52424;
+      --border-soft: #262626;
+      --radius-card: 24px;
+      --radius-pill: 999px;
+      --shadow-soft: 0 10px 30px rgba(0, 0, 0, 0.7);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: "Germania One", -apple-system, BlinkMacSystemFont,
+        "Segoe UI", Roboto, sans-serif;
+      background-color: var(--gunmetal);
+      color: var(--text-main);
+    }
+
+    /* --------------------------
+       LAYOUT SHELL
+    --------------------------- */
 
-  * {
-    box-sizing: border-box;
-  }
-
-  body {
-    margin: 0;
-    padding: 0;
-    font-family: "Germania One", -apple-system, BlinkMacSystemFont,
-      "Segoe UI", Roboto, sans-serif;
-    background-color: var(--gunmetal);
-    color: #ffffff;
-  }
-
-  /* --------------------------
-     COLLAPSE / CARD STATES
-  --------------------------- */
-
-  .sets-wrapper.collapsed {
-    display: none;
-  }
-
-  .workout-card.collapsed {
-    padding: 14px 8px;
-  }
-
-  .workout-card.collapsed .workout-header {
-    margin: 0;
-    opacity: 0.85;
-  }
-
-  .workout-card.collapsed .sets-wrapper {
-    display: none;
-  }
-
-  .workout-card.collapsed .workout-header-actions {
-    display: none;
-  }
-
-  .workout-card.collapsed .workout-name {
-    cursor: pointer;
-  }
-
-  .workout-card.collapsed .workout-name:focus {
-    outline: none;
-  }
-
-  .round-btn.collapse-btn {
-    font-size: 18px;
-  }
-
-  .neumorphic-inset {
-    background: #1a1a1a;
-    border-radius: 12px;
-    box-shadow:
-      inset 3px 3px 6px rgba(0, 0, 0, 0.6),
-      inset -3px -3px 6px rgba(70, 70, 70, 0.15);
-  }
-
-  .neumorphic-outset {
-    background: #1a1a1a;
-    border-radius: 12px;
-    box-shadow:
-      -4px -4px 8px rgba(60, 60, 60, 0.25),
-      4px 4px 8px rgba(0, 0, 0, 0.7);
-  }
-
-  /* --------------------------
-     LAYOUT SHELL
-  --------------------------- */
-
-  .app-wrapper {
-    min-height: 100vh;
-    padding: 12px 12px 32px;
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .app-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin: 8px 4px 16px;
-  }
-
-  .app-header h1 {
-    font-size: 32px;
-    font-weight: 800;
-    margin: 0;
-    letter-spacing: 0.5px;
-  }
-
-  .menu-button {
-    width: 44px;
-    height: 44px;
-    border-radius: 12px;
-    border: 1px solid #2f2f2f;
-    background-color: #111;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0;
-  }
-
-  .menu-button:active {
-    background-color: #1d1d1d;
-  }
-
-  .menu-icon {
-    width: 18px;
-    height: 18px;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-  }
-
-  .menu-icon span {
-    display: block;
-    height: 3px;
-    border-radius: 999px;
-    background-color: #ffffff;
-  }
-
-  .menu-dropdown {
-    position: absolute;
-    right: 16px;
-    top: 64px;
-    background-color: #111;
-    border-radius: 16px;
-    box-shadow: var(--shadow-soft);
-    overflow: hidden;
-    opacity: 0;
-    pointer-events: none;
-    transform: translateY(-8px);
-    transition: opacity 0.18s ease, transform 0.18s ease;
-    min-width: 220px;
-    z-index: 20;
-  }
-
-  .menu-dropdown.open {
-    opacity: 1;
-    pointer-events: auto;
-    transform: translateY(0);
-  }
-
-  .menu-item {
-    padding: 14px 18px;
-    font-size: 16px;
-    border-bottom: 1px solid #222;
-  }
-
-  .menu-item:last-child {
-    border-bottom: none;
-  }
-
-  .menu-item:active {
-    background-color: #1f1f1f;
-  }
-
-  main.screen {
-    display: none;
-    flex: 1;
-  }
-
-  main.screen.active {
-    display: block;
-  }
-
-  .card {
-    max-width: 480px;
-    margin: 0 auto;
-    background-color: var(--card);
-    padding: 18px 16px 24px;
-    box-shadow: var(--shadow-soft);
-    border-radius: 22px;
-    border: 2px solid #8b5a2b;
-    box-shadow:
-      0 0 0 1px #1A1E2C,
-      0 4px 0 #000;
-  }
-
-  .card-title {
-    font-size: 22px;
-    font-weight: 700;
-    margin: 4px 4px 8px;
-  }
-
-  .card-subtitle {
-    font-size: 14px;
-    color: var(--text-muted);
-    margin: 0 4px 16px;
-    line-height: 1.4;
-  }
-
-  .input-label {
-    display: block;
-    font-size: 13px;
-    color: var(--text-muted);
-    margin-bottom: 4px;
-  }
-
-  /* --------------------------
-     INPUTS & BUTTONS (GLOBAL)
-  --------------------------- */
-
-  .text-input,
-  .set-input {
-    width: 100%;
-    height: 44px;
-    border-radius: 12px;
-    background: #1A1E2C;
-    text-align: center;
-    box-sizing: border-box;
-    background-color: #000;
-    border: 2px solid #8b5a2b;
-    box-shadow:
-      0 0 0 1px #754d27,
-      0 4px 0 #000;
-    font-size: 16px;
-    color: #fff;
-  }
-
-  .text-input::placeholder,
-  .set-input::placeholder {
-    color: #727272;
-    text-shadow: 0 0 4px rgba(255, 255, 255, 0.1);
-  }
-
-  .set-input:focus,
-  .text-input:focus {
-    outline: 1px solid #8b5a2b;
-    box-shadow: 0 0 12px rgba(57, 255, 20, 0.35);
-  }
-
-  .round-btn {
-    background-color: #1A1E2C;
-    height: 44px;
-    width: 56px;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: 2px solid #8b5a2b;
-    box-shadow:
-      0 0 0 1px #754d27,
-      0 4px 0 #000;
-    font-size: 16px;
-    color: #fff;
-  }
-
-  .round-btn:active {
-    outline: 1px solid #8b5a2b;
-    transform: translateY(1px);
-    opacity: 0.9;
-    background-color: #0a0b0d;
-    box-shadow: none;
-  }
-
-  .primary-btn {
-    width: 100%;
-    height: 44px;
-    border-radius: 12px;
-    background-color: #1A1E2C;
-    font-size: 17px;
-    font-weight: 600;
-    margin-top: 8px;
-    border: 2px solid #8b5a2b;
-    box-shadow:
-      0 0 0 1px #754d27,
-      0 4px 0 #000;
-    font-size: 16px;
-    color: #fff;
-  }
-
-  .primary-btn:active {
-    outline: 1px solid #8b5a2b;
-    transform: translateY(1px);
-    opacity: 0.9;
-    background-color: #070809;
-    box-shadow: none;
-  }
-
-  .footer-btn {
-    margin-top: 10px;
-  }
-
-  .danger-btn {
-    width: 100%;
-    border-radius: var(--radius-pill);
-    padding: 11px 16px;
-    font-size: 17px;
-    font-weight: 600;
-    border: none;
-    color: #fff;
-    background-color: var(--danger);
-    margin: 4px 0 10px;
-  }
-
-  .danger-btn:active {
-    background-color: var(--danger-soft);
-    outline: 1px solid #8b5a2b;
-  }
-
-  /* --------------------------
-     WORKOUT CARD (EXERCISE)
-  --------------------------- */
-
-  .workouts-container {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    margin-top: 4px;
-    margin-bottom: 12px;
-  }
-
-  .workout-card {
-    border: 1px solid var(--copper);
-    border-radius: 22px;
-    padding: 10px 14px;
-    background-color: var(--card-inner);
-    margin-bottom: 14px;
-    box-shadow:
-      0 0 0 1px #1b1c20,
-      0 12px 30px rgba(0, 0, 0, 0.85);
-  }
-
-  .workout-name {
-    flex: 1;
-    width: 100%;
-  }
-
-  .workout-header {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 0;
-  }
-
-  .workout-header .workout-name {
-    flex: 1;
-    height: 44px;
-    padding: 0 12px;
-  }
-
-  .workout-header-actions {
-    display: flex;
-    gap: 8px;
-  }
-
-  /* --------------------------
-     SET ROW
-  --------------------------- */
-
-  .set-box {
-    display: grid;
-    grid-template-columns: auto 1fr auto;
-    column-gap: 10px;
-    align-items: center;
-    margin-top: 12px;
-  }
-
-  .set-label {
-    font-size: 18px;
-    color: #8b5a2b;
-    font-family: "Germania One", sans-serif;
-    font-weight: 700;
-  }
-
-  .set-weight-group {
-    justify-self: end;
-  }
-
-  .set-weight-group .set-input {
-    width: 56px;
-  }
-
-  .set-right-group {
-    display: flex;
-    gap: 8px;
-    margin-left: auto;
-  }
-
-  .set-right-group .set-input {
-    width: 56px;
-  }
-
-  /* --------------------------
-     PROGRESS LIST & MISC
-  --------------------------- */
-
-/* NEW: Letter grid A–Z */
-.progress-letter-grid {
-  margin-top: 12px;
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 8px;
-}
-
-.progress-letter-btn {
-  -webkit-appearance: none;
-  appearance: none;
-  height: 34px;
-  border-radius: 12px;
-  border: 1px solid var(--copper);
-  background-color: #000;
-  color: #fff;
-  font-size: 15px;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow:
-    0 0 0 1px #754d27,
-    0 3px 0 #000;
-}
-
-.progress-letter-btn:active {
-  transform: translateY(1px);
-  outline: 1px solid var(--copper);
-  box-shadow: none;
-}
-
-.progress-letter-btn.disabled {
-  opacity: 0.25;
-  pointer-events: none;
-}
-
-.progress-letter-btn.active {
-  background-color: #1A1E2C;
-  box-shadow:
-    0 0 0 1px #39ff14,
-    0 3px 0 #000;
-}
-
-  .set-header {
-    font-size: 15px;
-    font-weight: 700;
-    color: var(--accent);
-    margin-bottom: 6px;
-  }
-
-  /* NEW: Letter grid A–Z */
-  .progress-letter-grid {
-    margin-top: 12px;
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 8px;
-  }
-
-  .progress-letter-btn {
-    -webkit-appearance: none;
-    appearance: none;
-    height: 34px;
-    border-radius: 12px;
-    border: 1px solid var(--copper);
-    background-color: #000;
-    color: #fff;
-    font-size: 15px;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow:
-      0 0 0 1px #754d27,
-      0 3px 0 #000;
-  }
-
-  .progress-letter-btn:active {
-    transform: translateY(1px);
-    outline: 1px solid var(--copper);
-    box-shadow: none;
-  }
-
-  .progress-letter-btn.disabled {
-    opacity: 0.25;
-    pointer-events: none;
-  }
-
-  .progress-letter-btn.active {
-    background-color: #1A1E2C;
-    box-shadow:
-      0 0 0 1px #39ff14,
-      0 3px 0 #000;
-  }
-
-  .progress-letter-header {
-    margin-top: 10px;
-    margin-bottom: 4px;
-    font-size: 13px;
-    font-weight: 700;
-    color: #8a8a8a;
-    text-transform: uppercase;
-  }
-
-  .progress-detail-row {
-    display: flex;
-    justify-content: space-between;
-    font-size: 13px;
-    margin-bottom: 4px;
-  }
-
-  .progress-detail-row span:first-child {
-    color: #bbbbbb;
-  }
-
-  .progress-detail-row span:last-child {
-    color: #ffffff;
-    font-weight: 600;
-  }
-
-  .saved-list {
-    margin-top: 12px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-
-  .saved-wrapper {
-    margin-top: 4px;
-  }
-
-  .saved-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 10px 12px;
-    border-radius: 14px;
-    background-color: #1A1E2C;
-    border: 1px solid #8b5a2b;
-    box-shadow:
-      0 0 0 1px #754d27,
-      0 4px 0 #000;
-    font-size: 16px;
-    color: #fff;
-  }
-
-  .saved-name {
-    flex: 1;
-    margin-right: 10px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    min-width: 0;
-  }
-
-  .saved-buttons {
-    display: flex;
-    gap: 6px;
-  }
-
-  .small-btn {
-    -webkit-appearance: none;
-    appearance: none;
-    -webkit-tap-highlight-color: transparent;
-    border-radius: 12px;
-    border: 1px solid #8b5a2b;
-    padding: 6px 12px;
-    font-size: 13px;
-    font-weight: 600;
-    color: #ffffff;
-    background-color: #000;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
-  }
-
-  .small-btn:active {
-    transform: translateY(1px);
-    opacity: 0.9;
-    background-color: #111;
-    outline: 1px solid #8b5a2b;
-  }
-
-  .open-panel {
-    margin-top: 8px;
-    padding: 10px 10px 14px;
-    border-radius: 18px;
-    background-color: #101010;
-    border: 1px solid #262626;
-    display: none;
-  }
-
-  .open-panel.open {
-    display: block;
-  }
-
-  .link-back {
-    margin-top: 18px;
-    font-size: 15px;
-    color: var(--text-muted);
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-  }
-
-  .link-back span {
-    font-size: 18px;
-    line-height: 1;
-  }
-
-  .link-back:active {
-    color: #ffffff;
-  }
-
-  .input-group {
-    margin: 6px 0 10px;
-  }
-
-  /* --------------------------
-     TUTORIAL OVERLAY
-  --------------------------- */
-
-  .tutorial-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.85);
-    display: none;
-    align-items: center;
-    justify-content: center;
-    padding: 16px;
-    z-index: 100;
-  }
-
-  .tutorial-overlay.visible {
-    display: flex;
-  }
-
-  .tutorial-card {
-    width: 100%;
-    max-width: 420px;
-    background-color: #121212;
-    border-radius: 24px;
-    padding: 20px 18px 16px;
-    border: 1px solid #333;
-    box-shadow: var(--shadow-soft);
-  }
-
-  .tutorial-title {
-    font-size: 20px;
-    font-weight: 700;
-    margin-bottom: 6px;
-  }
-
-  .tutorial-body {
-    font-size: 14px;
-    color: var(--text-muted);
-    line-height: 1.5;
-  }
-
-  .tutorial-bullets {
-    margin-top: 8px;
-    padding-left: 18px;
-    font-size: 14px;
-    color: var(--text-muted);
-  }
-
-  .tutorial-bullets li {
-    margin-bottom: 4px;
-  }
-
-  .tutorial-actions {
-    margin-top: 16px;
-    display: flex;
-    gap: 8px;
-    justify-content: flex-end;
-  }
-
-  .tutorial-primary-btn,
-  .tutorial-secondary-btn {
-    -webkit-appearance: none;
-    appearance: none;
-    border-radius: 999px;
-    padding: 8px 14px;
-    border: 1px solid #333;
-    font-size: 14px;
-    font-weight: 600;
-    color: #fff;
-    background-color: #000;
-  }
-
-  .tutorial-primary-btn {
-    background-color: var(--accent-soft);
-    border-color: var(--accent-soft);
-  }
-
-  .tutorial-primary-btn:active,
-  .tutorial-secondary-btn:active {
-    transform: translateY(1px);
-    opacity: 0.9;
-  }
-
-  .tutorial-screen {
-    display: none;
-  }
-
-  .tutorial-screen.active {
-    display: block;
-  }
-
-  /* --------------------------
-     FOOTER / LEGAL
-  --------------------------- */
-
-  .legal-footer {
-    font-size: 0.75rem;
-    padding: 0.75rem 1rem 1.25rem;
-    opacity: 0.75;
-    text-align: center;
-  }
-
-  .legal-link {
-    background: none;
-    border: none;
-    padding: 0;
-    margin-bottom: 0.25rem;
-    font-size: 0.8rem;
-    text-decoration: underline;
-    cursor: pointer;
-    color: var(--text-muted);
-  }
-
-  .legal-panel {
-    max-width: 500px;
-    margin: 0.25rem auto 0;
-    line-height: 1.3;
-    font-size: 0.75rem;
-    color: var(--text-muted);
-  }
-
-  .hidden {
-    display: none;
-  }
-
-  @media (min-width: 500px) {
     .app-wrapper {
+      min-height: 100vh;
+      padding: 12px 12px 32px;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .app-header {
+      display: flex;
       align-items: center;
+      justify-content: space-between;
+      margin: 8px 4px 16px;
+    }
+
+    .app-header h1 {
+      font-size: 32px;
+      font-weight: 800;
+      margin: 0;
+      letter-spacing: 0.5px;
+    }
+
+    main.screen {
+      display: none;
+      flex: 1;
+    }
+
+    main.screen.active {
+      display: block;
     }
 
     .card {
-      width: 430px;
+      max-width: 480px;
+      margin: 0 auto;
+      background-color: var(--card);
+      padding: 18px 16px 24px;
+      border-radius: 22px;
+      border: 2px solid var(--copper);
+      box-shadow:
+        0 0 0 1px #1A1E2C,
+        0 4px 0 #000;
     }
-  }
+
+    .card-title {
+      font-size: 22px;
+      font-weight: 700;
+      margin: 4px 4px 8px;
+    }
+
+    .card-subtitle {
+      font-size: 14px;
+      color: var(--text-muted);
+      margin: 0 4px 16px;
+      line-height: 1.4;
+    }
+
+    .input-label {
+      display: block;
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+
+    .input-group {
+      margin: 6px 0 10px;
+    }
+
+    /* --------------------------
+       MENU
+    --------------------------- */
+
+    .menu-button {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      border: 1px solid #2f2f2f;
+      background-color: #111;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+    }
+
+    .menu-button:active {
+      background-color: #1d1d1d;
+    }
+
+    .menu-icon {
+      width: 18px;
+      height: 18px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .menu-icon span {
+      display: block;
+      height: 3px;
+      border-radius: 999px;
+      background-color: #ffffff;
+    }
+
+    .menu-dropdown {
+      position: absolute;
+      right: 16px;
+      top: 64px;
+      background-color: #111;
+      border-radius: 16px;
+      box-shadow: var(--shadow-soft);
+      overflow: hidden;
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(-8px);
+      transition: opacity 0.18s ease, transform 0.18s ease;
+      min-width: 220px;
+      z-index: 20;
+    }
+
+    .menu-dropdown.open {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateY(0);
+    }
+
+    .menu-item {
+      padding: 14px 18px;
+      font-size: 16px;
+      border-bottom: 1px solid #222;
+    }
+
+    .menu-item:last-child {
+      border-bottom: none;
+    }
+
+    .menu-item:active {
+      background-color: #1f1f1f;
+    }
+
+    /* --------------------------
+       INPUTS & BUTTONS
+    --------------------------- */
+
+    .text-input,
+    .set-input {
+      width: 100%;
+      height: 44px;
+      border-radius: 12px;
+      text-align: center;
+      box-sizing: border-box;
+      background-color: #000;
+      border: 2px solid var(--copper);
+      box-shadow:
+        0 0 0 1px #754d27,
+        0 4px 0 #000;
+      font-size: 16px;
+      color: #fff;
+    }
+
+    .text-input::placeholder,
+    .set-input::placeholder {
+      color: #727272;
+      text-shadow: 0 0 4px rgba(255, 255, 255, 0.1);
+    }
+
+    .set-input:focus,
+    .text-input:focus {
+      outline: 1px solid var(--copper);
+      box-shadow: 0 0 12px rgba(57, 255, 20, 0.35);
+    }
+
+    .round-btn {
+      background-color: #1A1E2C;
+      height: 44px;
+      width: 56px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid var(--copper);
+      box-shadow:
+        0 0 0 1px #754d27,
+        0 4px 0 #000;
+      font-size: 16px;
+      color: #fff;
+    }
+
+    .round-btn:active {
+      outline: 1px solid var(--copper);
+      transform: translateY(1px);
+      opacity: 0.9;
+      background-color: #0a0b0d;
+      box-shadow: none;
+    }
+
+    .primary-btn {
+      width: 100%;
+      height: 44px;
+      border-radius: 12px;
+      background-color: #1A1E2C;
+      font-size: 17px;
+      font-weight: 600;
+      margin-top: 8px;
+      border: 2px solid var(--copper);
+      box-shadow:
+        0 0 0 1px #754d27,
+        0 4px 0 #000;
+      color: #fff;
+    }
+
+    .primary-btn:active {
+      outline: 1px solid var(--copper);
+      transform: translateY(1px);
+      opacity: 0.9;
+      background-color: #070809;
+      box-shadow: none;
+    }
+
+    .footer-btn {
+      margin-top: 10px;
+    }
+
+    .danger-btn {
+      width: 100%;
+      border-radius: var(--radius-pill);
+      padding: 11px 16px;
+      font-size: 17px;
+      font-weight: 600;
+      border: none;
+      color: #fff;
+      background-color: var(--danger);
+      margin: 4px 0 10px;
+    }
+
+    .danger-btn:active {
+      background-color: var(--danger-soft);
+      outline: 1px solid var(--copper);
+    }
+
+    /* --------------------------
+       WORKOUT CARDS
+    --------------------------- */
+
+    .workouts-container {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 4px;
+      margin-bottom: 12px;
+    }
+
+    .workout-card {
+      border: 1px solid var(--copper);
+      border-radius: 22px;
+      padding: 10px 14px;
+      background-color: var(--card-inner);
+      margin-bottom: 14px;
+      box-shadow:
+        0 0 0 1px #1b1c20,
+        0 12px 30px rgba(0, 0, 0, 0.85);
+    }
+
+    .workout-card.collapsed {
+      padding: 14px 8px;
+    }
+
+    .workout-card.collapsed .workout-header {
+      margin: 0;
+      opacity: 0.85;
+    }
+
+    .workout-card.collapsed .sets-wrapper {
+      display: none;
+    }
+
+    .workout-card.collapsed .workout-header-actions {
+      display: none;
+    }
+
+    .workout-card.collapsed .workout-name {
+      cursor: pointer;
+    }
+
+    .workout-card.collapsed .workout-name:focus {
+      outline: none;
+    }
+
+    .round-btn.collapse-btn {
+      font-size: 18px;
+    }
+
+    .workout-name {
+      flex: 1;
+      width: 100%;
+    }
+
+    .workout-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 0;
+    }
+
+    .workout-header .workout-name {
+      flex: 1;
+      height: 44px;
+      padding: 0 12px;
+    }
+
+    .workout-header-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .sets-wrapper.collapsed {
+      display: none;
+    }
+
+    /* --------------------------
+       SET ROW
+    --------------------------- */
+
+    .set-box {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      column-gap: 10px;
+      align-items: center;
+      margin-top: 12px;
+    }
+
+    .set-label {
+      font-size: 18px;
+      color: var(--copper);
+      font-family: "Germania One", sans-serif;
+      font-weight: 700;
+    }
+
+    .set-weight-group {
+      justify-self: end;
+    }
+
+    .set-weight-group .set-input {
+      width: 56px;
+    }
+
+    .set-right-group {
+      display: flex;
+      gap: 8px;
+      margin-left: auto;
+    }
+
+    .set-right-group .set-input {
+      width: 56px;
+    }
+
+    /* --------------------------
+       PROGRESS LIST / LETTER GRID
+    --------------------------- */
+
+    .saved-list {
+      margin-top: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .saved-wrapper {
+      margin-top: 4px;
+    }
+
+    .saved-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 12px;
+      border-radius: 14px;
+      background-color: #1A1E2C;
+      border: 1px solid var(--copper);
+      box-shadow:
+        0 0 0 1px #754d27,
+        0 4px 0 #000;
+      font-size: 16px;
+      color: #fff;
+    }
+
+    .saved-name {
+      flex: 1;
+      margin-right: 10px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      min-width: 0;
+    }
+
+    .saved-buttons {
+      display: flex;
+      gap: 6px;
+    }
+
+    .small-btn {
+      -webkit-appearance: none;
+      appearance: none;
+      -webkit-tap-highlight-color: transparent;
+      border-radius: 12px;
+      border: 1px solid var(--copper);
+      padding: 6px 12px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #ffffff;
+      background-color: #000;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+    }
+
+    .small-btn:active {
+      transform: translateY(1px);
+      opacity: 0.9;
+      background-color: #111;
+      outline: 1px solid var(--copper);
+    }
+
+    .open-panel {
+      margin-top: 8px;
+      padding: 10px 10px 14px;
+      border-radius: 18px;
+      background-color: #101010;
+      border: 1px solid #262626;
+      display: none;
+    }
+
+    .open-panel.open {
+      display: block;
+    }
+
+    .set-header {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 6px;
+    }
+
+    .progress-detail-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+      margin-bottom: 4px;
+    }
+
+    .progress-detail-row span:first-child {
+      color: #bbbbbb;
+    }
+
+    .progress-detail-row span:last-child {
+      color: #ffffff;
+      font-weight: 600;
+    }
+
+    .progress-letter-grid {
+      margin-top: 12px;
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
+    }
+
+    .progress-letter-btn {
+      -webkit-appearance: none;
+      appearance: none;
+      height: 34px;
+      border-radius: 12px;
+      border: 1px solid var(--copper);
+      background-color: #000;
+      color: #fff;
+      font-size: 15px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow:
+        0 0 0 1px #754d27,
+        0 3px 0 #000;
+    }
+
+    .progress-letter-btn:active {
+      transform: translateY(1px);
+      outline: 1px solid var(--copper);
+      box-shadow: none;
+    }
+
+    .progress-letter-btn.disabled {
+      opacity: 0.25;
+      pointer-events: none;
+    }
+
+    .progress-letter-btn.active {
+      background-color: #1A1E2C;
+      box-shadow:
+        0 0 0 1px var(--accent),
+        0 3px 0 #000;
+    }
+
+    /* --------------------------
+       LINKS / MISC
+    --------------------------- */
+
+    .link-back {
+      margin-top: 18px;
+      font-size: 15px;
+      color: var(--text-muted);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .link-back span {
+      font-size: 18px;
+      line-height: 1;
+    }
+
+    .link-back:active {
+      color: #ffffff;
+    }
+
+    /* --------------------------
+       TUTORIAL OVERLAY
+    --------------------------- */
+
+    .tutorial-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.85);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      z-index: 100;
+    }
+
+    .tutorial-overlay.visible {
+      display: flex;
+    }
+
+    .tutorial-card {
+      width: 100%;
+      max-width: 420px;
+      background-color: #121212;
+      border-radius: 24px;
+      padding: 20px 18px 16px;
+      border: 1px solid #333;
+      box-shadow: var(--shadow-soft);
+    }
+
+    .tutorial-title {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .tutorial-body {
+      font-size: 14px;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    .tutorial-bullets {
+      margin-top: 8px;
+      padding-left: 18px;
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+
+    .tutorial-bullets li {
+      margin-bottom: 4px;
+    }
+
+    .tutorial-actions {
+      margin-top: 16px;
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+
+    .tutorial-primary-btn,
+    .tutorial-secondary-btn {
+      -webkit-appearance: none;
+      appearance: none;
+      border-radius: 999px;
+      padding: 8px 14px;
+      border: 1px solid #333;
+      font-size: 14px;
+      font-weight: 600;
+      color: #fff;
+      background-color: #000;
+    }
+
+    .tutorial-primary-btn {
+      background-color: var(--accent-soft);
+      border-color: var(--accent-soft);
+    }
+
+    .tutorial-primary-btn:active,
+    .tutorial-secondary-btn:active {
+      transform: translateY(1px);
+      opacity: 0.9;
+    }
+
+    .tutorial-screen {
+      display: none;
+    }
+
+    .tutorial-screen.active {
+      display: block;
+    }
+
+    /* --------------------------
+       FOOTER / LEGAL
+    --------------------------- */
+
+    .legal-footer {
+      font-size: 0.75rem;
+      padding: 0.75rem 1rem 1.25rem;
+      opacity: 0.75;
+      text-align: center;
+    }
+
+    .legal-link {
+      background: none;
+      border: none;
+      padding: 0;
+      margin-bottom: 0.25rem;
+      font-size: 0.8rem;
+      text-decoration: underline;
+      cursor: pointer;
+      color: var(--text-muted);
+    }
+
+    .legal-panel {
+      max-width: 500px;
+      margin: 0.25rem auto 0;
+      line-height: 1.3;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    @media (min-width: 500px) {
+      .app-wrapper {
+        align-items: center;
+      }
+
+      .card {
+        width: 430px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -788,7 +718,96 @@
     </header>
 
     <!-- Tutorial Overlay (one-time walkthrough) -->
-    <!-- ... unchanged tutorial markup ... -->
+    <div id="tutorialOverlay" class="tutorial-overlay">
+      <div class="tutorial-card">
+        <!-- Step 0: Welcome / choice -->
+        <div class="tutorial-screen active" data-tutorial-step="0">
+          <div class="tutorial-title">Welcome to Code & Iron</div>
+          <div class="tutorial-body">
+            This is your workout logger, routines builder, and progress tracker —
+            all in one place.
+          </div>
+          <ul class="tutorial-bullets">
+            <li>Log exercises and sets on the home screen</li>
+            <li>Save routines you can reload later</li>
+            <li>Track PRs and progress over time</li>
+          </ul>
+          <div class="tutorial-actions">
+            <button id="tutorialSkipBtn" class="tutorial-secondary-btn">
+              Skip for now
+            </button>
+            <button id="tutorialStartBtn" class="tutorial-primary-btn">
+              Show me around
+            </button>
+          </div>
+        </div>
+
+        <!-- Step 1: Logger -->
+        <div class="tutorial-screen" data-tutorial-step="1">
+          <div class="tutorial-title">1. Log your workout</div>
+          <div class="tutorial-body">
+            On the home screen:
+          </div>
+          <ul class="tutorial-bullets">
+            <li>Type an exercise name (e.g. Bench Press, Push Ups)</li>
+            <li>Use the + / – next to sets to add or remove sets</li>
+            <li>Use the top-right + to add another exercise card</li>
+            <li>Hit “Save progress” when you're done</li>
+          </ul>
+          <div class="tutorial-actions">
+            <button data-tutorial-back class="tutorial-secondary-btn">
+              Back
+            </button>
+            <button data-tutorial-next class="tutorial-primary-btn">
+              Next
+            </button>
+          </div>
+        </div>
+
+        <!-- Step 2: Routines -->
+        <div class="tutorial-screen" data-tutorial-step="2">
+          <div class="tutorial-title">2. Save routines</div>
+          <div class="tutorial-body">
+            In the Routines menu:
+          </div>
+          <ul class="tutorial-bullets">
+            <li>Give your routine a name (e.g. Push Day, Leg Day)</li>
+            <li>Tap “Create” to save the current layout from the home screen</li>
+            <li>Use “Load” to send that routine back to the home screen</li>
+            <li>Use “Open” to edit the template itself</li>
+          </ul>
+          <div class="tutorial-actions">
+            <button data-tutorial-back class="tutorial-secondary-btn">
+              Back
+            </button>
+            <button data-tutorial-next class="tutorial-primary-btn">
+              Next
+            </button>
+          </div>
+        </div>
+
+        <!-- Step 3: Progress & PRs -->
+        <div class="tutorial-screen" data-tutorial-step="3">
+          <div class="tutorial-title">3. Track progress & PRs</div>
+          <div class="tutorial-body">
+            In the Progress menu:
+          </div>
+          <ul class="tutorial-bullets">
+            <li>See your best weight × reps and max reps for each exercise</li>
+            <li>New PRs are tagged when you beat your old best</li>
+            <li>Tap an exercise to see recent history by date</li>
+          </ul>
+          <div class="tutorial-actions">
+            <button data-tutorial-back class="tutorial-secondary-btn">
+              Back
+            </button>
+            <button data-tutorial-done class="tutorial-primary-btn">
+              Got it
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <!-- Menu -->
     <div class="menu-dropdown" id="menuDropdown">
@@ -808,7 +827,36 @@
     </main>
 
     <!-- ROUTINES SCREEN -->
-    <!-- ... unchanged routines markup ... -->
+    <main id="workoutsScreen" class="screen">
+      <section class="card">
+        <h2 class="card-title">Workouts</h2>
+        <p class="card-subtitle">
+          Create and save exercise routines you can load later on the main page.
+        </p>
+
+        <div class="input-group">
+          <label class="input-label" for="templateNameInput">New routine name</label>
+          <input
+            id="templateNameInput"
+            class="text-input"
+            placeholder="e.g. Chest, Legs, Shoulders, Back"
+          />
+        </div>
+
+        <button id="saveTemplateBtn" class="primary-btn">
+          Create
+        </button>
+
+        <h3 class="card-subtitle" style="margin-top:18px;margin-bottom:4px;">
+          Saved workouts
+        </h3>
+        <div id="savedTemplatesList" class="saved-list"></div>
+
+        <div class="link-back" id="backToLogger">
+          <span>←</span> Back to workout logger
+        </div>
+      </section>
+    </main>
 
     <!-- PROGRESS SCREEN -->
     <main id="progressScreen" class="screen">
@@ -818,7 +866,7 @@
           Your best sets for each exercise based on saved workouts.
         </p>
 
-        <!-- NEW: Letter grid A–Z -->
+        <!-- Letter grid A–Z -->
         <div id="progressLetterGrid" class="progress-letter-grid"></div>
 
         <!-- Exercises for selected letter -->
@@ -859,13 +907,34 @@
     </main>
   </div>
 
-  <!-- footer unchanged -->
   <footer class="legal-footer">
     <button id="toggle-privacy" class="legal-link">
       Privacy &amp; Data
     </button>
+
     <div id="privacy-panel" class="legal-panel hidden">
-      <!-- ... unchanged privacy text ... -->
+      <p>
+        This app does not collect, store, or transmit any personal data.
+        All workout entries and progress logs are saved locally on your device
+        using your browser's localStorage.
+      </p>
+      <p>
+        No data is sent to the developer, and the developer cannot access your
+        information in any way. Clearing your browser data may erase your saved
+        progress.
+      </p>
+      <p>
+        If you have ideas, run into bugs, or want to suggest features,
+        please email me at
+        <a href="mailto:aangel.ssilva28@gmail.com">
+          aangel.ssilva28@gmail.com
+        </a>.
+        I read every message and use your feedback to make this app better.
+      </p>
+      <p style="margin-top: 12px; opacity: .7;">
+        <strong>Version:</strong> v0.9.0 Beta<br>
+        <strong>Last updated:</strong> November 24, 2025
+      </p>
     </div>
   </footer>
 
