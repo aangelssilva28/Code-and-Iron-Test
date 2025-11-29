@@ -293,7 +293,8 @@ const homeScreen = document.getElementById("homeScreen");
 const workoutsScreen = document.getElementById("workoutsScreen");
 const progressScreen = document.getElementById("progressScreen");
 const progressDetail = document.getElementById("progressDetail");
-// letter-grid state (used on Progress screen)
+
+// Progress letter-grid state
 const progressLetterGrid = document.getElementById("progressLetterGrid");
 let progressByLetter = {};
 let activeProgressLetter = null;
@@ -335,20 +336,19 @@ if (backToLoggerFromProgress) {
   });
 }
 
-// SAFE version – doesn't crash if workoutsScreen is missing
 function showScreen(which) {
   if (which === "home") {
-    if (homeScreen) homeScreen.classList.add("active");
-    if (workoutsScreen) workoutsScreen.classList.remove("active");
-    if (progressScreen) progressScreen.classList.remove("active");
+    homeScreen.classList.add("active");
+    workoutsScreen.classList.remove("active");
+    progressScreen.classList.remove("active");
   } else if (which === "workouts") {
-    if (homeScreen) homeScreen.classList.remove("active");
-    if (workoutsScreen) workoutsScreen.classList.add("active");
-    if (progressScreen) progressScreen.classList.remove("active");
+    homeScreen.classList.remove("active");
+    workoutsScreen.classList.add("active");
+    progressScreen.classList.remove("active");
   } else if (which === "progress") {
-    if (homeScreen) homeScreen.classList.remove("active");
-    if (workoutsScreen) workoutsScreen.classList.remove("active");
-    if (progressScreen) progressScreen.classList.add("active");
+    homeScreen.classList.remove("active");
+    workoutsScreen.classList.remove("active");
+    progressScreen.classList.add("active");
   }
 
   if (which !== "progress" && progressDetail) {
@@ -362,17 +362,15 @@ function showScreen(which) {
 const workoutsContainer = document.getElementById("workoutsContainer");
 const saveProgressBtn = document.getElementById("saveProgressBtn");
 
-if (saveProgressBtn) {
-  saveProgressBtn.addEventListener("click", () => {
-    saveCurrentProgress();
-    alert("Progress saved!");
-  });
-}
+saveProgressBtn.addEventListener("click", () => {
+  saveCurrentProgress();
+  alert("Progress saved!");
+});
 
 // ---------- Progress list (A–Z grid + per-letter list) ----------
 
 function renderProgressList() {
-  const grid = document.getElementById("progressLetterGrid");
+  const grid = progressLetterGrid;
   const list = document.getElementById("progressList");
 
   if (!grid || !list) return;
@@ -416,9 +414,7 @@ function renderProgressList() {
   const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 
   letters.forEach((letter) => {
-    const hasAny = !!(
-      progressByLetter[letter] && progressByLetter[letter].length
-    );
+    const hasAny = !!(progressByLetter[letter] && progressByLetter[letter].length);
     const btn = document.createElement("button");
     btn.className = "progress-letter-btn";
     if (!hasAny) btn.classList.add("disabled");
@@ -634,7 +630,7 @@ function saveCurrentProgress() {
         if (
           bestWeight === null ||
           weightNum > bestWeight ||
-          (weightNum === bestWeight && repsNum > bestWeightReps)
+          (bestWeight === weightNum && repsNum > bestWeightReps)
         ) {
           bestWeight = weightNum;
           bestWeightReps = repsNum;
@@ -878,13 +874,9 @@ const LEGACY_SHARE_PREFIX = "CIROUTINEv1:"; // old long prefix (still accepted)
 
 function makeShareCode(tpl) {
   const payload = {
-    // routine name
-    n: tpl.name || "Shared routine",
-    // workouts
+    n: tpl.name || "Shared routine", // name
     w: (tpl.workouts || []).map((ex) => ({
-      // exercise name
       n: ex.name || "",
-      // sets
       s: (ex.sets || []).map((set) => ({
         w: set.weight ?? "",
         r: set.reps ?? "",
@@ -997,8 +989,6 @@ function closePanelAndSave(panel) {
 }
 
 function renderTemplatesList() {
-  if (!savedTemplatesList) return; // <-- guard
-
   savedTemplatesList.innerHTML = "";
   if (!templates.length) return;
 
@@ -1018,15 +1008,13 @@ function renderTemplatesList() {
     const btnWrap = document.createElement("div");
     btnWrap.className = "saved-buttons";
 
-    // Share FIRST
+    // Share
     const shareBtn = document.createElement("button");
     shareBtn.className = "small-btn share";
     shareBtn.textContent = "Share";
     shareBtn.addEventListener("click", () => {
       const code = makeShareCode(tpl);
-      if (templateNameInput) {
-        templateNameInput.value = code;
-      }
+      templateNameInput.value = code;
       alert(
         "Share code generated and placed in the 'New routine name' box.\n\n" +
           "Copy it and send it to your friend. They can paste it into the same box " +
@@ -1035,7 +1023,7 @@ function renderTemplatesList() {
     });
     btnWrap.appendChild(shareBtn);
 
-    // Then Load
+    // Load
     const loadBtn = document.createElement("button");
     loadBtn.className = "small-btn load";
     loadBtn.textContent = "Load";
@@ -1045,13 +1033,13 @@ function renderTemplatesList() {
     });
     btnWrap.appendChild(loadBtn);
 
-    // Then Open
+    // Open
     const openBtn = document.createElement("button");
     openBtn.className = "small-btn open";
     openBtn.textContent = "Open";
     btnWrap.appendChild(openBtn);
 
-    // Finally Delete
+    // Delete
     const delBtn = document.createElement("button");
     delBtn.className = "small-btn delete";
     delBtn.textContent = "Delete";
@@ -1103,56 +1091,51 @@ function renderTemplatesList() {
   });
 }
 
-// Only attach template listeners if the elements exist
-if (saveTemplateBtn && templateNameInput) {
-  saveTemplateBtn.addEventListener("click", () => {
-    const raw = templateNameInput.value.trim();
-    if (!raw) {
-      alert("Give this routine a name first, or paste a share code.");
-      return;
-    }
+saveTemplateBtn.addEventListener("click", () => {
+  const raw = templateNameInput.value.trim();
+  if (!raw) {
+    alert("Give this routine a name first, or paste a share code.");
+    return;
+  }
 
-    // 1️⃣ Try to treat the input as a share code
-    const imported = tryImportShareCode(raw);
-    if (imported) {
-      templates.push({
-        id: Date.now(),
-        name: imported.name,
-        workouts: JSON.parse(JSON.stringify(imported.workouts)),
-      });
-      saveTemplates(templates);
-      renderTemplatesList();
-      templateNameInput.value = "";
-      alert(`Shared routine imported as "${imported.name}".`);
-      return;
-    }
-
-    // 2️⃣ Normal behaviour – create from current layout using the typed name
-    const name = raw;
-    const workoutsData = getCurrentWorkoutLayout();
-
-    const safeWorkouts =
-      workoutsData && workoutsData.length
-        ? workoutsData
-        : [{ name: "", sets: [{ weight: "", reps: "" }] }];
-
+  // 1️⃣ Try to treat the input as a share code
+  const imported = tryImportShareCode(raw);
+  if (imported) {
     templates.push({
       id: Date.now(),
-      name,
-      workouts: JSON.parse(JSON.stringify(safeWorkouts)),
+      name: imported.name,
+      workouts: JSON.parse(JSON.stringify(imported.workouts)),
     });
-
     saveTemplates(templates);
     renderTemplatesList();
     templateNameInput.value = "";
-  });
-}
+    alert(`Shared routine imported as "${imported.name}".`);
+    return;
+  }
 
-if (backToLogger) {
-  backToLogger.addEventListener("click", () => {
-    showScreen("home");
+  // 2️⃣ Normal behaviour – create from current layout using the typed name
+  const name = raw;
+  const workoutsData = getCurrentWorkoutLayout();
+
+  const safeWorkouts =
+    workoutsData && workoutsData.length
+      ? workoutsData
+      : [{ name: "", sets: [{ weight: "", reps: "" }] }];
+
+  templates.push({
+    id: Date.now(),
+    name,
+    workouts: JSON.parse(JSON.stringify(safeWorkouts)),
   });
-}
+
+  saveTemplates(templates);
+  renderTemplatesList();
+  templateNameInput.value = "";
+});
+
+backToLogger.addEventListener("click", () => {
+  showScreen("home");
+});
 
 // Re-open tutorial from the menu
 const tutorialMenu = document.getElementById("menuTutorial");
@@ -1164,10 +1147,9 @@ if (tutorialMenu) {
   });
 }
 
-// ---------- Init ----------
+// ---------- Helpers for logger ----------
 
 function applyTemplateToHome(workoutDataArray) {
-  if (!workoutsContainer) return;
   workoutsContainer.innerHTML = "";
   if (!workoutDataArray || workoutDataArray.length === 0) {
     createWorkoutCard(workoutsContainer);
@@ -1179,14 +1161,13 @@ function applyTemplateToHome(workoutDataArray) {
 }
 
 function getCurrentWorkoutLayout() {
-  if (!workoutsContainer) return [];
   return getWorkoutLayoutFrom(workoutsContainer);
 }
 
+// ---------- Init ----------
+
 function init() {
-  if (workoutsContainer) {
-    createWorkoutCard(workoutsContainer);
-  }
+  createWorkoutCard(workoutsContainer);
   renderTemplatesList();
   initTutorial();
 }
