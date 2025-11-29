@@ -335,20 +335,20 @@ if (backToLoggerFromProgress) {
   });
 }
 
-// ***** FIXED: safely handle missing workoutsScreen *****
+// SAFE version – doesn't crash if workoutsScreen is missing
 function showScreen(which) {
   if (which === "home") {
-    homeScreen.classList.add("active");
+    if (homeScreen) homeScreen.classList.add("active");
     if (workoutsScreen) workoutsScreen.classList.remove("active");
-    progressScreen.classList.remove("active");
+    if (progressScreen) progressScreen.classList.remove("active");
   } else if (which === "workouts") {
-    homeScreen.classList.remove("active");
+    if (homeScreen) homeScreen.classList.remove("active");
     if (workoutsScreen) workoutsScreen.classList.add("active");
-    progressScreen.classList.remove("active");
+    if (progressScreen) progressScreen.classList.remove("active");
   } else if (which === "progress") {
-    homeScreen.classList.remove("active");
+    if (homeScreen) homeScreen.classList.remove("active");
     if (workoutsScreen) workoutsScreen.classList.remove("active");
-    progressScreen.classList.add("active");
+    if (progressScreen) progressScreen.classList.add("active");
   }
 
   if (which !== "progress" && progressDetail) {
@@ -362,10 +362,12 @@ function showScreen(which) {
 const workoutsContainer = document.getElementById("workoutsContainer");
 const saveProgressBtn = document.getElementById("saveProgressBtn");
 
-saveProgressBtn.addEventListener("click", () => {
-  saveCurrentProgress();
-  alert("Progress saved!");
-});
+if (saveProgressBtn) {
+  saveProgressBtn.addEventListener("click", () => {
+    saveCurrentProgress();
+    alert("Progress saved!");
+  });
+}
 
 // ---------- Progress list (A–Z grid + per-letter list) ----------
 
@@ -871,7 +873,7 @@ function restoreFromBackupString(str) {
 
 // ---------- Routine share codes (compact) ----------
 
-const ROUTINE_SHARE_PREFIX = "C1:"; // new compact prefix
+const ROUTINE_SHARE_PREFIX = "C1:";          // new compact prefix
 const LEGACY_SHARE_PREFIX = "CIROUTINEv1:"; // old long prefix (still accepted)
 
 function makeShareCode(tpl) {
@@ -995,6 +997,8 @@ function closePanelAndSave(panel) {
 }
 
 function renderTemplatesList() {
+  if (!savedTemplatesList) return; // <-- guard
+
   savedTemplatesList.innerHTML = "";
   if (!templates.length) return;
 
@@ -1020,7 +1024,9 @@ function renderTemplatesList() {
     shareBtn.textContent = "Share";
     shareBtn.addEventListener("click", () => {
       const code = makeShareCode(tpl);
-      templateNameInput.value = code;
+      if (templateNameInput) {
+        templateNameInput.value = code;
+      }
       alert(
         "Share code generated and placed in the 'New routine name' box.\n\n" +
           "Copy it and send it to your friend. They can paste it into the same box " +
@@ -1097,51 +1103,56 @@ function renderTemplatesList() {
   });
 }
 
-saveTemplateBtn.addEventListener("click", () => {
-  const raw = templateNameInput.value.trim();
-  if (!raw) {
-    alert("Give this routine a name first, or paste a share code.");
-    return;
-  }
+// Only attach template listeners if the elements exist
+if (saveTemplateBtn && templateNameInput) {
+  saveTemplateBtn.addEventListener("click", () => {
+    const raw = templateNameInput.value.trim();
+    if (!raw) {
+      alert("Give this routine a name first, or paste a share code.");
+      return;
+    }
 
-  // 1️⃣ Try to treat the input as a share code
-  const imported = tryImportShareCode(raw);
-  if (imported) {
+    // 1️⃣ Try to treat the input as a share code
+    const imported = tryImportShareCode(raw);
+    if (imported) {
+      templates.push({
+        id: Date.now(),
+        name: imported.name,
+        workouts: JSON.parse(JSON.stringify(imported.workouts)),
+      });
+      saveTemplates(templates);
+      renderTemplatesList();
+      templateNameInput.value = "";
+      alert(`Shared routine imported as "${imported.name}".`);
+      return;
+    }
+
+    // 2️⃣ Normal behaviour – create from current layout using the typed name
+    const name = raw;
+    const workoutsData = getCurrentWorkoutLayout();
+
+    const safeWorkouts =
+      workoutsData && workoutsData.length
+        ? workoutsData
+        : [{ name: "", sets: [{ weight: "", reps: "" }] }];
+
     templates.push({
       id: Date.now(),
-      name: imported.name,
-      workouts: JSON.parse(JSON.stringify(imported.workouts)),
+      name,
+      workouts: JSON.parse(JSON.stringify(safeWorkouts)),
     });
+
     saveTemplates(templates);
     renderTemplatesList();
     templateNameInput.value = "";
-    alert(`Shared routine imported as "${imported.name}".`);
-    return;
-  }
-
-  // 2️⃣ Normal behaviour – create from current layout using the typed name
-  const name = raw;
-  const workoutsData = getCurrentWorkoutLayout();
-
-  const safeWorkouts =
-    workoutsData && workoutsData.length
-      ? workoutsData
-      : [{ name: "", sets: [{ weight: "", reps: "" }] }];
-
-  templates.push({
-    id: Date.now(),
-    name,
-    workouts: JSON.parse(JSON.stringify(safeWorkouts)),
   });
+}
 
-  saveTemplates(templates);
-  renderTemplatesList();
-  templateNameInput.value = "";
-});
-
-backToLogger.addEventListener("click", () => {
-  showScreen("home");
-});
+if (backToLogger) {
+  backToLogger.addEventListener("click", () => {
+    showScreen("home");
+  });
+}
 
 // Re-open tutorial from the menu
 const tutorialMenu = document.getElementById("menuTutorial");
@@ -1156,6 +1167,7 @@ if (tutorialMenu) {
 // ---------- Init ----------
 
 function applyTemplateToHome(workoutDataArray) {
+  if (!workoutsContainer) return;
   workoutsContainer.innerHTML = "";
   if (!workoutDataArray || workoutDataArray.length === 0) {
     createWorkoutCard(workoutsContainer);
@@ -1167,11 +1179,14 @@ function applyTemplateToHome(workoutDataArray) {
 }
 
 function getCurrentWorkoutLayout() {
+  if (!workoutsContainer) return [];
   return getWorkoutLayoutFrom(workoutsContainer);
 }
 
 function init() {
-  createWorkoutCard(workoutsContainer);
+  if (workoutsContainer) {
+    createWorkoutCard(workoutsContainer);
+  }
   renderTemplatesList();
   initTutorial();
 }
