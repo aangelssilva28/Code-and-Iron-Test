@@ -888,13 +888,10 @@ function makeShareCode(tpl) {
 }
 
 function tryImportShareCode(rawCode) {
-  const trimmed = (rawCode || "").trim();
-  const upper   = trimmed.toUpperCase(); // make prefix check case-insensitive
-
   try {
     // 1) New compact codes: "C1:..."
-    if (upper.startsWith(ROUTINE_SHARE_PREFIX)) {
-      const encoded = trimmed.slice(ROUTINE_SHARE_PREFIX.length);
+    if (rawCode.startsWith(ROUTINE_SHARE_PREFIX)) {
+      const encoded = rawCode.slice(ROUTINE_SHARE_PREFIX.length);
       const payload = JSON.parse(atob(encoded));
 
       const workouts = (payload.w || []).map((ex) => ({
@@ -915,8 +912,8 @@ function tryImportShareCode(rawCode) {
     }
 
     // 2) Legacy long codes: "CIROUTINEv1:..."
-    if (upper.startsWith(LEGACY_SHARE_PREFIX.toUpperCase())) {
-      const encoded = trimmed.slice(LEGACY_SHARE_PREFIX.length);
+    if (rawCode.startsWith(LEGACY_SHARE_PREFIX)) {
+      const encoded = rawCode.slice(LEGACY_SHARE_PREFIX.length);
       const payload = JSON.parse(atob(encoded));
 
       const safeWorkouts =
