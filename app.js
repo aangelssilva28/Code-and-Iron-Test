@@ -1319,6 +1319,83 @@ const QuickAdd = (() => {
 
 
 // ======================================================
+// SetIncrements module (hold-to-increment weight & reps)
+// ======================================================
+const SetIncrements = (() => {
+  let holdTimer = null;
+  let activeBtn = null;
+
+  function adjust(btn) {
+    const dir = btn.dataset.dir === "-" ? -1 : 1;
+    const target = btn.dataset.target; // "weight" or "reps"
+    if (!target) return;
+
+    const setBox = btn.closest(".set-box");
+    if (!setBox) return;
+
+    const input = setBox.querySelector(
+      '.set-input[data-field="' + target + '"]'
+    );
+    if (!input) return;
+
+    const raw = (input.value || "").trim();
+    const current = raw === "" ? 0 : Number(raw) || 0;
+
+    const step = target === "weight" ? 5 : 1; // small step; big jumps via chips
+    const next = Math.max(0, current + dir * step);
+
+    input.value = next || "";
+  }
+
+  function startHold(btn) {
+    adjust(btn); // do one immediately
+    activeBtn = btn;
+    holdTimer = setInterval(() => {
+      if (activeBtn) adjust(activeBtn);
+    }, 200);
+  }
+
+  function stopHold() {
+    if (holdTimer) {
+      clearInterval(holdTimer);
+      holdTimer = null;
+    }
+    activeBtn = null;
+  }
+
+  function init() {
+    const root = document;
+
+    root.addEventListener("mousedown", (e) => {
+      const btn = e.target.closest(".set-inc-btn");
+      if (!btn) return;
+      e.preventDefault();
+      startHold(btn);
+    });
+
+    root.addEventListener(
+      "touchstart",
+      (e) => {
+        const btn = e.target.closest(".set-inc-btn");
+        if (!btn) return;
+        e.preventDefault();
+        startHold(btn);
+      },
+      { passive: false }
+    );
+
+    ["mouseup", "mouseleave", "touchend", "touchcancel"].forEach((ev) => {
+      root.addEventListener(ev, stopHold);
+    });
+  }
+
+  return {
+    init,
+  };
+})();
+
+
+// ======================================================
 // App orchestrator (navigation, wiring everything)
 // ======================================================
 const App = (() => {
@@ -1457,6 +1534,7 @@ const App = (() => {
     });
 
     QuickAdd.init();
+    SetIncrements.init();
 
     showScreen("home");
   }
