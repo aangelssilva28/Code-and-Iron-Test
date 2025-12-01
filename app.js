@@ -292,7 +292,6 @@ weightInput.placeholder =
     ? Settings.getWeightPlaceholder()
     : "Weight";
 weightInput.type = "number";
-weightInput.type = "number";
 weightInput.inputMode = "decimal";
 weightInput.min = "0";
 weightInput.value = setData?.weight ?? "";
@@ -1541,9 +1540,10 @@ const App = (() => {
           closeMenu();
         });
       });
+    } // <-- close the if here
 
     // Init modules
-       Logger.init({
+    Logger.init({
       containerSelector: "#workoutsContainer",
       saveButtonSelector: "#saveProgressBtn",
       onSave: (rawWorkouts) => {
