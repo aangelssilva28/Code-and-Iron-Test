@@ -768,6 +768,62 @@
   margin-top: 0;
 }
     
+        /* --------------------------
+       SETTINGS
+    --------------------------- */
+
+    .settings-group {
+      margin-top: 10px;
+      margin-bottom: 14px;
+    }
+
+    .settings-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 4px 0;
+      font-size: 14px;
+    }
+
+    .settings-row span {
+      color: var(--text-main);
+    }
+
+    .settings-note {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin: 4px 4px 0;
+      line-height: 1.4;
+    }
+
+    .settings-checkbox {
+      width: 18px;
+      height: 18px;
+    }
+    
+        /* --------------------------
+       HIGH CONTRAST THEME
+    --------------------------- */
+
+    body.theme-high-contrast {
+      --card: #05070b;
+      --card-inner: #020308;
+      --text-muted: #f0f0f0;
+      --border-soft: #3a3a3a;
+    }
+
+    body.theme-high-contrast .card {
+      border-color: var(--accent);
+      box-shadow:
+        0 0 0 1px var(--accent),
+        0 4px 0 #000;
+    }
+
+    body.theme-high-contrast .saved-item {
+      border-color: var(--accent);
+    }
+    
   </style>
 </head>
 <body>
@@ -890,6 +946,7 @@
     <div class="menu-dropdown" id="menuDropdown">
       <div class="menu-item" data-nav="workouts">Routines</div>
       <div class="menu-item" data-nav="progress">Progress</div>
+      <div class="menu-item" data-nav="settings">Settings</div>
       <div class="menu-item" id="menuTutorial">Tutorial</div>
     </div>
 
@@ -945,6 +1002,87 @@
         <p class="card-subtitle">
           Your best sets for each exercise based on saved workouts.
         </p>
+
+    <!-- SETTINGS SCREEN -->
+    <main id="settingsScreen" class="screen">
+      <section class="card">
+        <h2 class="card-title">Settings</h2>
+        <p class="card-subtitle">
+          Adjust units, theme, and how your data is handled.
+        </p>
+
+        <!-- Units -->
+        <div class="settings-group">
+          <h3 class="card-subtitle" style="margin-top:0;margin-bottom:4px;">
+            Units
+          </h3>
+          <div class="settings-row">
+            <span>Weight units</span>
+            <select
+              id="settingsUnitSelect"
+              class="text-input"
+              style="max-width:160px;height:36px;padding:0 10px;text-align:left;"
+            >
+              <option value="lb">Pounds (lb)</option>
+              <option value="kg">Kilograms (kg)</option>
+            </select>
+          </div>
+          <p class="settings-note">
+            Internally everything is stored consistently. This only changes how
+            weights are shown in the logger.
+          </p>
+        </div>
+
+        <!-- Theme -->
+        <div class="settings-group">
+          <h3 class="card-subtitle" style="margin-top:8px;margin-bottom:4px;">
+            Theme
+          </h3>
+          <div class="settings-row">
+            <span>High contrast mode</span>
+            <label style="display:flex;align-items:center;gap:6px;">
+              <input
+                id="settingsHighContrast"
+                type="checkbox"
+                class="settings-checkbox"
+              />
+              <span style="font-size:13px;">Boost contrast</span>
+            </label>
+          </div>
+          <p class="settings-note">
+            Useful if the copper text feels too dim or low contrast.
+          </p>
+        </div>
+
+        <!-- Data / backup -->
+        <div class="settings-group">
+          <h3 class="card-subtitle" style="margin-top:8px;margin-bottom:4px;">
+            Data
+          </h3>
+
+          <button
+            id="settingsExportBackupBtn"
+            class="primary-btn footer-btn"
+          >
+            Export backup
+          </button>
+
+          <button id="resetAllDataBtn" class="danger-btn">
+            Reset all data
+          </button>
+
+          <p class="settings-note">
+            Resetting clears routines, progress, tutorial status, and settings
+            from this browser. This cannot be undone.
+          </p>
+        </div>
+
+        <div class="link-back" id="backToLoggerFromSettings">
+          <span>←</span> Back to workout logger
+        </div>
+      </section>
+    </main>
+  </div>
 
         <!-- Letter grid A–Z -->
         <div id="progressLetterGrid" class="progress-letter-grid"></div>
