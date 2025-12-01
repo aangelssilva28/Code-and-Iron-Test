@@ -362,6 +362,9 @@ const Logger = (() => {
     init,
     getCurrentWorkoutLayout,
     applyTemplateToHome,
+    // expose helpers so Templates can use the same card UI in its editor panels
+    createCard: createWorkoutCard,
+    getLayoutFromContainer: getWorkoutLayoutFrom,
   };
 })();
 
@@ -921,7 +924,7 @@ const Templates = (() => {
 
   // ---------- Templates UI ----------
 
-  function buildEditorPanel(panel, tpl) {
+   function buildEditorPanel(panel, tpl) {
     panel.innerHTML = "";
     panel.classList.add("open");
 
@@ -934,7 +937,8 @@ const Templates = (() => {
         ? tpl.workouts
         : [{ name: "", sets: [{ weight: "", reps: "" }] }];
 
-    data.forEach((w) => Logger.applyTemplateToHome([w])); // not used; keep function compatibility
+    // use Logger's card factory so the UI matches the main logger screen
+    data.forEach((w) => Logger.createCard(innerContainer, w));
   }
 
   function closePanelAndSave(panel) {
@@ -942,10 +946,8 @@ const Templates = (() => {
     if (!isNaN(index) && templates[index]) {
       const inner = panel.querySelector(".workouts-container");
       if (inner) {
-        // reuse logger helper to read layout
-        const workouts = Logger.getCurrentWorkoutLayout
-          ? Logger.getCurrentWorkoutLayout.call(null, inner)
-          : [];
+        // read layout from the panel using Logger helper
+        const workouts = Logger.getLayoutFromContainer(inner);
         templates[index].workouts = workouts;
         Storage.saveTemplates(templates);
       }
