@@ -1033,29 +1033,30 @@ const Templates = (() => {
       panel.dataset.index = index.toString();
       wrapper.appendChild(panel);
 
-      openBtn.addEventListener("click", () => {
-        if (panel.classList.contains("open")) {
-          closePanelAndSave(panel);
-          openBtn.textContent = "Open";
-          return;
-        }
+openBtn.addEventListener("click", () => {
+  if (panel.classList.contains("open")) {
+    // Panel is open → close it and save changes
+    closePanelAndSave(panel);
+    openBtn.textContent = "Open";
+    return;
+  }
 
-        document.querySelectorAll(".open-panel.open").forEach((p) => {
-          if (p !== panel) {
-            const btnIndex = p.dataset.index;
-            const otherBtn = savedTemplatesList.querySelector(
-              `.saved-wrapper:nth-child(${parseInt(btnIndex, 10) + 1}) .small-btn.open`
-            );
-            if (otherBtn) otherBtn.textContent = "Open";
-            closePanelAndSave(p);
-          }
-        });
+  // Close any other open panels first
+  document.querySelectorAll(".open-panel.open").forEach((p) => {
+    if (p !== panel) {
+      const btnIndex = p.dataset.index;
+      const otherBtn = savedTemplatesList.querySelector(
+        `.saved-wrapper:nth-child(${parseInt(btnIndex, 10) + 1}) .small-btn.open`
+      );
+      if (otherBtn) otherBtn.textContent = "Open";
+      closePanelAndSave(p);
+    }
+  });
 
-        // For now, we just show that the panel is open;
-        // you can wire up full editor here if you like.
-        panel.classList.add("open");
-        openBtn.textContent = "Close";
-      });
+  // 🔥 Actually build the editor UI inside this panel
+  buildEditorPanel(panel, tpl);
+  openBtn.textContent = "Close";
+});
 
       savedTemplatesList.appendChild(wrapper);
     });
