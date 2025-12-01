@@ -1,464 +1,1348 @@
-// ===== Storage Module =====
+// ======================================================
+// Storage module (versioned templates + progress)
+// ======================================================
 const Storage = (() => {
   const STORAGE_KEY = "codeAndIronTemplates_v2";
   const PROGRESS_KEY = "codeAndIronProgress_v1";
-  const BACKUP_KEY = "codeAndIronBackup_v1";
 
-  function loadTemplates() {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      return raw ? JSON.parse(raw) : [];
-    } catch (e) {
-      console.error("Failed to load templates", e);
-      return [];
-    }
-  }
+  const TEMPLATE_VERSION = 1;
+  const PROGRESS_VERSION = 1;
 
-  function saveTemplates(tpls) {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(tpls));
-    } catch (e) {
-      console.error("Failed to save templates", e);
-    }
-  }
-
+  // ---- PROGRESS ----
   function loadProgress() {
     try {
       const raw = localStorage.getItem(PROGRESS_KEY);
-      return raw ? JSON.parse(raw) : {};
+      if (!raw) return {};
+
+      const parsed = JSON.parse(raw);
+
+      if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+        return {};
+      }
+
+      if (!Object.prototype.hasOwnProperty.call(parsed, "version")) {
+        // old format: just data
+        return parsed;
+      }
+
+      if (parsed.version === PROGRESS_VERSION) {
+        return parsed.data || {};
+      }
+
+      console.warn("Newer progress version found — falling back to .data.");
+      return parsed.data || {};
     } catch (e) {
-      console.error("Failed to load progress", e);
+      console.error("Error loading progress", e);
       return {};
     }
   }
 
   function saveProgress(data) {
     try {
-      localStorage.setItem(PROGRESS_KEY, JSON.stringify(data));
-    } catch (e) {
-      console.error("Failed to save progress", e);
-    }
-  }
-
-  // optional: backup all app data in one lump
-  function backupAll() {
-    try {
-      const data = {
-        templates: loadTemplates(),
-        progress: loadProgress(),
-        timestamp: Date.now()
+      const wrapped = {
+        version: PROGRESS_VERSION,
+        data: data,
       };
-      localStorage.setItem(BACKUP_KEY, JSON.stringify(data));
+      localStorage.setItem(PROGRESS_KEY, JSON.stringify(wrapped));
     } catch (e) {
-      console.error("Failed to backup", e);
+      console.error("Error saving progress", e);
     }
   }
 
-  function loadBackup() {
+  // ---- TEMPLATES ----
+  function loadTemplates() {
     try {
-      const raw = localStorage.getItem(BACKUP_KEY);
-      return raw ? JSON.parse(raw) : null;
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return [];
+
+      const parsed = JSON.parse(raw);
+
+      if (Array.isArray(parsed)) {
+        // very old format
+        return parsed;
+      }
+
+      if (!parsed || typeof parsed !== "object") {
+        return [];
+      }
+
+      if (!Object.prototype.hasOwnProperty.call(parsed, "version")) {
+        return [];
+      }
+
+      if (parsed.version === TEMPLATE_VERSION) {
+        return parsed.data || [];
+      }
+
+      console.warn("Newer template version found — falling back to .data.");
+      return parsed.data || [];
     } catch (e) {
-      console.error("Failed to load backup", e);
-      return null;
+      console.error("Error loading templates", e);
+      return [];
+    }
+  }
+
+  function saveTemplates(templates) {
+    try {
+      const wrapped = {
+        version: TEMPLATE_VERSION,
+        data: templates,
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(wrapped));
+    } catch (e) {
+      console.error("Error saving templates", e);
     }
   }
 
   return {
-    loadTemplates,
-    saveTemplates,
     loadProgress,
     saveProgress,
-    backupAll,
-    loadBackup
+    loadTemplates,
+    saveTemplates,
   };
 })();
 
-// ===== Logger Module =====
+
+// ======================================================
+// Logger module (home screen workout cards & sets)
+// ======================================================
 const Logger = (() => {
-  let currentLayout = null;   // e.g. template for today
-  let currentLog = [];        // array of { exerciseId, sets: [...] }
+  let workoutsContainer = null;
 
-  // DOM cache if needed
-  let loggerRootEl = null;
+  function init({ containerSelector, saveButtonSelector, onSave }) {
+    workoutsContainer = document.querySelector(containerSelector);
 
-  function init({ rootSelector }) {
-    loggerRootEl = document.querySelector(rootSelector);
-    if (!loggerRootEl) {
-      console.warn("Logger root not found:", rootSelector);
+    if (!workoutsContainer) {
+      console.warn("Logger: workouts container not found:", containerSelector);
+      return;
     }
-    // initial render or listeners
-  }
 
-  function getCurrentLayout() {
-    return currentLayout;
-  }
+    // Start with one blank card
+    createWorkoutCard(workoutsContainer);
 
-  function applyLayout(layout) {
-    currentLayout = layout;
-    currentLog = []; // reset log for fresh session
-    renderLayout();
-  }
-
-  function renderLayout() {
-    if (!loggerRootEl || !currentLayout) return;
-
-    // Clear and rebuild cards based on currentLayout
-    loggerRootEl.innerHTML = "";
-    currentLayout.exercises.forEach(ex => {
-      const card = document.createElement("div");
-      card.className = "exercise-card";
-      card.dataset.exerciseId = ex.id;
-      card.innerHTML = `
-        <h3>${ex.name}</h3>
-        <div class="sets"></div>
-        <button class="add-set-btn">+ Set</button>
-      `;
-      loggerRootEl.appendChild(card);
-    });
-
-    // reattach listeners
-    loggerRootEl.addEventListener("click", handleLoggerClick);
-  }
-
-  function handleLoggerClick(e) {
-    const addBtn = e.target.closest(".add-set-btn");
-    if (addBtn) {
-      const card = addBtn.closest(".exercise-card");
-      const exerciseId = card.dataset.exerciseId;
-      addSet(exerciseId);
+    const saveBtn = document.querySelector(saveButtonSelector);
+    if (saveBtn && typeof onSave === "function") {
+      saveBtn.addEventListener("click", () => {
+        onSave(getCurrentWorkoutLayout());
+      });
     }
   }
 
-  function addSet(exerciseId) {
-    // find or create log entry
-    let entry = currentLog.find(l => l.exerciseId === exerciseId);
-    if (!entry) {
-      entry = { exerciseId, sets: [] };
-      currentLog.push(entry);
-    }
+  // ---------- Set rows (Weight / Reps) ----------
+  function createSetBox(card, setData, indexOverride) {
+    const box = document.createElement("div");
+    box.className = "set-box";
 
-    const newSet = { reps: 0, weight: 0 }; // or whatever your schema is
-    entry.sets.push(newSet);
+    const setLabel = document.createElement("div");
+    setLabel.className = "set-label";
+    const existingCount = card.querySelectorAll(".set-box").length;
+    const setNumber = indexOverride || existingCount + 1;
+    setLabel.textContent = `Set ${setNumber}`;
 
-    renderSetsForExercise(exerciseId);
-  }
+    const weightInput = document.createElement("input");
+    weightInput.className = "set-input";
+    weightInput.placeholder = "Weight";
+    weightInput.type = "text";
+    weightInput.value = setData?.weight ?? "";
 
-  function renderSetsForExercise(exerciseId) {
-    if (!loggerRootEl) return;
-    const card = loggerRootEl.querySelector(`.exercise-card[data-exercise-id="${exerciseId}"]`);
-    if (!card) return;
+    const weightGroup = document.createElement("div");
+    weightGroup.className = "set-weight-group";
+    weightGroup.appendChild(weightInput);
 
-    const setsContainer = card.querySelector(".sets");
-    const entry = currentLog.find(l => l.exerciseId === exerciseId);
-    setsContainer.innerHTML = "";
+    const repsInput = document.createElement("input");
+    repsInput.className = "set-input";
+    repsInput.placeholder = "Reps";
+    repsInput.type = "number";
+    repsInput.min = "0";
+    repsInput.value = setData?.reps ?? "";
 
-    if (!entry) return;
-
-    entry.sets.forEach((set, idx) => {
-      const row = document.createElement("div");
-      row.className = "set-row";
-      row.innerHTML = `
-        <span>Set ${idx + 1}</span>
-        <input type="number" class="set-reps" value="${set.reps}" data-index="${idx}">
-        <input type="number" class="set-weight" value="${set.weight}" data-index="${idx}">
-      `;
-      setsContainer.appendChild(row);
-    });
-  }
-
-  function getCurrentLog() {
-    return currentLog;
-  }
-
-  return {
-    init,
-    getCurrentLayout,
-    applyLayout,
-    getCurrentLog
-  };
-})();
-
-// ===== Templates Module =====
-const Templates = (() => {
-  let templates = [];
-  let selectedTemplateId = null;
-
-  let rootEl = null;
-
-  function init({ rootSelector }) {
-    rootEl = document.querySelector(rootSelector);
-    templates = Storage.loadTemplates();
-    renderList();
-    attachEvents();
-  }
-
-  function attachEvents() {
-    if (!rootEl) return;
-    rootEl.addEventListener("click", e => {
-      const selectBtn = e.target.closest("[data-template-id]");
-      if (selectBtn) {
-        const id = selectBtn.dataset.templateId;
-        selectTemplate(id);
+    const minusBtn = document.createElement("button");
+    minusBtn.className = "round-btn";
+    minusBtn.textContent = "–";
+    minusBtn.addEventListener("click", () => {
+      const boxes = card.querySelectorAll(".set-box");
+      if (boxes.length > 1) {
+        box.remove();
+        renumberSets(card);
       }
     });
 
-    // plus events for add / edit / delete buttons
+    const plusBtn = document.createElement("button");
+    plusBtn.className = "round-btn";
+    plusBtn.textContent = "+";
+    plusBtn.addEventListener("click", () => {
+      const wrapper = card.querySelector(".sets-wrapper") || card;
+      wrapper.appendChild(createSetBox(card));
+      renumberSets(card);
+    });
+
+    const rightGroup = document.createElement("div");
+    rightGroup.className = "set-right-group";
+    rightGroup.appendChild(repsInput);
+    rightGroup.appendChild(minusBtn);
+    rightGroup.appendChild(plusBtn);
+
+    box.appendChild(setLabel);
+    box.appendChild(weightGroup);
+    box.appendChild(rightGroup);
+
+    return box;
   }
 
-  function renderList() {
-    if (!rootEl) return;
-    rootEl.innerHTML = "";
-
-    templates.forEach(tpl => {
-      const item = document.createElement("div");
-      item.className = "template-item";
-      item.innerHTML = `
-        <button data-template-id="${tpl.id}">
-          ${tpl.name}
-        </button>
-      `;
-      rootEl.appendChild(item);
+  function renumberSets(card) {
+    const boxes = card.querySelectorAll(".set-box");
+    boxes.forEach((box, index) => {
+      const label = box.querySelector(".set-label");
+      if (label) {
+        label.textContent = `Set ${index + 1}`;
+      }
     });
   }
 
-  function selectTemplate(id) {
-    selectedTemplateId = id;
-    const tpl = templates.find(t => t.id === id);
-    if (!tpl) return;
+  // ---------- Workout cards (exercises) ----------
 
-    // Let App / Logger handle applying it
-    if (typeof App !== "undefined" && App.onTemplateSelected) {
-      App.onTemplateSelected(tpl);
+  function setCardCollapsed(card, collapsed) {
+    const setsWrapper = card.querySelector(".sets-wrapper");
+    const headerActions = card.querySelector(".workout-header-actions");
+    const nameInput = card.querySelector(".workout-name");
+
+    if (collapsed) {
+      card.classList.add("collapsed");
+      if (setsWrapper) setsWrapper.style.display = "none";
+      if (headerActions) headerActions.style.display = "none";
+
+      if (nameInput) {
+        nameInput.readOnly = true;
+        nameInput.blur();
+      }
+    } else {
+      card.classList.remove("collapsed");
+      if (setsWrapper) setsWrapper.style.display = "";
+      if (headerActions) headerActions.style.display = "flex";
+
+      if (nameInput) {
+        nameInput.readOnly = false;
+      }
     }
   }
 
-  function createTemplate(data) {
-    const newTpl = {
-      id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
-      ...data
-    };
-    templates.push(newTpl);
-    Storage.saveTemplates(templates);
-    renderList();
+  function createWorkoutCard(parent, workoutData) {
+    const card = document.createElement("div");
+    card.className = "workout-card";
+
+    const setsWrapper = document.createElement("div");
+    setsWrapper.className = "sets-wrapper";
+
+    const header = document.createElement("div");
+    header.className = "workout-header";
+
+    const nameInput = document.createElement("input");
+    nameInput.className = "text-input workout-name";
+    nameInput.placeholder = "Enter exercise name";
+    if (workoutData && workoutData.name) {
+      nameInput.value = workoutData.name;
+    }
+
+    nameInput.addEventListener("click", () => {
+      if (card.classList.contains("collapsed")) {
+        setCardCollapsed(card, false);
+      }
+    });
+
+    const headerActions = document.createElement("div");
+    headerActions.className = "workout-header-actions";
+
+    const removeWorkoutBtn = document.createElement("button");
+    removeWorkoutBtn.className = "round-btn minus";
+    removeWorkoutBtn.textContent = "–";
+    removeWorkoutBtn.addEventListener("click", () => {
+      const allCards = parent.querySelectorAll(".workout-card");
+
+      if (allCards.length <= 1) {
+        // Reset last card instead of deleting
+        nameInput.value = "";
+        const setsWrapper = card.querySelector(".sets-wrapper");
+        if (setsWrapper) {
+          setsWrapper.innerHTML = "";
+          const setBox = createSetBox(card, { weight: "", reps: "" }, 1);
+          setsWrapper.appendChild(setBox);
+        }
+      } else {
+        card.remove();
+      }
+    });
+
+    const collapseBtn = document.createElement("button");
+    collapseBtn.className = "round-btn collapse-btn";
+    collapseBtn.textContent = "▼";
+    collapseBtn.addEventListener("click", () => {
+      const isCollapsed = card.classList.contains("collapsed");
+      setCardCollapsed(card, !isCollapsed);
+    });
+
+    const addExerciseBtn = document.createElement("button");
+    addExerciseBtn.className = "round-btn plus";
+    addExerciseBtn.textContent = "+";
+    addExerciseBtn.addEventListener("click", () => {
+      createWorkoutCard(parent);
+    });
+
+    headerActions.appendChild(removeWorkoutBtn);
+    headerActions.appendChild(collapseBtn);
+    headerActions.appendChild(addExerciseBtn);
+
+    header.appendChild(nameInput);
+    header.appendChild(headerActions);
+
+    card.appendChild(header);
+    card.appendChild(setsWrapper);
+
+    const setsFromData =
+      workoutData && Array.isArray(workoutData.sets)
+        ? workoutData.sets
+        : [{ weight: "", reps: "" }];
+
+    setsFromData.forEach((set, idx) => {
+      const setBox = createSetBox(card, set, idx + 1);
+      setsWrapper.appendChild(setBox);
+    });
+
+    parent.appendChild(card);
+
+    if (workoutData && workoutData.collapsed) {
+      setCardCollapsed(card, true);
+    }
+
+    return card;
   }
 
-  function updateTemplate(id, updates) {
-    const tpl = templates.find(t => t.id === id);
-    if (!tpl) return;
-    Object.assign(tpl, updates);
-    Storage.saveTemplates(templates);
-    renderList();
+  // ---------- Helpers ----------
+
+  function getWorkoutLayoutFrom(container) {
+    const cards = container.querySelectorAll(".workout-card");
+    const workouts = [];
+
+    cards.forEach((card) => {
+      const nameInput = card.querySelector(".workout-name");
+      const sets = [];
+      card.querySelectorAll(".set-box").forEach((box) => {
+        const inputs = box.querySelectorAll(".set-input");
+        sets.push({
+          weight: inputs[0] ? inputs[0].value : "",
+          reps: inputs[1] ? inputs[1].value : "",
+        });
+      });
+      workouts.push({
+        name: nameInput ? nameInput.value : "",
+        sets,
+      });
+    });
+
+    return workouts;
   }
 
-  function deleteTemplate(id) {
-    templates = templates.filter(t => t.id !== id);
-    Storage.saveTemplates(templates);
-    renderList();
+  function getCurrentWorkoutLayout() {
+    if (!workoutsContainer) return [];
+    return getWorkoutLayoutFrom(workoutsContainer);
   }
 
-  function getTemplates() {
-    return templates;
+  function applyTemplateToHome(workoutDataArray) {
+    if (!workoutsContainer) return;
+    workoutsContainer.innerHTML = "";
+    if (!workoutDataArray || workoutDataArray.length === 0) {
+      createWorkoutCard(workoutsContainer);
+      return;
+    }
+    workoutDataArray.forEach((w) => {
+      createWorkoutCard(workoutsContainer, w);
+    });
   }
 
   return {
     init,
-    getTemplates,
-    createTemplate,
-    updateTemplate,
-    deleteTemplate
+    getCurrentWorkoutLayout,
+    applyTemplateToHome,
   };
 })();
 
-// ===== Progress Module =====
+
+// ======================================================
+// Progress module (A–Z grid + detail + saving progress)
+// ======================================================
 const Progress = (() => {
-  let progressData = {}; // { "A": { completed: true, ... }, ... }
+  let progressData = Storage.loadProgress();
 
-  let gridRootEl = null;
-  let detailRootEl = null;
+  let progressLetterGrid = null;
+  let progressListEl = null;
+  let progressDetailEl = null;
 
-  function init({ gridSelector, detailSelector }) {
-    gridRootEl = document.querySelector(gridSelector);
-    detailRootEl = document.querySelector(detailSelector);
+  let progressByLetter = {};
+  let activeProgressLetter = null;
 
-    progressData = Storage.loadProgress();
-    renderGrid();
-    attachEvents();
-  }
+  function init({ gridSelector, listSelector, detailSelector }) {
+    progressLetterGrid = document.getElementById(gridSelector.replace("#", ""));
+    progressListEl = document.getElementById(listSelector.replace("#", ""));
+    progressDetailEl = document.getElementById(detailSelector.replace("#", ""));
 
-  function attachEvents() {
-    if (!gridRootEl) return;
-    gridRootEl.addEventListener("click", e => {
-      const cell = e.target.closest("[data-letter]");
-      if (cell) {
-        const letter = cell.dataset.letter;
-        showDetail(letter);
-      }
-    });
-  }
-
-  function renderGrid() {
-    if (!gridRootEl) return;
-    gridRootEl.innerHTML = "";
-
-    const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
-    letters.forEach(letter => {
-      const data = progressData[letter] || {};
-      const cell = document.createElement("div");
-      cell.className = "progress-cell" + (data.completed ? " completed" : "");
-      cell.dataset.letter = letter;
-      cell.textContent = letter;
-      gridRootEl.appendChild(cell);
-    });
-  }
-
-  function showDetail(letter) {
-    if (!detailRootEl) return;
-    const data = progressData[letter] || {};
-    detailRootEl.innerHTML = `
-      <h2>${letter}</h2>
-      <p>Status: ${data.completed ? "Completed" : "Not completed"}</p>
-      <!-- Add more detail fields as needed -->
-    `;
-  }
-
-  // Called by App when a workout is logged/finished
-  function updateFromData(newData) {
-    // newData: e.g. { letter: "A", completed: true, date: "...", volume: 1234 }
-    if (!newData || !newData.letter) return;
-    progressData[newData.letter] = {
-      ...(progressData[newData.letter] || {}),
-      ...newData
-    };
-    Storage.saveProgress(progressData);
-    renderGrid();
+    renderProgressList();
   }
 
   function getData() {
     return progressData;
   }
 
-  return {
-    init,
-    updateFromData,
-    getData
-  };
-})();
+  // ---------- Save current workout into progress ----------
+  function saveFromWorkouts(workouts) {
+    if (!workouts || !workouts.length) return;
 
-// ===== Tutorial Module =====
-const Tutorial = (() => {
-  let overlayEl = null;
-  let isVisible = false;
+    const now = new Date().toISOString();
+    const today = now.split("T")[0];
+    const updated = { ...progressData };
 
-  function init({ overlaySelector }) {
-    overlayEl = document.querySelector(overlaySelector);
-    if (!overlayEl) return;
+    workouts.forEach((w) => {
+      const rawName = (w.name || "").trim();
+      if (!rawName) return;
 
-    overlayEl.addEventListener("click", e => {
-      if (e.target.matches(".tutorial-close, .tutorial-overlay")) {
-        hide();
+      const key = rawName.toLowerCase();
+      let maxReps = 0;
+      let bestWeight = null;
+      let bestWeightReps = 0;
+
+      (w.sets || []).forEach((set) => {
+        const repsNum = parseInt(set.reps, 10);
+        if (!repsNum || isNaN(repsNum)) return;
+
+        const weightStr = (set.weight || "").trim();
+        const weightNum = parseFloat(weightStr);
+
+        if (repsNum > maxReps) maxReps = repsNum;
+
+        if (!isNaN(weightNum)) {
+          if (
+            bestWeight === null ||
+            weightNum > bestWeight ||
+            (bestWeight === weightNum && repsNum > bestWeightReps)
+          ) {
+            bestWeight = weightNum;
+            bestWeightReps = repsNum;
+          }
+        }
+      });
+
+      if (maxReps === 0 && bestWeight === null) return;
+
+      const existing = updated[key] || {
+        name: rawName,
+        bestReps: 0,
+        bestRepsDate: null,
+        bestWeight: null,
+        bestWeightReps: 0,
+        bestWeightDate: null,
+        lastUpdated: null,
+        history: [],
+      };
+
+      if (maxReps > existing.bestReps) {
+        existing.bestReps = maxReps;
+        existing.bestRepsDate = now;
       }
+
+      if (bestWeight !== null) {
+        if (
+          existing.bestWeight === null ||
+          bestWeight > existing.bestWeight ||
+          (bestWeight === existing.bestWeight &&
+            bestWeightReps > existing.bestWeightReps)
+        ) {
+          existing.bestWeight = bestWeight;
+          existing.bestWeightReps = bestWeightReps;
+          existing.bestWeightDate = now;
+        }
+      }
+
+      const snapshot = {
+        date: today,
+        bestReps: maxReps,
+        bestWeight: bestWeight,
+        bestWeightReps: bestWeightReps,
+      };
+
+      existing.history = existing.history || [];
+      existing.history = existing.history.filter((h) => h.date !== today);
+      existing.history.push(snapshot);
+      existing.history.sort((a, b) => b.date.localeCompare(a.date));
+
+      if (existing.history.length > 30) {
+        existing.history = existing.history.slice(0, 30);
+      }
+
+      existing.lastUpdated = now;
+      existing.name = rawName;
+      updated[key] = existing;
+    });
+
+    progressData = updated;
+    Storage.saveProgress(progressData);
+    renderProgressList();
+  }
+
+  // ---------- Progress list (A–Z grid + per-letter list) ----------
+  function renderProgressList() {
+    const grid = progressLetterGrid;
+    const list = progressListEl;
+
+    if (!grid || !list) return;
+
+    grid.innerHTML = "";
+    list.innerHTML = "";
+
+    const entries = Object.values(progressData || {});
+    if (!entries.length) {
+      "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").forEach((letter) => {
+        const btn = document.createElement("button");
+        btn.className = "progress-letter-btn disabled";
+        btn.textContent = letter;
+        grid.appendChild(btn);
+      });
+
+      const empty = document.createElement("div");
+      empty.className = "card-subtitle";
+      empty.textContent =
+        "No progress saved yet. Log a workout on the home screen and tap 'Save progress'.";
+      list.appendChild(empty);
+
+      if (progressDetailEl) {
+        progressDetailEl.classList.remove("open");
+        progressDetailEl.innerHTML = "";
+      }
+      return;
+    }
+
+    progressByLetter = {};
+    entries.forEach((ex) => {
+      if (!ex.name) return;
+      let letter = ex.name.trim().charAt(0).toUpperCase();
+      if (letter < "A" || letter > "Z") return;
+      if (!progressByLetter[letter]) progressByLetter[letter] = [];
+      progressByLetter[letter].push(ex);
+    });
+
+    const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+
+    letters.forEach((letter) => {
+      const hasAny = !!(
+        progressByLetter[letter] && progressByLetter[letter].length
+      );
+      const btn = document.createElement("button");
+      btn.className = "progress-letter-btn";
+      if (!hasAny) btn.classList.add("disabled");
+      btn.textContent = letter;
+
+      btn.addEventListener("click", () => {
+        if (!hasAny) return;
+        activeProgressLetter = letter;
+
+        grid.querySelectorAll(".progress-letter-btn").forEach((b) => {
+          b.classList.toggle("active", b === btn);
+        });
+
+        updateProgressExerciseList();
+      });
+
+      grid.appendChild(btn);
+    });
+
+    if (!activeProgressLetter || !progressByLetter[activeProgressLetter]) {
+      activeProgressLetter =
+        letters.find(
+          (l) => progressByLetter[l] && progressByLetter[l].length
+        ) || null;
+    }
+
+    if (activeProgressLetter) {
+      const idx = letters.indexOf(activeProgressLetter);
+      if (idx !== -1 && grid.children[idx]) {
+        grid.children[idx].classList.add("active");
+      }
+    }
+
+    updateProgressExerciseList();
+  }
+
+  function updateProgressExerciseList() {
+    const list = progressListEl;
+    if (!list) return;
+
+    list.innerHTML = "";
+
+    if (
+      !activeProgressLetter ||
+      !progressByLetter[activeProgressLetter] ||
+      !progressByLetter[activeProgressLetter].length
+    ) {
+      const empty = document.createElement("div");
+      empty.className = "card-subtitle";
+      empty.textContent =
+        "No exercises saved under this letter yet. Log a workout and save progress.";
+      list.appendChild(empty);
+
+      if (progressDetailEl) {
+        progressDetailEl.classList.remove("open");
+        progressDetailEl.innerHTML = "";
+      }
+      return;
+    }
+
+    const today = new Date().toISOString().split("T")[0];
+
+    const exList = [...progressByLetter[activeProgressLetter]];
+    exList.sort((a, b) => a.name.localeCompare(b.name));
+
+    exList.forEach((ex) => {
+      const row = document.createElement("div");
+      row.className = "saved-item";
+
+      const nameDiv = document.createElement("div");
+      nameDiv.className = "saved-name";
+      nameDiv.textContent = ex.name;
+      row.appendChild(nameDiv);
+
+      const detail = document.createElement("div");
+      detail.style.fontSize = "13px";
+      detail.style.color = "#bbbbbb";
+
+      let prText = "";
+      if (ex.bestRepsDate && ex.bestRepsDate.startsWith(today)) {
+        prText += " (NEW REP PR!)";
+      }
+      if (ex.bestWeightDate && ex.bestWeightDate.startsWith(today)) {
+        prText += " (NEW WEIGHT PR!)";
+      }
+
+      if (ex.bestWeight !== null) {
+        detail.textContent = `Best: ${ex.bestWeight} x ${ex.bestWeightReps} • Max reps: ${ex.bestReps}${prText}`;
+      } else {
+        detail.textContent = `Best: ${ex.bestReps} reps${prText}`;
+      }
+
+      row.appendChild(detail);
+
+      row.addEventListener("click", () => {
+        openProgressDetail(ex);
+      });
+
+      list.appendChild(row);
     });
   }
 
-  function show(stepId) {
-    if (!overlayEl) return;
-    isVisible = true;
-    overlayEl.classList.add("visible");
+  // ---------- Progress detail panel (last 5 logs) ----------
+  function formatDateLabel(isoDate) {
+    if (!isoDate) return "";
+    const d = new Date(isoDate);
+    return d.toLocaleDateString(undefined, {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  }
 
-    // You can swap content by stepId if desired
-    if (stepId) {
-      overlayEl.dataset.step = stepId;
+  function openProgressDetail(ex) {
+    if (!progressDetailEl) return;
+
+    progressDetailEl.classList.add("open");
+    progressDetailEl.innerHTML = "";
+
+    const title = document.createElement("div");
+    title.className = "card-subtitle";
+    title.style.marginBottom = "8px";
+    title.textContent = ex.name + " — last sessions";
+    progressDetailEl.appendChild(title);
+
+    if (ex.bestRepsDate || ex.bestWeightDate) {
+      const prInfo = document.createElement("div");
+      prInfo.style.fontSize = "13px";
+      prInfo.style.color = "#bbbbbb";
+      prInfo.style.marginBottom = "8px";
+
+      const parts = [];
+      if (ex.bestRepsDate) {
+        parts.push(
+          `Rep PR: ${ex.bestReps} reps on ${formatDateLabel(
+            ex.bestRepsDate.split("T")[0]
+          )}`
+        );
+      }
+      if (ex.bestWeightDate && ex.bestWeight !== null) {
+        parts.push(
+          `Weight PR: ${ex.bestWeight} x ${ex.bestWeightReps} on ${formatDateLabel(
+            ex.bestWeightDate.split("T")[0]
+          )}`
+        );
+      }
+
+      prInfo.textContent = parts.join(" • ");
+      progressDetailEl.appendChild(prInfo);
     }
+
+    const history = (ex.history || []).slice(0, 5);
+    if (!history.length) {
+      const empty = document.createElement("div");
+      empty.style.fontSize = "13px";
+      empty.style.color = "#bbbbbb";
+      empty.textContent =
+        "No detailed history yet. Save progress a few times for this exercise.";
+      progressDetailEl.appendChild(empty);
+      return;
+    }
+
+    history.forEach((entry) => {
+      const row = document.createElement("div");
+      row.className = "progress-detail-row";
+
+      const left = document.createElement("span");
+      left.textContent = formatDateLabel(entry.date);
+
+      const right = document.createElement("span");
+      if (entry.bestWeight !== null) {
+        right.textContent = `${entry.bestWeight} x ${entry.bestWeightReps} • Max reps: ${entry.bestReps}`;
+      } else {
+        right.textContent = `Best: ${entry.bestReps} reps`;
+      }
+
+      row.appendChild(left);
+      row.appendChild(right);
+      progressDetailEl.appendChild(row);
+    });
   }
 
-  function hide() {
-    if (!overlayEl) return;
-    isVisible = false;
-    overlayEl.classList.remove("visible");
+  function closeDetail() {
+    if (!progressDetailEl) return;
+    progressDetailEl.classList.remove("open");
+    progressDetailEl.innerHTML = "";
   }
 
-  function toggle() {
-    isVisible ? hide() : show();
+  function refreshUI() {
+    renderProgressList();
   }
 
   return {
     init,
-    show,
-    hide,
-    toggle
+    saveFromWorkouts,
+    getData,
+    refreshUI,
+    closeDetail,
   };
 })();
 
-// ===== App Orchestrator =====
-const App = (() => {
 
-  function init() {
-    // Initialize all modules with selectors
-    Templates.init({ rootSelector: "#templates-root" });
-    Logger.init({ rootSelector: "#logger-root" });
-    Progress.init({ gridSelector: "#progress-grid", detailSelector: "#progress-detail" });
-    Tutorial.init({ overlaySelector: "#tutorial-overlay" });
+// ======================================================
+// Templates module (routines screen + share + backup)
+// ======================================================
+const Templates = (() => {
+  const ROUTINE_SHARE_PREFIX = "C1:";
+  const LEGACY_SHARE_PREFIX = "CIROUTINEv1:";
 
-    // Hook up UI-level buttons
-    wireGlobalButtons();
-  }
+  let templates = Storage.loadTemplates();
 
-  function wireGlobalButtons() {
-    const startTutorialBtn = document.querySelector("#start-tutorial-btn");
-    if (startTutorialBtn) {
-      startTutorialBtn.addEventListener("click", () => {
-        Tutorial.show("welcome");
+  let templateNameInput;
+  let saveTemplateBtn;
+  let savedTemplatesList;
+  let backToLoggerBtn;
+
+  // Backup UI
+  let backupText;
+  let exportBackupBtn;
+  let importBackupBtn;
+
+  function init({
+    nameInputSelector,
+    saveButtonSelector,
+    listSelector,
+    backButtonSelector,
+    backupTextSelector,
+    exportButtonSelector,
+    importButtonSelector,
+  }) {
+    templateNameInput = document.querySelector(nameInputSelector);
+    saveTemplateBtn = document.querySelector(saveButtonSelector);
+    savedTemplatesList = document.querySelector(listSelector);
+    backToLoggerBtn = document.querySelector(backButtonSelector);
+
+    backupText = document.querySelector(backupTextSelector);
+    exportBackupBtn = document.querySelector(exportButtonSelector);
+    importBackupBtn = document.querySelector(importButtonSelector);
+
+    if (saveTemplateBtn) {
+      saveTemplateBtn.addEventListener("click", onSaveTemplateClicked);
+    }
+
+    if (backToLoggerBtn) {
+      backToLoggerBtn.addEventListener("click", () => {
+        App.showScreen("home");
       });
     }
 
-    const finishWorkoutBtn = document.querySelector("#finish-workout-btn");
-    if (finishWorkoutBtn) {
-      finishWorkoutBtn.addEventListener("click", handleWorkoutFinish);
+    // Backup handlers
+    if (exportBackupBtn && backupText) {
+      exportBackupBtn.addEventListener("click", () => {
+        const backupString = createBackupString();
+        if (!backupString) return;
+        backupText.value = backupString;
+        alert(
+          "Backup code generated. Copy it and save it somewhere safe."
+        );
+      });
+    }
+
+    if (importBackupBtn && backupText) {
+      importBackupBtn.addEventListener("click", () => {
+        const str = backupText.value.trim();
+        if (!str) {
+          alert("Paste a backup code first.");
+          return;
+        }
+        restoreFromBackupString(str);
+      });
+    }
+
+    renderTemplatesList();
+  }
+
+  function getTemplates() {
+    return templates;
+  }
+
+  // ---------- Share codes ----------
+
+  function makeShareCode(tpl) {
+    const payload = {
+      n: tpl.name || "Shared routine",
+      w: (tpl.workouts || []).map((ex) => ({
+        n: ex.name || "",
+        s: (ex.sets || []).map((set) => ({
+          w: set.weight ?? "",
+          r: set.reps ?? "",
+        })),
+      })),
+    };
+
+    return ROUTINE_SHARE_PREFIX + btoa(JSON.stringify(payload));
+  }
+
+  function tryImportShareCode(rawCode) {
+    try {
+      if (rawCode.startsWith(ROUTINE_SHARE_PREFIX)) {
+        const encoded = rawCode.slice(ROUTINE_SHARE_PREFIX.length);
+        const payload = JSON.parse(atob(encoded));
+
+        const workouts = (payload.w || []).map((ex) => ({
+          name: ex.n || "",
+          sets: (ex.s || []).map((set) => ({
+            weight: set.w ?? "",
+            reps: set.r ?? "",
+          })),
+        }));
+
+        return {
+          name: payload.n || "Shared routine",
+          workouts:
+            workouts && workouts.length
+              ? workouts
+              : [{ name: "", sets: [{ weight: "", reps: "" }] }],
+        };
+      }
+
+      if (rawCode.startsWith(LEGACY_SHARE_PREFIX)) {
+        const encoded = rawCode.slice(LEGACY_SHARE_PREFIX.length);
+        const payload = JSON.parse(atob(encoded));
+
+        const safeWorkouts =
+          payload.workouts && payload.workouts.length
+            ? payload.workouts
+            : [{ name: "", sets: [{ weight: "", reps: "" }] }];
+
+        return {
+          name: payload.name || "Shared routine",
+          workouts: safeWorkouts,
+        };
+      }
+
+      return null;
+    } catch (e) {
+      console.error("Bad share code", e);
+      return null;
     }
   }
 
-  // Called by Templates when the user selects a routine
-  function onTemplateSelected(template) {
-    Logger.applyLayout(template.layout);
-    // optionally mark some “current letter” somewhere
-  }
-
-  function handleWorkoutFinish() {
-    const log = Logger.getCurrentLog();
-    // Convert log into whatever shape Progress expects
-    const summary = summarizeLogToProgress(log);
-
-    Progress.updateFromData(summary);
-    Storage.backupAll();
-  }
-
-  // Example mapping from log → progress summary
-  function summarizeLogToProgress(log) {
-    // Dummy example: map to letter "A" and mark completed
+  // ---------- Backup & restore (templates + progress) ----------
+  function getBackupObject() {
+    const progressData = Progress.getData ? Progress.getData() : {};
     return {
-      letter: "A",
-      completed: true,
-      volume: calcTotalVolume(log),
-      date: new Date().toISOString()
+      templates,
+      progressData,
+      version: 1,
     };
   }
 
-  function calcTotalVolume(log) {
-    return log.reduce((total, ex) => {
-      const exVol = ex.sets.reduce((v, s) => v + (Number(s.reps) * Number(s.weight || 0)), 0);
-      return total + exVol;
-    }, 0);
+  function createBackupString() {
+    try {
+      return JSON.stringify(getBackupObject());
+    } catch (e) {
+      console.error("Error creating backup", e);
+      alert("Could not create backup.");
+      return "";
+    }
   }
 
-  // Tiny public API
+  function restoreFromBackupString(str) {
+    try {
+      const parsed = JSON.parse(str);
+
+      if (parsed.templates && Array.isArray(parsed.templates)) {
+        templates = parsed.templates;
+        Storage.saveTemplates(templates);
+        renderTemplatesList();
+      }
+
+      if (parsed.progressData && typeof parsed.progressData === "object") {
+        Storage.saveProgress(parsed.progressData);
+        // refresh internal state in Progress
+        Progress.refreshUI();
+      }
+
+      alert("Backup restored!");
+    } catch (e) {
+      console.error("Error restoring backup", e);
+      alert(
+        "That backup code was invalid. Make sure you pasted the whole thing."
+      );
+    }
+  }
+
+  // ---------- Templates UI ----------
+
+  function buildEditorPanel(panel, tpl) {
+    panel.innerHTML = "";
+    panel.classList.add("open");
+
+    const innerContainer = document.createElement("div");
+    innerContainer.className = "workouts-container";
+    panel.appendChild(innerContainer);
+
+    const data =
+      tpl.workouts && tpl.workouts.length
+        ? tpl.workouts
+        : [{ name: "", sets: [{ weight: "", reps: "" }] }];
+
+    data.forEach((w) => Logger.applyTemplateToHome([w])); // not used; keep function compatibility
+  }
+
+  function closePanelAndSave(panel) {
+    const index = parseInt(panel.dataset.index, 10);
+    if (!isNaN(index) && templates[index]) {
+      const inner = panel.querySelector(".workouts-container");
+      if (inner) {
+        // reuse logger helper to read layout
+        const workouts = Logger.getCurrentWorkoutLayout
+          ? Logger.getCurrentWorkoutLayout.call(null, inner)
+          : [];
+        templates[index].workouts = workouts;
+        Storage.saveTemplates(templates);
+      }
+    }
+    panel.classList.remove("open");
+    panel.innerHTML = "";
+  }
+
+  function renderTemplatesList() {
+    if (!savedTemplatesList) return;
+
+    savedTemplatesList.innerHTML = "";
+    if (!templates.length) return;
+
+    templates.forEach((tpl, index) => {
+      const wrapper = document.createElement("div");
+      wrapper.className = "saved-wrapper";
+
+      const row = document.createElement("div");
+      row.className = "saved-item";
+
+      const name = document.createElement("div");
+      name.className = "saved-name";
+      name.textContent = tpl.name || "Untitled routine";
+      name.title = tpl.name || "Untitled routine";
+      row.appendChild(name);
+
+      const btnWrap = document.createElement("div");
+      btnWrap.className = "saved-buttons";
+
+      const shareBtn = document.createElement("button");
+      shareBtn.className = "small-btn share";
+      shareBtn.textContent = "Share";
+      shareBtn.addEventListener("click", () => {
+        const code = makeShareCode(tpl);
+        if (templateNameInput) {
+          templateNameInput.value = code;
+        }
+        alert(
+          "Share code generated and placed in the 'New routine name' box.\n\n" +
+            "Copy it and send it to your friend. They can paste it into the same box " +
+            "and tap Create to import this routine."
+        );
+      });
+      btnWrap.appendChild(shareBtn);
+
+      const loadBtn = document.createElement("button");
+      loadBtn.className = "small-btn load";
+      loadBtn.textContent = "Load";
+      loadBtn.addEventListener("click", () => {
+        Logger.applyTemplateToHome(tpl.workouts || []);
+        App.showScreen("home");
+      });
+      btnWrap.appendChild(loadBtn);
+
+      const openBtn = document.createElement("button");
+      openBtn.className = "small-btn open";
+      openBtn.textContent = "Open";
+      btnWrap.appendChild(openBtn);
+
+      const delBtn = document.createElement("button");
+      delBtn.className = "small-btn delete";
+      delBtn.textContent = "Delete";
+      delBtn.addEventListener("click", () => {
+        const panel = savedTemplatesList.querySelector(
+          `.open-panel[data-index="${index}"]`
+        );
+        if (panel && panel.classList.contains("open")) {
+          closePanelAndSave(panel);
+        }
+        templates.splice(index, 1);
+        Storage.saveTemplates(templates);
+        renderTemplatesList();
+        Progress.refreshUI();
+      });
+      btnWrap.appendChild(delBtn);
+
+      row.appendChild(btnWrap);
+      wrapper.appendChild(row);
+
+      const panel = document.createElement("div");
+      panel.className = "open-panel";
+      panel.dataset.index = index.toString();
+      wrapper.appendChild(panel);
+
+      openBtn.addEventListener("click", () => {
+        if (panel.classList.contains("open")) {
+          closePanelAndSave(panel);
+          openBtn.textContent = "Open";
+          return;
+        }
+
+        document.querySelectorAll(".open-panel.open").forEach((p) => {
+          if (p !== panel) {
+            const btnIndex = p.dataset.index;
+            const otherBtn = savedTemplatesList.querySelector(
+              `.saved-wrapper:nth-child(${parseInt(btnIndex, 10) + 1}) .small-btn.open`
+            );
+            if (otherBtn) otherBtn.textContent = "Open";
+            closePanelAndSave(p);
+          }
+        });
+
+        // For now, we just show that the panel is open;
+        // you can wire up full editor here if you like.
+        panel.classList.add("open");
+        openBtn.textContent = "Close";
+      });
+
+      savedTemplatesList.appendChild(wrapper);
+    });
+  }
+
+  // Save template button handler
+  function onSaveTemplateClicked() {
+    if (!templateNameInput) return;
+
+    const raw = templateNameInput.value.trim();
+    if (!raw) {
+      alert("Give this routine a name first, or paste a share code.");
+      return;
+    }
+
+    const imported = tryImportShareCode(raw);
+    if (imported) {
+      templates.push({
+        id: Date.now(),
+        name: imported.name,
+        workouts: JSON.parse(JSON.stringify(imported.workouts)),
+      });
+      Storage.saveTemplates(templates);
+      renderTemplatesList();
+      templateNameInput.value = "";
+      alert(`Shared routine imported as "${imported.name}".`);
+      return;
+    }
+
+    const name = raw;
+    const workoutsData = Logger.getCurrentWorkoutLayout();
+
+    const safeWorkouts =
+      workoutsData && workoutsData.length
+        ? workoutsData
+        : [{ name: "", sets: [{ weight: "", reps: "" }] }];
+
+    templates.push({
+      id: Date.now(),
+      name,
+      workouts: JSON.parse(JSON.stringify(safeWorkouts)),
+    });
+
+    Storage.saveTemplates(templates);
+    renderTemplatesList();
+    templateNameInput.value = "";
+  }
+
   return {
     init,
-    onTemplateSelected
+    getTemplates,
   };
 })();
 
-// Run once DOM is ready
+
+// ======================================================
+// Tutorial module (overlay + menu item)
+// ======================================================
+const Tutorial = (() => {
+  const TUTORIAL_KEY = "codeAndIronTutorialSeen_v1";
+
+  let overlay;
+  let menuReopenItem;
+
+  function init({ overlaySelector, menuItemSelector }) {
+    overlay = document.getElementById(overlaySelector.replace("#", ""));
+    menuReopenItem = document.querySelector(menuItemSelector);
+
+    if (menuReopenItem) {
+      menuReopenItem.addEventListener("click", () => {
+        localStorage.removeItem(TUTORIAL_KEY);
+        startTutorial();
+        App.closeMenu();
+      });
+    }
+
+    startTutorial();
+  }
+
+  function startTutorial() {
+    if (!overlay) return;
+
+    const seen = localStorage.getItem(TUTORIAL_KEY);
+    if (seen === "true") {
+      overlay.classList.remove("visible");
+      return;
+    }
+
+    const screens = Array.from(overlay.querySelectorAll(".tutorial-screen"));
+    if (!screens.length) return;
+
+    let currentIndex = 0;
+
+    function showStep(index) {
+      screens.forEach((el, i) => {
+        el.classList.toggle("active", i === index);
+      });
+    }
+
+    function finishTutorial() {
+      localStorage.setItem(TUTORIAL_KEY, "true");
+      overlay.classList.remove("visible");
+    }
+
+    overlay.classList.add("visible");
+    showStep(currentIndex);
+
+    const skipBtn = document.getElementById("tutorialSkipBtn");
+    const startBtn = document.getElementById("tutorialStartBtn");
+
+    if (skipBtn) {
+      skipBtn.addEventListener("click", () => {
+        finishTutorial();
+      });
+    }
+
+    if (startBtn) {
+      startBtn.addEventListener("click", () => {
+        currentIndex = 1;
+        showStep(currentIndex);
+      });
+    }
+
+    overlay.querySelectorAll("[data-tutorial-next]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        if (currentIndex < screens.length - 1) {
+          currentIndex++;
+          showStep(currentIndex);
+        } else {
+          finishTutorial();
+        }
+      });
+    });
+
+    overlay.querySelectorAll("[data-tutorial-back]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        if (currentIndex > 0) {
+          currentIndex--;
+          showStep(currentIndex);
+        }
+      });
+    });
+
+    overlay.querySelectorAll("[data-tutorial-done]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        finishTutorial();
+      });
+    });
+  }
+
+  return {
+    init,
+  };
+})();
+
+
+// ======================================================
+// App orchestrator (navigation, wiring everything)
+// ======================================================
+const App = (() => {
+  let menuButton;
+  let menuDropdown;
+  let homeScreen;
+  let workoutsScreen;
+  let progressScreen;
+
+  function init() {
+    // Privacy footer toggle
+    const togglePrivacy = document.getElementById("toggle-privacy");
+    const privacyPanel = document.getElementById("privacy-panel");
+    if (togglePrivacy && privacyPanel) {
+      togglePrivacy.addEventListener("click", () => {
+        privacyPanel.classList.toggle("hidden");
+      });
+    }
+
+    // Screens & nav
+    menuButton = document.getElementById("menuButton");
+    menuDropdown = document.getElementById("menuDropdown");
+    homeScreen = document.getElementById("homeScreen");
+    workoutsScreen = document.getElementById("workoutsScreen");
+    progressScreen = document.getElementById("progressScreen");
+
+    const progressBackBtn = document.getElementById("backToLoggerFromProgress");
+    if (progressBackBtn) {
+      progressBackBtn.addEventListener("click", () => showScreen("home"));
+    }
+
+    if (menuButton && menuDropdown) {
+      menuButton.addEventListener("click", () => {
+        menuDropdown.classList.toggle("open");
+      });
+
+      document.addEventListener("click", (e) => {
+        if (
+          !menuButton.contains(e.target) &&
+          !menuDropdown.contains(e.target)
+        ) {
+          closeMenu();
+        }
+      });
+
+      document.querySelectorAll(".menu-item[data-nav]").forEach((item) => {
+        item.addEventListener("click", () => {
+          const nav = item.dataset.nav;
+          if (nav === "workouts" || nav === "progress") {
+            showScreen(nav);
+            if (nav === "progress") {
+              Progress.refreshUI();
+            }
+          }
+          closeMenu();
+        });
+      });
+    }
+
+    // Init modules
+    Logger.init({
+      containerSelector: "#workoutsContainer",
+      saveButtonSelector: "#saveProgressBtn",
+      onSave: (workouts) => {
+        Progress.saveFromWorkouts(workouts);
+        alert("Progress saved!");
+      },
+    });
+
+    Progress.init({
+      gridSelector: "#progressLetterGrid",
+      listSelector: "#progressList",
+      detailSelector: "#progressDetail",
+    });
+
+    Templates.init({
+      nameInputSelector: "#templateNameInput",
+      saveButtonSelector: "#saveTemplateBtn",
+      listSelector: "#savedTemplatesList",
+      backButtonSelector: "#backToLogger",
+      backupTextSelector: "#backupText",
+      exportButtonSelector: "#exportBackupBtn",
+      importButtonSelector: "#importBackupBtn",
+    });
+
+    Tutorial.init({
+      overlaySelector: "#tutorialOverlay",
+      menuItemSelector: "#menuTutorial",
+    });
+
+    showScreen("home");
+  }
+
+  function showScreen(which) {
+    if (!homeScreen || !workoutsScreen || !progressScreen) return;
+
+    if (which === "home") {
+      homeScreen.classList.add("active");
+      workoutsScreen.classList.remove("active");
+      progressScreen.classList.remove("active");
+    } else if (which === "workouts") {
+      homeScreen.classList.remove("active");
+      workoutsScreen.classList.add("active");
+      progressScreen.classList.remove("active");
+    } else if (which === "progress") {
+      homeScreen.classList.remove("active");
+      workoutsScreen.classList.remove("active");
+      progressScreen.classList.add("active");
+    }
+
+    if (which !== "progress") {
+      Progress.closeDetail();
+    }
+  }
+
+  function closeMenu() {
+    if (menuDropdown) {
+      menuDropdown.classList.remove("open");
+    }
+  }
+
+  return {
+    init,
+    showScreen,
+    closeMenu,
+  };
+})();
+
+
+// ======================================================
+// Boot
+// ======================================================
 document.addEventListener("DOMContentLoaded", () => {
   App.init();
 });
