@@ -1034,8 +1034,8 @@ const Templates = (() => {
       wrapper.appendChild(panel);
 
 openBtn.addEventListener("click", () => {
+  // If panel is already open → close & save
   if (panel.classList.contains("open")) {
-    // Panel is open → close it and save changes
     closePanelAndSave(panel);
     openBtn.textContent = "Open";
     return;
@@ -1053,7 +1053,7 @@ openBtn.addEventListener("click", () => {
     }
   });
 
-  // 🔥 Actually build the editor UI inside this panel
+  // 🔥 Build the editor UI inside this panel
   buildEditorPanel(panel, tpl);
   openBtn.textContent = "Close";
 });
