@@ -321,13 +321,13 @@ repsInput.dataset.field = "reps";
     quickLabel.textContent = "Quick add:";
     quickAddRow.appendChild(quickLabel);
 
-    [5, 10, 25].forEach((val) => {
-      const chip = document.createElement("button");
-      chip.className = "quick-add-chip";
-      chip.dataset.quick = String(val);
-      chip.textContent = `+${val}`;
-      quickAddRow.appendChild(chip);
-    });
+[5, 10, 25, 35, 45].forEach((val) => {
+  const chip = document.createElement("button");
+  chip.className = "quick-add-chip";
+  chip.dataset.quick = String(val);
+  chip.textContent = `+${val}`;
+  quickAddRow.appendChild(chip);
+});
 
     card.appendChild(quickAddRow);
 
