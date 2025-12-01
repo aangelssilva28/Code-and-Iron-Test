@@ -139,22 +139,27 @@ const Logger = (() => {
     const setNumber = indexOverride || existingCount + 1;
     setLabel.textContent = `Set ${setNumber}`;
 
-    const weightInput = document.createElement("input");
-    weightInput.className = "set-input";
-    weightInput.placeholder = "Weight";
-    weightInput.type = "text";
-    weightInput.value = setData?.weight ?? "";
+const weightInput = document.createElement("input");
+weightInput.className = "set-input";
+weightInput.placeholder = "Weight";
+weightInput.type = "number";
+weightInput.inputMode = "decimal";
+weightInput.min = "0";
+weightInput.value = setData?.weight ?? "";
+weightInput.dataset.field = "weight";
 
-    const weightGroup = document.createElement("div");
-    weightGroup.className = "set-weight-group";
-    weightGroup.appendChild(weightInput);
+const weightGroup = document.createElement("div");
+weightGroup.className = "set-weight-group";
+weightGroup.appendChild(weightInput);
 
-    const repsInput = document.createElement("input");
-    repsInput.className = "set-input";
-    repsInput.placeholder = "Reps";
-    repsInput.type = "number";
-    repsInput.min = "0";
-    repsInput.value = setData?.reps ?? "";
+const repsInput = document.createElement("input");
+repsInput.className = "set-input";
+repsInput.placeholder = "Reps";
+repsInput.type = "number";
+repsInput.inputMode = "numeric";
+repsInput.min = "0";
+repsInput.value = setData?.reps ?? "";
+repsInput.dataset.field = "reps";
 
     const minusBtn = document.createElement("button");
     minusBtn.className = "round-btn";
@@ -306,6 +311,25 @@ const Logger = (() => {
       const setBox = createSetBox(card, set, idx + 1);
       setsWrapper.appendChild(setBox);
     });
+
+    // Quick-add chips for weight (appear under sets)
+    const quickAddRow = document.createElement("div");
+    quickAddRow.className = "quick-add-row";
+
+    const quickLabel = document.createElement("span");
+    quickLabel.className = "quick-add-label";
+    quickLabel.textContent = "Quick add:";
+    quickAddRow.appendChild(quickLabel);
+
+    [5, 10, 25].forEach((val) => {
+      const chip = document.createElement("button");
+      chip.className = "quick-add-chip";
+      chip.dataset.quick = String(val);
+      chip.textContent = `+${val}`;
+      quickAddRow.appendChild(chip);
+    });
+
+    card.appendChild(quickAddRow);
 
     parent.appendChild(card);
 
@@ -1214,6 +1238,55 @@ const Tutorial = (() => {
 
 
 // ======================================================
+// QuickAdd module (weight chips)
+// ======================================================
+const QuickAdd = (() => {
+  let lastFocusedWeightInput = null;
+
+  function init() {
+    // Track last-focused weight input anywhere in the app
+    document.addEventListener("focusin", (e) => {
+      const input = e.target.closest('.set-input[data-field="weight"]');
+      if (input) {
+        lastFocusedWeightInput = input;
+      }
+    });
+
+    // Delegate chip clicks
+    document.addEventListener("click", (e) => {
+      const chip = e.target.closest(".quick-add-chip");
+      if (!chip) return;
+
+      const delta = Number(chip.dataset.quick) || 0;
+      if (!delta) return;
+
+      // Prefer last focused weight input
+      let targetInput = lastFocusedWeightInput;
+
+      // Fallback: first weight input in this workout card
+      if (!targetInput) {
+        const card = chip.closest(".workout-card");
+        if (card) {
+          targetInput = card.querySelector('.set-input[data-field="weight"]');
+        }
+      }
+
+      if (!targetInput) return;
+
+      const raw = (targetInput.value || "").trim();
+      const current = raw === "" ? 0 : Number(raw) || 0;
+      const next = current + delta;
+      targetInput.value = next;
+    });
+  }
+
+  return {
+    init,
+  };
+})();
+
+
+// ======================================================
 // App orchestrator (navigation, wiring everything)
 // ======================================================
 const App = (() => {
@@ -1222,6 +1295,44 @@ const App = (() => {
   let homeScreen;
   let workoutsScreen;
   let progressScreen;
+
+  function sanitizeWorkoutsForSave(workouts) {
+    if (!Array.isArray(workouts)) return [];
+
+    const result = [];
+
+    workouts.forEach((w) => {
+      const name = (w.name || "").trim();
+      const sets = Array.isArray(w.sets) ? w.sets : [];
+
+      const filteredSets = sets.filter((set) => {
+        const wRaw = (set.weight ?? "").toString().trim();
+        const rRaw = (set.reps ?? "").toString().trim();
+
+        const wNum = wRaw === "" ? 0 : Number(wRaw) || 0;
+        const rNum = rRaw === "" ? 0 : Number(rRaw) || 0;
+
+        const weightEmptyOrZero = wRaw === "" || wNum === 0;
+        const repsEmptyOrZero = rRaw === "" || rNum === 0;
+
+        // if BOTH are empty/zero, ignore this set
+        if (weightEmptyOrZero && repsEmptyOrZero) {
+          return false;
+        }
+        return true;
+      });
+
+      // If no name OR no meaningful sets, skip this workout entirely
+      if (!name || filteredSets.length === 0) return;
+
+      result.push({
+        name,
+        sets: filteredSets,
+      });
+    });
+
+    return result;
+  }
 
   function init() {
     // Privacy footer toggle
@@ -1274,10 +1385,19 @@ const App = (() => {
     }
 
     // Init modules
-    Logger.init({
+       Logger.init({
       containerSelector: "#workoutsContainer",
       saveButtonSelector: "#saveProgressBtn",
-      onSave: (workouts) => {
+      onSave: (rawWorkouts) => {
+        const workouts = sanitizeWorkoutsForSave(rawWorkouts);
+
+        if (!workouts.length) {
+          alert(
+            "Nothing to save yet.\n\nAdd at least one set with weight and/or reps before saving."
+          );
+          return;
+        }
+
         Progress.saveFromWorkouts(workouts);
         alert("Progress saved!");
       },
@@ -1303,6 +1423,8 @@ const App = (() => {
       overlaySelector: "#tutorialOverlay",
       menuItemSelector: "#menuTutorial",
     });
+
+    QuickAdd.init();
 
     showScreen("home");
   }
