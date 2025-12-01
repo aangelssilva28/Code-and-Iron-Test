@@ -1003,6 +1003,46 @@
           Your best sets for each exercise based on saved workouts.
         </p>
 
+        <!-- Letter grid A–Z -->
+        <div id="progressLetterGrid" class="progress-letter-grid"></div>
+
+        <!-- Exercises for selected letter -->
+        <div id="progressList" class="saved-list"></div>
+
+        <!-- Detail panel for a single exercise -->
+        <div id="progressDetail" class="open-panel"></div>
+
+        <h3 class="card-subtitle" style="margin-top:18px;margin-bottom:4px;">
+          Backup &amp; Restore
+        </h3>
+
+        <p class="card-subtitle" style="margin-top:0;margin-bottom:8px;">
+          Generate a backup code and save it somewhere (Notes, email, etc.).
+          If your browser data ever gets cleared, paste it here to restore
+          your routines and progress.
+        </p>
+
+        <textarea
+          id="backupText"
+          class="text-input"
+          rows="3"
+          placeholder="Your backup code will appear here. Copy it and save it. To restore, paste a code and tap Restore."
+        ></textarea>
+
+        <button id="exportBackupBtn" class="primary-btn footer-btn">
+          Generate Code
+        </button>
+
+        <button id="importBackupBtn" class="primary-btn footer-btn">
+          Restore from backup
+        </button>
+
+        <div class="link-back" id="backToLoggerFromProgress">
+          <span>←</span> Back to workout logger
+        </div>
+      </section>
+    </main>
+
     <!-- SETTINGS SCREEN -->
     <main id="settingsScreen" class="screen">
       <section class="card">
