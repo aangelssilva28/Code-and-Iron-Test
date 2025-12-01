@@ -139,58 +139,28 @@ const Logger = (() => {
     const setNumber = indexOverride || existingCount + 1;
     setLabel.textContent = `Set ${setNumber}`;
 
-    // ---- Weight input ----
-    const weightInput = document.createElement("input");
-    weightInput.className = "set-input";
-    weightInput.placeholder = "Weight";
-    weightInput.type = "number";
-    weightInput.inputMode = "decimal";
-    weightInput.min = "0";
-    weightInput.value = setData?.weight ?? "";
-    weightInput.dataset.field = "weight";
+const weightInput = document.createElement("input");
+weightInput.className = "set-input";
+weightInput.placeholder = "Weight";
+weightInput.type = "number";
+weightInput.inputMode = "decimal";
+weightInput.min = "0";
+weightInput.value = setData?.weight ?? "";
+weightInput.dataset.field = "weight";
 
-    const weightGroup = document.createElement("div");
-    weightGroup.className = "set-weight-group";
+const weightGroup = document.createElement("div");
+weightGroup.className = "set-weight-group";
+weightGroup.appendChild(weightInput);
 
-    const weightMinusBtn = document.createElement("button");
-    weightMinusBtn.className = "set-inc-btn";
-    weightMinusBtn.dataset.dir = "-";
-    weightMinusBtn.dataset.target = "weight";
-    weightMinusBtn.textContent = "−";
+const repsInput = document.createElement("input");
+repsInput.className = "set-input";
+repsInput.placeholder = "Reps";
+repsInput.type = "number";
+repsInput.inputMode = "numeric";
+repsInput.min = "0";
+repsInput.value = setData?.reps ?? "";
+repsInput.dataset.field = "reps";
 
-    const weightPlusBtn = document.createElement("button");
-    weightPlusBtn.className = "set-inc-btn";
-    weightPlusBtn.dataset.dir = "+";
-    weightPlusBtn.dataset.target = "weight";
-    weightPlusBtn.textContent = "+";
-
-    weightGroup.appendChild(weightMinusBtn);
-    weightGroup.appendChild(weightInput);
-    weightGroup.appendChild(weightPlusBtn);
-
-    // ---- Reps input ----
-    const repsInput = document.createElement("input");
-    repsInput.className = "set-input";
-    repsInput.placeholder = "Reps";
-    repsInput.type = "number";
-    repsInput.inputMode = "numeric";
-    repsInput.min = "0";
-    repsInput.value = setData?.reps ?? "";
-    repsInput.dataset.field = "reps";
-
-    const repsMinusBtn = document.createElement("button");
-    repsMinusBtn.className = "set-inc-btn";
-    repsMinusBtn.dataset.dir = "-";
-    repsMinusBtn.dataset.target = "reps";
-    repsMinusBtn.textContent = "−";
-
-    const repsPlusBtn = document.createElement("button");
-    repsPlusBtn.className = "set-inc-btn";
-    repsPlusBtn.dataset.dir = "+";
-    repsPlusBtn.dataset.target = "reps";
-    repsPlusBtn.textContent = "+";
-
-    // ---- Set add/remove buttons (your existing behavior) ----
     const minusBtn = document.createElement("button");
     minusBtn.className = "round-btn";
     minusBtn.textContent = "–";
@@ -213,9 +183,7 @@ const Logger = (() => {
 
     const rightGroup = document.createElement("div");
     rightGroup.className = "set-right-group";
-    rightGroup.appendChild(repsMinusBtn);
     rightGroup.appendChild(repsInput);
-    rightGroup.appendChild(repsPlusBtn);
     rightGroup.appendChild(minusBtn);
     rightGroup.appendChild(plusBtn);
 
@@ -1319,83 +1287,6 @@ const QuickAdd = (() => {
 
 
 // ======================================================
-// SetIncrements module (hold-to-increment weight & reps)
-// ======================================================
-const SetIncrements = (() => {
-  let holdTimer = null;
-  let activeBtn = null;
-
-  function adjust(btn) {
-    const dir = btn.dataset.dir === "-" ? -1 : 1;
-    const target = btn.dataset.target; // "weight" or "reps"
-    if (!target) return;
-
-    const setBox = btn.closest(".set-box");
-    if (!setBox) return;
-
-    const input = setBox.querySelector(
-      '.set-input[data-field="' + target + '"]'
-    );
-    if (!input) return;
-
-    const raw = (input.value || "").trim();
-    const current = raw === "" ? 0 : Number(raw) || 0;
-
-    const step = target === "weight" ? 5 : 1; // small step; big jumps via chips
-    const next = Math.max(0, current + dir * step);
-
-    input.value = next || "";
-  }
-
-  function startHold(btn) {
-    adjust(btn); // do one immediately
-    activeBtn = btn;
-    holdTimer = setInterval(() => {
-      if (activeBtn) adjust(activeBtn);
-    }, 200);
-  }
-
-  function stopHold() {
-    if (holdTimer) {
-      clearInterval(holdTimer);
-      holdTimer = null;
-    }
-    activeBtn = null;
-  }
-
-  function init() {
-    const root = document;
-
-    root.addEventListener("mousedown", (e) => {
-      const btn = e.target.closest(".set-inc-btn");
-      if (!btn) return;
-      e.preventDefault();
-      startHold(btn);
-    });
-
-    root.addEventListener(
-      "touchstart",
-      (e) => {
-        const btn = e.target.closest(".set-inc-btn");
-        if (!btn) return;
-        e.preventDefault();
-        startHold(btn);
-      },
-      { passive: false }
-    );
-
-    ["mouseup", "mouseleave", "touchend", "touchcancel"].forEach((ev) => {
-      root.addEventListener(ev, stopHold);
-    });
-  }
-
-  return {
-    init,
-  };
-})();
-
-
-// ======================================================
 // App orchestrator (navigation, wiring everything)
 // ======================================================
 const App = (() => {
@@ -1534,7 +1425,6 @@ const App = (() => {
     });
 
     QuickAdd.init();
-    SetIncrements.init();
 
     showScreen("home");
   }
