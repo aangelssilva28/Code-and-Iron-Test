@@ -102,6 +102,152 @@ const Storage = (() => {
   };
 })();
 
+// ======================================================
+// Settings module (units, theme, data control)
+// ======================================================
+const Settings = (() => {
+  const SETTINGS_KEY = "codeAndIronSettings_v1";
+
+  let state = {
+    unit: "lb",          // "lb" | "kg"
+    highContrast: false, // boolean
+  };
+
+  function load() {
+    try {
+      const raw = localStorage.getItem(SETTINGS_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === "object") {
+        state.unit = parsed.unit === "kg" ? "kg" : "lb";
+        state.highContrast = !!parsed.highContrast;
+      }
+    } catch (e) {
+      console.error("Error loading settings", e);
+    }
+  }
+
+  function save() {
+    try {
+      localStorage.setItem(SETTINGS_KEY, JSON.stringify(state));
+    } catch (e) {
+      console.error("Error saving settings", e);
+    }
+  }
+
+  function applyTheme() {
+    if (state.highContrast) {
+      document.body.classList.add("theme-high-contrast");
+    } else {
+      document.body.classList.remove("theme-high-contrast");
+    }
+  }
+
+  function applyUnitPlaceholders() {
+    const label = getWeightPlaceholder();
+    document
+      .querySelectorAll('.set-input[data-field="weight"]')
+      .forEach((input) => {
+        input.placeholder = label;
+      });
+  }
+
+  function init({
+    unitSelectSelector,
+    highContrastSelector,
+    exportButtonSelector,
+    resetButtonSelector,
+  }) {
+    load();
+    applyTheme();
+
+    const unitSelect = document.querySelector(unitSelectSelector);
+    const contrastCheckbox = document.querySelector(highContrastSelector);
+    const exportBtn = document.querySelector(exportButtonSelector);
+    const resetBtn = document.querySelector(resetButtonSelector);
+
+    if (unitSelect) {
+      unitSelect.value = state.unit;
+      unitSelect.addEventListener("change", () => {
+        state.unit = unitSelect.value === "kg" ? "kg" : "lb";
+        save();
+        applyUnitPlaceholders();
+      });
+    }
+
+    if (contrastCheckbox) {
+      contrastCheckbox.checked = state.highContrast;
+      contrastCheckbox.addEventListener("change", () => {
+        state.highContrast = contrastCheckbox.checked;
+        save();
+        applyTheme();
+      });
+    }
+
+    if (exportBtn) {
+      exportBtn.addEventListener("click", () => {
+        // Reuse the existing Progress backup button
+        const progressBackupBtn = document.getElementById("exportBackupBtn");
+        if (progressBackupBtn) {
+          progressBackupBtn.click();
+        } else {
+          alert(
+            "Open the Progress screen to use backup, then try again."
+          );
+        }
+      });
+    }
+
+    if (resetBtn) {
+      resetBtn.addEventListener("click", () => {
+        const confirmText = prompt(
+          "This will ERASE all Code & Iron data in this browser:\n" +
+            "• Saved routines\n" +
+            "• Progress / PRs\n" +
+            "• Tutorial status\n" +
+            "• Settings\n\n" +
+            "Type RESET (all caps) to confirm."
+        );
+
+        if (confirmText !== "RESET") {
+          alert("Reset cancelled.");
+          return;
+        }
+
+        try {
+          const keysToRemove = [
+            "codeAndIronTemplates_v2",
+            "codeAndIronProgress_v1",
+            "codeAndIronTutorialSeen_v1",
+            SETTINGS_KEY,
+          ];
+          keysToRemove.forEach((k) => localStorage.removeItem(k));
+        } catch (e) {
+          console.error("Error clearing data", e);
+        }
+
+        window.location.reload();
+      });
+    }
+
+    // Make sure current logger inputs match chosen unit
+    applyUnitPlaceholders();
+  }
+
+  function getUnit() {
+    return state.unit;
+  }
+
+  function getWeightPlaceholder() {
+    return state.unit === "kg" ? "Weight (kg)" : "Weight (lb)";
+  }
+
+  return {
+    init,
+    getUnit,
+    getWeightPlaceholder,
+  };
+})();
 
 // ======================================================
 // Logger module (home screen workout cards & sets)
@@ -141,7 +287,11 @@ const Logger = (() => {
 
 const weightInput = document.createElement("input");
 weightInput.className = "set-input";
-weightInput.placeholder = "Weight";
+weightInput.placeholder =
+  typeof Settings !== "undefined" && Settings.getWeightPlaceholder
+    ? Settings.getWeightPlaceholder()
+    : "Weight";
+weightInput.type = "number";
 weightInput.type = "number";
 weightInput.inputMode = "decimal";
 weightInput.min = "0";
@@ -1295,6 +1445,7 @@ const App = (() => {
   let homeScreen;
   let workoutsScreen;
   let progressScreen;
+  let settingsScreen;
 
   function sanitizeWorkoutsForSave(workouts) {
     if (!Array.isArray(workouts)) return [];
@@ -1350,10 +1501,16 @@ const App = (() => {
     homeScreen = document.getElementById("homeScreen");
     workoutsScreen = document.getElementById("workoutsScreen");
     progressScreen = document.getElementById("progressScreen");
-
+    settingsScreen = document.getElementById("settingsScreen");
+        
     const progressBackBtn = document.getElementById("backToLoggerFromProgress");
     if (progressBackBtn) {
       progressBackBtn.addEventListener("click", () => showScreen("home"));
+    }
+
+    const settingsBackBtn = document.getElementById("backToLoggerFromSettings");
+    if (settingsBackBtn) {
+      settingsBackBtn.addEventListener("click", () => showScreen("home"));
     }
 
     if (menuButton && menuDropdown) {
@@ -1373,16 +1530,17 @@ const App = (() => {
       document.querySelectorAll(".menu-item[data-nav]").forEach((item) => {
         item.addEventListener("click", () => {
           const nav = item.dataset.nav;
-          if (nav === "workouts" || nav === "progress") {
+
+          if (nav === "workouts" || nav === "progress" || nav === "settings") {
             showScreen(nav);
             if (nav === "progress") {
               Progress.refreshUI();
             }
           }
+
           closeMenu();
         });
       });
-    }
 
     // Init modules
        Logger.init({
@@ -1426,24 +1584,34 @@ const App = (() => {
 
     QuickAdd.init();
 
+    Settings.init({
+      unitSelectSelector: "#settingsUnitSelect",
+      highContrastSelector: "#settingsHighContrast",
+      exportButtonSelector: "#settingsExportBackupBtn",
+      resetButtonSelector: "#resetAllDataBtn",
+    });
+
     showScreen("home");
   }
 
   function showScreen(which) {
-    if (!homeScreen || !workoutsScreen || !progressScreen) return;
+    if (!homeScreen || !workoutsScreen || !progressScreen || !settingsScreen) {
+      return;
+    }
+
+    homeScreen.classList.remove("active");
+    workoutsScreen.classList.remove("active");
+    progressScreen.classList.remove("active");
+    settingsScreen.classList.remove("active");
 
     if (which === "home") {
       homeScreen.classList.add("active");
-      workoutsScreen.classList.remove("active");
-      progressScreen.classList.remove("active");
     } else if (which === "workouts") {
-      homeScreen.classList.remove("active");
       workoutsScreen.classList.add("active");
-      progressScreen.classList.remove("active");
     } else if (which === "progress") {
-      homeScreen.classList.remove("active");
-      workoutsScreen.classList.remove("active");
       progressScreen.classList.add("active");
+    } else if (which === "settings") {
+      settingsScreen.classList.add("active");
     }
 
     if (which !== "progress") {
