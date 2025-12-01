@@ -217,6 +217,41 @@
       box-shadow: 0 0 12px rgba(57, 255, 20, 0.35);
     }
 
+.quick-add-row {
+  margin-top: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  font-size: 12px;
+}
+
+.quick-add-label {
+  color: var(--text-muted);
+  opacity: 0.85;
+}
+
+.quick-add-chip {
+  -webkit-appearance: none;
+  appearance: none;
+  border-radius: 999px;
+  border: 1px solid var(--copper);
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  background-color: #000;
+  color: #fff;
+  box-shadow:
+    0 0 0 1px #754d27,
+    0 3px 0 #000;
+}
+
+.quick-add-chip:active {
+  transform: translateY(1px);
+  outline: 1px solid var(--accent);
+  box-shadow: none;
+}
+
     .round-btn {
       background-color: #1A1E2C;
       height: 44px;
@@ -701,6 +736,34 @@
         width: 430px;
       }
     }
+    
+    /* Logger card: scrollable content + room for sticky footer */
+.card.card--logger {
+  position: relative;
+  max-height: calc(100vh - 140px); /* keeps card usable on small phones */
+  overflow-y: auto;
+  padding-bottom: 72px; /* room so content isn't hidden behind footer */
+}
+
+/* Sticky footer inside the card */
+.card-sticky-footer {
+  position: sticky;
+  bottom: 0;
+  margin-top: 16px;
+  padding-top: 12px;
+  background: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.98),
+    rgba(0, 0, 0, 0.85),
+    transparent
+  );
+}
+
+/* Tighten spacing; footer-btn already has margin-top */
+.card-sticky-footer .footer-btn {
+  margin-top: 0;
+}
+    
   </style>
 </head>
 <body>
@@ -826,15 +889,18 @@
       <div class="menu-item" id="menuTutorial">Tutorial</div>
     </div>
 
-    <!-- HOME / LOGGER SCREEN -->
-    <main id="homeScreen" class="screen active">
-      <section class="card">
-        <div id="workoutsContainer" class="workouts-container"></div>
-        <button id="saveProgressBtn" class="primary-btn footer-btn">
-          Save progress
-        </button>
-      </section>
-    </main>
+<!-- HOME / LOGGER SCREEN -->
+<main id="homeScreen" class="screen active">
+  <section class="card card--logger">
+    <div id="workoutsContainer" class="workouts-container"></div>
+
+    <div class="card-sticky-footer">
+      <button id="saveProgressBtn" class="primary-btn footer-btn">
+        Save progress
+      </button>
+    </div>
+  </section>
+</main>
 
     <!-- ROUTINES SCREEN -->
     <main id="workoutsScreen" class="screen">
