@@ -2134,6 +2134,7 @@ const App = (() => {
           closeMenu();
         });
       });
+    }
 
     // Init modules
     Logger.init({
@@ -2220,6 +2221,7 @@ const App = (() => {
     } else if (which === "settings") {
       settingsScreen.classList.add("active");
     }
+  }
 
   function closeMenu() {
     if (menuDropdown) {
