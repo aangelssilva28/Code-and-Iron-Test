@@ -5,6 +5,13 @@
   <title>Code and Iron Test</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
+<!-- PWA -->
+<meta name="theme-color" content="#39ff14">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+
   <!-- Germania One font -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1254,5 +1261,18 @@
   </footer>
 
   <script src="app.js"></script>
+
+  <script>
+    // Register service worker for PWA / offline support
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker
+          .register("./sw.js")
+          .catch((err) => {
+            console.error("Service worker registration failed:", err);
+          });
+      });
+    }
+  </script>
 </body>
 </html>
