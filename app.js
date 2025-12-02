@@ -1370,7 +1370,7 @@ const Charts = (() => {
     });
   }
 
-  // Simple bar chart: prefers volume, then weight, then reps
+  // Simple line chart: prefers volume, then weight, then reps
   function drawExerciseChart(canvas, ex) {
     const ctx = canvas.getContext("2d");
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -1385,7 +1385,7 @@ const Charts = (() => {
     }
 
     // Oldest → newest, cap to last 12 entries
-    const ordered = history.slice().reverse();
+    const ordered = history.slice().reverse(); // now oldest → newest
     const maxPoints = 12;
     const slice = ordered.slice(-maxPoints);
 
@@ -1412,10 +1412,7 @@ const Charts = (() => {
       return { value, mode };
     });
 
-    const maxVal = points.reduce(
-      (max, p) => Math.max(max, p.value),
-      0
-    );
+    const maxVal = points.reduce((max, p) => Math.max(max, p.value), 0);
     if (!maxVal) {
       ctx.fillStyle = "#bbbbbb";
       ctx.font =
@@ -1432,33 +1429,52 @@ const Charts = (() => {
     const chartH = canvas.height - paddingTop - paddingBottom;
 
     const n = points.length;
-    const gap = 4;
-    const barW = chartW / n - gap;
+    const bottomY = canvas.height - paddingBottom;
 
     // Axes
     ctx.strokeStyle = "#444";
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.moveTo(paddingLeft, paddingTop);
-    ctx.lineTo(paddingLeft, canvas.height - paddingBottom);
-    ctx.lineTo(
-      canvas.width - paddingRight,
-      canvas.height - paddingBottom
-    );
+    ctx.lineTo(paddingLeft, bottomY);
+    ctx.lineTo(canvas.width - paddingRight, bottomY);
     ctx.stroke();
 
-    // Bars
-    ctx.fillStyle = "#39ff14";
-    points.forEach((p, i) => {
+    // Compute x/y for each point
+    const coords = points.map((p, i) => {
       const ratio = p.value / maxVal;
-      const h = ratio * chartH;
-      const x =
-        paddingLeft + i * (barW + gap) + gap / 2;
-      const y =
-        canvas.height - paddingBottom - h;
-      ctx.fillRect(x, y, barW, h);
+      const y = bottomY - ratio * chartH;
+
+      let x;
+      if (n === 1) {
+        // single point → center it
+        x = paddingLeft + chartW / 2;
+      } else {
+        const step = chartW / (n - 1);
+        x = paddingLeft + step * i;
+      }
+      return { x, y, value: p.value, mode: p.mode };
     });
 
+    // Line
+    ctx.beginPath();
+    coords.forEach((pt, i) => {
+      if (i === 0) ctx.moveTo(pt.x, pt.y);
+      else ctx.lineTo(pt.x, pt.y);
+    });
+    ctx.strokeStyle = "#39ff14"; // neon line
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // Points (little circles)
+    ctx.fillStyle = "#39ff14";
+    coords.forEach((pt) => {
+      ctx.beginPath();
+      ctx.arc(pt.x, pt.y, 3, 0, Math.PI * 2);
+      ctx.fill();
+    });
+
+    // Label: what we're plotting + max value
     const lastMode = points[points.length - 1].mode;
     let label;
     if (lastMode === "volume") {
@@ -1476,12 +1492,6 @@ const Charts = (() => {
     ctx.textBaseline = "top";
     ctx.fillText(`${label} — max ${maxVal}`, paddingLeft, 2);
   }
-
-  return {
-    init,
-    refresh,
-  };
-})();
 
 // ======================================================
 // Templates module (routines screen + share + backup)
