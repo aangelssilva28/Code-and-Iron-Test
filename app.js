@@ -936,6 +936,9 @@ const Progress = (() => {
     progressData = updated;
     Storage.saveProgress(progressData);
     renderProgressList();
+        if (typeof Charts !== "undefined" && Charts.refresh) {
+      Charts.refresh();
+    }
   }
 
   // ---------- Progress list (A–Z grid + per-letter list) ----------
@@ -1221,6 +1224,262 @@ const Progress = (() => {
     getData,
     refreshUI,
     closeDetail,
+  };
+})();
+
+// ======================================================
+// Charts module (select exercises + show progress charts)
+// ======================================================
+const Charts = (() => {
+  const CHARTS_KEY = "codeAndIronCharts_v1";
+
+  let selectedKeys = [];
+  let listEl = null;
+  let chartsContainer = null;
+
+  function loadSelected() {
+    try {
+      const raw = localStorage.getItem(CHARTS_KEY);
+      if (!raw) return [];
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (e) {
+      console.error("Error loading charts selection", e);
+      return [];
+    }
+  }
+
+  function saveSelected() {
+    try {
+      localStorage.setItem(CHARTS_KEY, JSON.stringify(selectedKeys));
+    } catch (e) {
+      console.error("Error saving charts selection", e);
+    }
+  }
+
+  function getProgressData() {
+    return typeof Progress !== "undefined" && Progress.getData
+      ? Progress.getData()
+      : {};
+  }
+
+  function init({ listSelector, chartsContainerSelector }) {
+    selectedKeys = loadSelected();
+    listEl = $(listSelector);
+    chartsContainer = $(chartsContainerSelector);
+    renderAll();
+  }
+
+  function refresh() {
+    renderAll();
+  }
+
+  function renderAll() {
+    if (listEl) renderExerciseList();
+    if (chartsContainer) renderCharts();
+  }
+
+  function renderExerciseList() {
+    const data = getProgressData();
+    listEl.innerHTML = "";
+
+    const entries = Object.entries(data || {});
+    if (!entries.length) {
+      const note = document.createElement("div");
+      note.className = "settings-note";
+      note.textContent =
+        "No exercises yet. Log a workout and save progress to see them here.";
+      listEl.appendChild(note);
+      return;
+    }
+
+    entries
+      .sort((a, b) => {
+        const nameA = (a[1].name || a[0]).toLowerCase();
+        const nameB = (b[1].name || b[0]).toLowerCase();
+        return nameA.localeCompare(nameB);
+      })
+      .forEach(([key, ex]) => {
+        const row = document.createElement("label");
+        row.className = "settings-row";
+
+        const nameSpan = document.createElement("span");
+        nameSpan.textContent = ex.name || key;
+
+        const box = document.createElement("input");
+        box.type = "checkbox";
+        box.className = "settings-checkbox";
+        box.checked = selectedKeys.includes(key);
+
+        box.addEventListener("change", () => {
+          if (box.checked) {
+            if (!selectedKeys.includes(key)) selectedKeys.push(key);
+          } else {
+            selectedKeys = selectedKeys.filter((k) => k !== key);
+          }
+          saveSelected();
+          renderCharts();
+        });
+
+        row.appendChild(nameSpan);
+        row.appendChild(box);
+        listEl.appendChild(row);
+      });
+  }
+
+  function renderCharts() {
+    chartsContainer.innerHTML = "";
+
+    const data = getProgressData();
+    const activeKeys = selectedKeys.filter((k) => !!data[k]);
+
+    if (!activeKeys.length) {
+      const note = document.createElement("div");
+      note.className = "card-subtitle";
+      note.textContent =
+        "No charts yet. Select one or more exercises above.";
+      chartsContainer.appendChild(note);
+      return;
+    }
+
+    activeKeys.forEach((key) => {
+      const ex = data[key];
+      const card = document.createElement("div");
+      card.className = "chart-card";
+
+      const title = document.createElement("div");
+      title.className = "chart-card-title";
+      title.textContent = ex.name || key;
+      card.appendChild(title);
+
+      const sub = document.createElement("div");
+      sub.className = "chart-card-sub";
+      sub.textContent = "Newest sessions are on the right.";
+      card.appendChild(sub);
+
+      const canvas = document.createElement("canvas");
+      canvas.width = 320;
+      canvas.height = 140;
+      canvas.style.width = "100%";
+      canvas.style.height = "90px";
+      card.appendChild(canvas);
+
+      chartsContainer.appendChild(card);
+
+      drawExerciseChart(canvas, ex);
+    });
+  }
+
+  // Simple bar chart: prefers volume, then weight, then reps
+  function drawExerciseChart(canvas, ex) {
+    const ctx = canvas.getContext("2d");
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    const history = Array.isArray(ex.history) ? ex.history.slice() : [];
+    if (!history.length) {
+      ctx.fillStyle = "#bbbbbb";
+      ctx.font =
+        "11px system-ui, -apple-system, BlinkMacSystemFont, sans-serif";
+      ctx.fillText("No history yet.", 10, 20);
+      return;
+    }
+
+    // Oldest → newest, cap to last 12 entries
+    const ordered = history.slice().reverse();
+    const maxPoints = 12;
+    const slice = ordered.slice(-maxPoints);
+
+    const points = slice.map((entry) => {
+      let value;
+      let mode = "volume";
+
+      if (
+        typeof entry.totalVolume === "number" &&
+        entry.totalVolume > 0
+      ) {
+        value = entry.totalVolume;
+      } else if (
+        typeof entry.bestWeight === "number" &&
+        entry.bestWeight > 0
+      ) {
+        value = entry.bestWeight;
+        mode = "weight";
+      } else {
+        value = entry.bestReps || 0;
+        mode = "reps";
+      }
+
+      return { value, mode };
+    });
+
+    const maxVal = points.reduce(
+      (max, p) => Math.max(max, p.value),
+      0
+    );
+    if (!maxVal) {
+      ctx.fillStyle = "#bbbbbb";
+      ctx.font =
+        "11px system-ui, -apple-system, BlinkMacSystemFont, sans-serif";
+      ctx.fillText("No numeric data yet.", 10, 20);
+      return;
+    }
+
+    const paddingLeft = 30;
+    const paddingRight = 8;
+    const paddingTop = 12;
+    const paddingBottom = 20;
+    const chartW = canvas.width - paddingLeft - paddingRight;
+    const chartH = canvas.height - paddingTop - paddingBottom;
+
+    const n = points.length;
+    const gap = 4;
+    const barW = chartW / n - gap;
+
+    // Axes
+    ctx.strokeStyle = "#444";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(paddingLeft, paddingTop);
+    ctx.lineTo(paddingLeft, canvas.height - paddingBottom);
+    ctx.lineTo(
+      canvas.width - paddingRight,
+      canvas.height - paddingBottom
+    );
+    ctx.stroke();
+
+    // Bars
+    ctx.fillStyle = "#39ff14";
+    points.forEach((p, i) => {
+      const ratio = p.value / maxVal;
+      const h = ratio * chartH;
+      const x =
+        paddingLeft + i * (barW + gap) + gap / 2;
+      const y =
+        canvas.height - paddingBottom - h;
+      ctx.fillRect(x, y, barW, h);
+    });
+
+    const lastMode = points[points.length - 1].mode;
+    let label;
+    if (lastMode === "volume") {
+      label = "Volume (weight × reps)";
+    } else if (lastMode === "weight") {
+      label = "Best weight";
+    } else {
+      label = "Best reps";
+    }
+
+    ctx.fillStyle = "#bbbbbb";
+    ctx.font =
+      "10px system-ui, -apple-system, BlinkMacSystemFont, sans-serif";
+    ctx.textAlign = "left";
+    ctx.textBaseline = "top";
+    ctx.fillText(`${label} — max ${maxVal}`, paddingLeft, 2);
+  }
+
+  return {
+    init,
+    refresh,
   };
 })();
 
@@ -1756,6 +2015,7 @@ const App = (() => {
   let homeScreen;
   let workoutsScreen;
   let progressScreen;
+  let chartsScreen;
   let settingsScreen;
 
   function sanitizeWorkoutsForSave(workouts) {
@@ -1813,10 +2073,16 @@ const App = (() => {
     workoutsScreen = $("#workoutsScreen");
     progressScreen = $("#progressScreen");
     settingsScreen = $("#settingsScreen");
+    chartsScreen = $("#chartsScreen");
 
     if (menuButton) {
       menuButton.setAttribute("aria-haspopup", "true");
       menuButton.setAttribute("aria-expanded", "false");
+    }
+
+    const chartsBackBtn = $("#backToLoggerFromCharts");
+    if (chartsBackBtn) {
+      chartsBackBtn.addEventListener("click", () => showScreen("home"));
     }
 
     const progressBackBtn = $("#backToLoggerFromProgress");
@@ -1848,17 +2114,26 @@ const App = (() => {
         item.addEventListener("click", () => {
           const nav = item.dataset.nav;
 
-          if (nav === "workouts" || nav === "progress" || nav === "settings") {
+          if (
+            nav === "workouts" ||
+            nav === "progress" ||
+            nav === "charts" ||
+            nav === "settings"
+          ) {
             showScreen(nav);
+
             if (nav === "progress") {
               Progress.refreshUI();
+            } else if (nav === "charts") {
+              if (typeof Charts !== "undefined" && Charts.refresh) {
+                Charts.refresh();
+              }
             }
           }
 
           closeMenu();
         });
       });
-    }
 
     // Init modules
     Logger.init({
@@ -1909,17 +2184,29 @@ const App = (() => {
       resetButtonSelector: "#resetAllDataBtn",
     });
 
+    Charts.init({
+      listSelector: "#chartsExerciseList",
+      chartsContainerSelector: "#chartsContainer",
+    });
+
     showScreen("home");
   }
 
   function showScreen(which) {
-    if (!homeScreen || !workoutsScreen || !progressScreen || !settingsScreen) {
+    if (
+      !homeScreen ||
+      !workoutsScreen ||
+      !progressScreen ||
+      !chartsScreen ||
+      !settingsScreen
+    ) {
       return;
     }
 
     homeScreen.classList.remove("active");
     workoutsScreen.classList.remove("active");
     progressScreen.classList.remove("active");
+    chartsScreen.classList.remove("active");
     settingsScreen.classList.remove("active");
 
     if (which === "home") {
@@ -1928,14 +2215,11 @@ const App = (() => {
       workoutsScreen.classList.add("active");
     } else if (which === "progress") {
       progressScreen.classList.add("active");
+    } else if (which === "charts") {
+      chartsScreen.classList.add("active");
     } else if (which === "settings") {
       settingsScreen.classList.add("active");
     }
-
-    if (which !== "progress") {
-      Progress.closeDetail();
-    }
-  }
 
   function closeMenu() {
     if (menuDropdown) {
