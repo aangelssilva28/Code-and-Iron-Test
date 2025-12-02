@@ -1115,32 +1115,31 @@
       </section>
     </main>
 
-    <!-- CHARTS SCREEN -->
-    <main id="chartsScreen" class="screen">
-      <section class="card">
-        <h2 class="card-title">Charts</h2>
-        <p class="card-subtitle">
-          Pick exercises and see how their sessions trend over time.
-        </p>
+<!-- Charts Screen -->
+<section id="chartsScreen" class="screen">
+  <div class="card main-card">
+    <h2 class="card-title">Charts</h2>
+    <p class="card-subtitle">
+      Pick exercises and see how their sessions trend over time.
+    </p>
 
-        <div class="settings-group">
-          <h3 class="card-subtitle" style="margin-top:0;margin-bottom:4px;">
-            Choose exercises to chart
-          </h3>
-          <div
-            id="chartsExerciseList"
-            class="settings-volume-list"
-            style="margin-top:4px;"
-          ></div>
-        </div>
+    <h3 class="card-subtitle" style="margin-top: 1.25rem;">
+      Choose exercises to chart
+    </h3>
+    <div id="chartsExerciseList" class="settings-list">
+      <!-- checkboxes will be injected here -->
+    </div>
 
-        <div id="chartsContainer" class="charts-container"></div>
+    <div id="chartsContainer" class="charts-container" style="margin-top: 1.5rem;">
+      <!-- canvases will be injected here -->
+    </div>
 
-        <div class="link-back" id="backToLoggerFromCharts">
-          <span>←</span> Back to workout logger
-        </div>
-      </section>
-    </main>
+    <button id="backToLoggerFromCharts" class="secondary-btn"
+            type="button" style="margin-top: 2rem;">
+      ← Back to workout logger
+    </button>
+  </div>
+</section>
 
     <!-- SETTINGS SCREEN -->
     <main id="settingsScreen" class="screen">
