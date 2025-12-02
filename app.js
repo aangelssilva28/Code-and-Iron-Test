@@ -25,6 +25,157 @@ function openSinglePanel(
 }
 
 // ======================================================
+// Exercise key normalization + migration helpers
+// ======================================================
+
+function normalizeExerciseKey(name) {
+  if (!name) return "";
+  return name
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, " ")          // collapse multiple spaces
+    .replace(/[^\w\s]/g, "");      // strip punctuation (.,!?-/ etc.)
+}
+
+// Merge two progress entries when keys collide during migration
+function mergeProgressEntries(a, b) {
+  const merged = { ...(a || {}), ...(b || {}) };
+
+  // Choose the "nicer" name (longer wins)
+  const nameA = (a && a.name) || "";
+  const nameB = (b && b.name) || "";
+  merged.name = nameB.length > nameA.length ? nameB : nameA;
+
+  // Best reps
+  const bestRepsA = (a && a.bestReps) || 0;
+  const bestRepsB = (b && b.bestReps) || 0;
+  if (bestRepsB > bestRepsA) {
+    merged.bestReps = bestRepsB;
+    merged.bestRepsDate = b.bestRepsDate || null;
+  } else {
+    merged.bestReps = bestRepsA;
+    merged.bestRepsDate = a.bestRepsDate || null;
+  }
+
+  // Best weight x reps
+  const wA = a && typeof a.bestWeight === "number" ? a.bestWeight : null;
+  const rA = (a && a.bestWeightReps) || 0;
+  const wB = b && typeof b.bestWeight === "number" ? b.bestWeight : null;
+  const rB = (b && b.bestWeightReps) || 0;
+
+  function betterWeight(firstW, firstR, secondW, secondR) {
+    if (secondW === null) return { w: firstW, r: firstR };
+    if (firstW === null) return { w: secondW, r: secondR };
+    if (secondW > firstW) return { w: secondW, r: secondR };
+    if (secondW < firstW) return { w: firstW, r: firstR };
+    // same weight → keep higher reps
+    if (secondR > firstR) return { w: secondW, r: secondR };
+    return { w: firstW, r: firstR };
+  }
+
+  const best = betterWeight(wA, rA, wB, rB);
+  merged.bestWeight = best.w;
+  merged.bestWeightReps = best.r;
+  merged.bestWeightDate =
+    best.w === wB ? b.bestWeightDate || null : a.bestWeightDate || null;
+
+  // Merge history by date (favor entry with higher bestWeight / bestReps)
+  const histA = Array.isArray(a && a.history) ? a.history : [];
+  const histB = Array.isArray(b && b.history) ? b.history : [];
+  const byDate = {};
+
+  histA.concat(histB).forEach((h) => {
+    if (!h || !h.date) return;
+    const existing = byDate[h.date];
+    if (!existing) {
+      byDate[h.date] = h;
+      return;
+    }
+
+    const wE =
+      typeof existing.bestWeight === "number" ? existing.bestWeight : null;
+    const wH = typeof h.bestWeight === "number" ? h.bestWeight : null;
+    const rE = existing.bestWeightReps || 0;
+    const rH = h.bestWeightReps || 0;
+    const repsE = existing.bestReps || 0;
+    const repsH = h.bestReps || 0;
+
+    let takeNew = false;
+    if (wH !== null) {
+      if (wE === null || wH > wE || (wH === wE && rH > rE)) {
+        takeNew = true;
+      }
+    } else if (repsH > repsE) {
+      takeNew = true;
+    }
+
+    if (takeNew) byDate[h.date] = h;
+  });
+
+  merged.history = Object.values(byDate).sort((a, b) =>
+    b.date.localeCompare(a.date)
+  );
+
+  return merged;
+}
+
+// One-time migration: move old keys → normalized keys
+function migrateProgressKeys(rawData) {
+  if (!rawData || typeof rawData !== "object") return {};
+
+  const migrated = {};
+
+  Object.entries(rawData).forEach(([oldKey, ex]) => {
+    if (!ex || typeof ex !== "object") return;
+    const name = (ex.name || "").trim() || oldKey;
+    const newKey = normalizeExerciseKey(name);
+    if (!newKey) return;
+
+    if (!migrated[newKey]) {
+      migrated[newKey] = { ...ex, name };
+    } else {
+      migrated[newKey] = mergeProgressEntries(migrated[newKey], {
+        ...ex,
+        name,
+      });
+    }
+  });
+
+  return migrated;
+}
+
+// When a *new* exercise name looks similar to an existing one,
+// we can offer to merge.
+function findSimilarExistingExercise(normalizedKey, rawName, progressObj) {
+  const entries = Object.entries(progressObj || {});
+  if (!entries.length) return null;
+
+  const lowerName = rawName.toLowerCase().trim();
+  const [firstWordNew] = lowerName.split(/\s+/);
+
+  let candidate = null;
+
+  for (const [key, ex] of entries) {
+    const existingName = (ex.name || "").toLowerCase().trim();
+    if (!existingName) continue;
+    const [firstWordExisting] = existingName.split(/\s+/);
+
+    // same first word and somewhat overlapping text
+    const looksSimilar =
+      firstWordExisting &&
+      firstWordExisting === firstWordNew &&
+      (existingName.includes(firstWordNew) || lowerName.includes(firstWordExisting));
+
+    if (looksSimilar) {
+      candidate = { key, name: ex.name || existingName };
+      break;
+    }
+  }
+
+  return candidate;
+}
+
+// ======================================================
 // Storage module (versioned templates + progress)
 // ======================================================
 const Storage = (() => {
@@ -582,7 +733,8 @@ const Logger = (() => {
 // Progress module (A–Z grid + detail + saving progress)
 // ======================================================
 const Progress = (() => {
-  let progressData = Storage.loadProgress();
+  // migrate old keys to normalized keys once
+  let progressData = migrateProgressKeys(Storage.loadProgress() || {});
 
   let progressLetterGrid = null;
   let progressListEl = null;
@@ -609,90 +761,178 @@ const Progress = (() => {
 
     const now = new Date().toISOString();
     const today = now.split("T")[0];
+
+    // Copy current data so we don't mutate in-place mid-loop
     const updated = { ...progressData };
+
+    // For this save operation:
+    // - keyMapping tracks "rawName → final key" (handles merge choice)
+    // - sessionData accumulates all sets per exercise for today
+    const keyMapping = {};
+    const sessionData = {}; // key -> { rawName, maxReps, bestWeight, bestWeightReps, sets: [] }
 
     workouts.forEach((w) => {
       const rawName = (w.name || "").trim();
       if (!rawName) return;
 
-      const key = rawName.toLowerCase();
-      let maxReps = 0;
-      let bestWeight = null;
-      let bestWeightReps = 0;
+      const baseKey = normalizeExerciseKey(rawName);
+      if (!baseKey) return;
+
+      // Map normalized key → final key (might be merged with an existing one)
+      let finalKey = keyMapping[baseKey];
+      if (!finalKey) {
+        finalKey = baseKey;
+
+        // If no existing entry, see if there's a similar exercise to merge into
+        if (!updated[finalKey]) {
+          const similar = findSimilarExistingExercise(baseKey, rawName, updated);
+          if (similar && typeof window !== "undefined" && window.confirm) {
+            const merge = window.confirm(
+              `You logged "${rawName}".\n\n` +
+                `There is already progress for "${similar.name}".\n\n` +
+                `Press OK to merge them (treat as the same exercise),\n` +
+                `or Cancel to keep them separate as a new exercise.`
+            );
+            if (merge) {
+              finalKey = similar.key;
+            }
+          }
+        }
+
+        keyMapping[baseKey] = finalKey;
+      }
+
+      if (!sessionData[finalKey]) {
+        sessionData[finalKey] = {
+          rawName,
+          maxReps: 0,
+          bestWeight: null,
+          bestWeightReps: 0,
+          sets: [],
+        };
+      }
+
+      const acc = sessionData[finalKey];
 
       (w.sets || []).forEach((set) => {
         const repsNum = parseInt(set.reps, 10);
-        if (!repsNum || isNaN(repsNum)) return;
+        const weightStr = (set.weight || "").toString().trim();
+        const weightNum = weightStr === "" ? NaN : parseFloat(weightStr);
 
-        const weightStr = (set.weight || "").trim();
-        const weightNum = parseFloat(weightStr);
+        const hasReps = !isNaN(repsNum) && repsNum > 0;
+        const hasWeight = !isNaN(weightNum) && weightNum > 0;
 
-        if (repsNum > maxReps) maxReps = repsNum;
+        // Ignore completely empty sets (both fields blank / zero)
+        if (!hasReps && !hasWeight) return;
 
-        if (!isNaN(weightNum)) {
+        if (hasReps && repsNum > acc.maxReps) {
+          acc.maxReps = repsNum;
+        }
+
+        if (hasWeight) {
           if (
-            bestWeight === null ||
-            weightNum > bestWeight ||
-            (bestWeight === weightNum && repsNum > bestWeightReps)
+            acc.bestWeight === null ||
+            weightNum > acc.bestWeight ||
+            (weightNum === acc.bestWeight &&
+              hasReps &&
+              repsNum > acc.bestWeightReps)
           ) {
-            bestWeight = weightNum;
-            bestWeightReps = repsNum;
+            acc.bestWeight = weightNum;
+            acc.bestWeightReps = hasReps ? repsNum : acc.bestWeightReps;
           }
         }
+
+        acc.sets.push({
+          weight: hasWeight ? weightNum : null,
+          reps: hasReps ? repsNum : null,
+        });
       });
+    });
 
-      if (maxReps === 0 && bestWeight === null) return;
+    // Now fold per-exercise sessionData into overall progress
+    Object.entries(sessionData).forEach(([key, acc]) => {
+      // If nothing meaningful logged for this exercise, skip it
+      if (acc.maxReps === 0 && acc.bestWeight === null) return;
 
-      const existing = updated[key] || {
-        name: rawName,
-        bestReps: 0,
-        bestRepsDate: null,
-        bestWeight: null,
-        bestWeightReps: 0,
-        bestWeightDate: null,
-        lastUpdated: null,
-        history: [],
-      };
+      const existing =
+        updated[key] || {
+          name: acc.rawName,
+          bestReps: 0,
+          bestRepsDate: null,
+          bestWeight: null,
+          bestWeightReps: 0,
+          bestWeightDate: null,
+          lastUpdated: null,
+          history: [],
+        };
 
-      if (maxReps > existing.bestReps) {
-        existing.bestReps = maxReps;
+      // Update PRs
+      if (acc.maxReps > (existing.bestReps || 0)) {
+        existing.bestReps = acc.maxReps;
         existing.bestRepsDate = now;
       }
 
-      if (bestWeight !== null) {
+      if (acc.bestWeight !== null) {
         if (
           existing.bestWeight === null ||
-          bestWeight > existing.bestWeight ||
-          (bestWeight === existing.bestWeight &&
-            bestWeightReps > existing.bestWeightReps)
+          acc.bestWeight > existing.bestWeight ||
+          (acc.bestWeight === existing.bestWeight &&
+            acc.bestWeightReps > (existing.bestWeightReps || 0))
         ) {
-          existing.bestWeight = bestWeight;
-          existing.bestWeightReps = bestWeightReps;
+          existing.bestWeight = acc.bestWeight;
+          existing.bestWeightReps = acc.bestWeightReps;
           existing.bestWeightDate = now;
         }
       }
 
+      // New: per-set snapshot for this day
       const snapshot = {
         date: today,
-        bestReps: maxReps,
-        bestWeight: bestWeight,
-        bestWeightReps: bestWeightReps,
+        bestReps: acc.maxReps,
+        bestWeight: acc.bestWeight,
+        bestWeightReps: acc.bestWeightReps,
       };
 
-      existing.history = existing.history || [];
+      if (acc.sets && acc.sets.length) {
+        snapshot.sets = acc.sets.map((s) => ({
+          weight: s.weight,
+          reps: s.reps,
+        }));
+
+        let volume = 0;
+        acc.sets.forEach((s) => {
+          if (
+            typeof s.weight === "number" &&
+            typeof s.reps === "number" &&
+            s.weight > 0 &&
+            s.reps > 0
+          ) {
+            volume += s.weight * s.reps;
+          }
+        });
+        snapshot.totalVolume = volume;
+      }
+
+      existing.history = Array.isArray(existing.history)
+        ? existing.history
+        : [];
+      // Ensure only one entry per date
       existing.history = existing.history.filter((h) => h.date !== today);
       existing.history.push(snapshot);
       existing.history.sort((a, b) => b.date.localeCompare(a.date));
 
+      // Trim history length if needed
       if (existing.history.length > 30) {
         existing.history = existing.history.slice(0, 30);
       }
 
       existing.lastUpdated = now;
-      existing.name = rawName;
+      existing.name = acc.rawName;
+
       updated[key] = existing;
     });
 
+    // Save back
     progressData = updated;
     Storage.saveProgress(progressData);
     renderProgressList();
@@ -912,17 +1152,56 @@ const Progress = (() => {
       left.textContent = formatDateLabel(entry.date);
 
       const right = document.createElement("span");
-      if (entry.bestWeight !== null) {
-        right.textContent = `${entry.bestWeight} x ${entry.bestWeightReps} • Max reps: ${entry.bestReps}`;
+
+      const hasWeight =
+        typeof entry.bestWeight === "number" && entry.bestWeight !== null;
+      const bestReps = entry.bestReps || 0;
+
+      // NEW: if we have per-set info, show volume + a small sets preview
+      const hasSets = Array.isArray(entry.sets) && entry.sets.length > 0;
+      const hasVolume =
+        typeof entry.totalVolume === "number" && entry.totalVolume > 0;
+
+      if (hasSets) {
+        const preview = entry.sets
+          .filter(
+            (s) =>
+              typeof s.weight === "number" &&
+              typeof s.reps === "number" &&
+              s.weight > 0 &&
+              s.reps > 0
+          )
+          .slice(0, 3)
+          .map((s) => `${s.weight}x${s.reps}`)
+          .join(", ");
+
+        const more =
+          entry.sets.length > 3 ? `, … (+${entry.sets.length - 3} more)` : "";
+
+        const base =
+          hasWeight && bestReps
+            ? `${entry.bestWeight} x ${entry.bestWeightReps} • Max reps: ${bestReps}`
+            : hasWeight
+            ? `${entry.bestWeight} x ${entry.bestWeightReps}`
+            : `Best: ${bestReps} reps`;
+
+        const volText = hasVolume ? ` • Volume: ${entry.totalVolume}` : "";
+        const setsText = preview ? ` • Sets: ${preview}${more}` : "";
+
+        right.textContent = base + volText + setsText;
       } else {
-        right.textContent = `Best: ${entry.bestReps} reps`;
+        // Backwards compatible: old entries without per-set data
+        if (hasWeight) {
+          right.textContent = `${entry.bestWeight} x ${entry.bestWeightReps} • Max reps: ${bestReps}`;
+        } else {
+          right.textContent = `Best: ${bestReps} reps`;
+        }
       }
 
       row.appendChild(left);
       row.appendChild(right);
       progressDetailEl.appendChild(row);
     });
-  }
 
   function closeDetail() {
     if (!progressDetailEl) return;
