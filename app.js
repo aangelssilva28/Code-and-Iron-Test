@@ -285,33 +285,35 @@ const Logger = (() => {
     const setNumber = indexOverride || existingCount + 1;
     setLabel.textContent = `Set ${setNumber}`;
 
-const weightInput = document.createElement("input");
-weightInput.className = "set-input";
-weightInput.placeholder =
-  typeof Settings !== "undefined" && Settings.getWeightPlaceholder
-    ? Settings.getWeightPlaceholder()
-    : "Weight";
-weightInput.type = "number";
-weightInput.inputMode = "decimal";
-weightInput.min = "0";
-weightInput.value = setData?.weight ?? "";
-weightInput.dataset.field = "weight";
+    const weightInput = document.createElement("input");
+    weightInput.className = "set-input";
+    weightInput.placeholder =
+      typeof Settings !== "undefined" && Settings.getWeightPlaceholder
+        ? Settings.getWeightPlaceholder()
+        : "Weight";
+    weightInput.type = "number";
+    weightInput.inputMode = "decimal";
+    weightInput.min = "0";
+    weightInput.value = setData?.weight ?? "";
+    weightInput.dataset.field = "weight";
 
-const weightGroup = document.createElement("div");
-weightGroup.className = "set-weight-group";
-weightGroup.appendChild(weightInput);
+    const weightGroup = document.createElement("div");
+    weightGroup.className = "set-weight-group";
+    weightGroup.appendChild(weightInput);
 
-const repsInput = document.createElement("input");
-repsInput.className = "set-input";
-repsInput.placeholder = "Reps";
-repsInput.type = "number";
-repsInput.inputMode = "numeric";
-repsInput.min = "0";
-repsInput.value = setData?.reps ?? "";
-repsInput.dataset.field = "reps";
+    const repsInput = document.createElement("input");
+    repsInput.className = "set-input";
+    repsInput.placeholder = "Reps";
+    repsInput.type = "number";
+    repsInput.inputMode = "numeric";
+    repsInput.min = "0";
+    repsInput.value = setData?.reps ?? "";
+    repsInput.dataset.field = "reps";
 
     const minusBtn = document.createElement("button");
     minusBtn.className = "round-btn";
+    minusBtn.type = "button";
+    minusBtn.setAttribute("aria-label", "Remove set");
     minusBtn.textContent = "–";
     minusBtn.addEventListener("click", () => {
       const boxes = card.querySelectorAll(".set-box");
@@ -323,6 +325,8 @@ repsInput.dataset.field = "reps";
 
     const plusBtn = document.createElement("button");
     plusBtn.className = "round-btn";
+    plusBtn.type = "button";
+    plusBtn.setAttribute("aria-label", "Add set");
     plusBtn.textContent = "+";
     plusBtn.addEventListener("click", () => {
       const wrapper = card.querySelector(".sets-wrapper") || card;
@@ -393,6 +397,7 @@ repsInput.dataset.field = "reps";
     const nameInput = document.createElement("input");
     nameInput.className = "text-input workout-name";
     nameInput.placeholder = "Enter exercise name";
+    nameInput.setAttribute("aria-label", "Exercise name");
     if (workoutData && workoutData.name) {
       nameInput.value = workoutData.name;
     }
@@ -408,6 +413,8 @@ repsInput.dataset.field = "reps";
 
     const removeWorkoutBtn = document.createElement("button");
     removeWorkoutBtn.className = "round-btn minus";
+    removeWorkoutBtn.type = "button";
+    removeWorkoutBtn.setAttribute("aria-label", "Remove exercise card");
     removeWorkoutBtn.textContent = "–";
     removeWorkoutBtn.addEventListener("click", () => {
       const allCards = parent.querySelectorAll(".workout-card");
@@ -428,6 +435,8 @@ repsInput.dataset.field = "reps";
 
     const collapseBtn = document.createElement("button");
     collapseBtn.className = "round-btn collapse-btn";
+    collapseBtn.type = "button";
+    collapseBtn.setAttribute("aria-label", "Collapse or expand exercise");
     collapseBtn.textContent = "▼";
     collapseBtn.addEventListener("click", () => {
       const isCollapsed = card.classList.contains("collapsed");
@@ -436,6 +445,8 @@ repsInput.dataset.field = "reps";
 
     const addExerciseBtn = document.createElement("button");
     addExerciseBtn.className = "round-btn plus";
+    addExerciseBtn.type = "button";
+    addExerciseBtn.setAttribute("aria-label", "Add new exercise card");
     addExerciseBtn.textContent = "+";
     addExerciseBtn.addEventListener("click", () => {
       createWorkoutCard(parent);
@@ -470,13 +481,15 @@ repsInput.dataset.field = "reps";
     quickLabel.textContent = "Quick add:";
     quickAddRow.appendChild(quickLabel);
 
-[5, 10, 25, 35, 45].forEach((val) => {
-  const chip = document.createElement("button");
-  chip.className = "quick-add-chip";
-  chip.dataset.quick = String(val);
-  chip.textContent = `+${val}`;
-  quickAddRow.appendChild(chip);
-});
+    [5, 10, 25, 35, 45].forEach((val) => {
+      const chip = document.createElement("button");
+      chip.className = "quick-add-chip";
+      chip.type = "button";
+      chip.dataset.quick = String(val);
+      chip.textContent = `+${val}`;
+      chip.setAttribute("aria-label", `Add ${val} to weight`);
+      quickAddRow.appendChild(chip);
+    });
 
     card.appendChild(quickAddRow);
 
@@ -677,6 +690,7 @@ const Progress = (() => {
       "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").forEach((letter) => {
         const btn = document.createElement("button");
         btn.className = "progress-letter-btn disabled";
+        btn.type = "button";
         btn.textContent = letter;
         grid.appendChild(btn);
       });
@@ -711,6 +725,7 @@ const Progress = (() => {
       );
       const btn = document.createElement("button");
       btn.className = "progress-letter-btn";
+      btn.type = "button";
       if (!hasAny) btn.classList.add("disabled");
       btn.textContent = letter;
 
@@ -1097,7 +1112,7 @@ const Templates = (() => {
 
   // ---------- Templates UI ----------
 
-   function buildEditorPanel(panel, tpl) {
+  function buildEditorPanel(panel, tpl) {
     panel.innerHTML = "";
     panel.classList.add("open");
 
@@ -1153,6 +1168,7 @@ const Templates = (() => {
 
       const shareBtn = document.createElement("button");
       shareBtn.className = "small-btn share";
+      shareBtn.type = "button";
       shareBtn.textContent = "Share";
       shareBtn.addEventListener("click", () => {
         const code = makeShareCode(tpl);
@@ -1169,6 +1185,7 @@ const Templates = (() => {
 
       const loadBtn = document.createElement("button");
       loadBtn.className = "small-btn load";
+      loadBtn.type = "button";
       loadBtn.textContent = "Load";
       loadBtn.addEventListener("click", () => {
         Logger.applyTemplateToHome(tpl.workouts || []);
@@ -1178,11 +1195,13 @@ const Templates = (() => {
 
       const openBtn = document.createElement("button");
       openBtn.className = "small-btn open";
+      openBtn.type = "button";
       openBtn.textContent = "Open";
       btnWrap.appendChild(openBtn);
 
       const delBtn = document.createElement("button");
       delBtn.className = "small-btn delete";
+      delBtn.type = "button";
       delBtn.textContent = "Delete";
       delBtn.addEventListener("click", () => {
         const panel = savedTemplatesList.querySelector(
@@ -1206,30 +1225,30 @@ const Templates = (() => {
       panel.dataset.index = index.toString();
       wrapper.appendChild(panel);
 
-openBtn.addEventListener("click", () => {
-  // If panel is already open → close & save
-  if (panel.classList.contains("open")) {
-    closePanelAndSave(panel);
-    openBtn.textContent = "Open";
-    return;
-  }
+      openBtn.addEventListener("click", () => {
+        // If panel is already open → close & save
+        if (panel.classList.contains("open")) {
+          closePanelAndSave(panel);
+          openBtn.textContent = "Open";
+          return;
+        }
 
-  // Close any other open panels first
-  document.querySelectorAll(".open-panel.open").forEach((p) => {
-    if (p !== panel) {
-      const btnIndex = p.dataset.index;
-      const otherBtn = savedTemplatesList.querySelector(
-        `.saved-wrapper:nth-child(${parseInt(btnIndex, 10) + 1}) .small-btn.open`
-      );
-      if (otherBtn) otherBtn.textContent = "Open";
-      closePanelAndSave(p);
-    }
-  });
+        // Close any other open panels first
+        document.querySelectorAll(".open-panel.open").forEach((p) => {
+          if (p !== panel) {
+            const btnIndex = p.dataset.index;
+            const otherBtn = savedTemplatesList.querySelector(
+              `.saved-wrapper:nth-child(${parseInt(btnIndex, 10) + 1}) .small-btn.open`
+            );
+            if (otherBtn) otherBtn.textContent = "Open";
+            closePanelAndSave(p);
+          }
+        });
 
-  // 🔥 Build the editor UI inside this panel
-  buildEditorPanel(panel, tpl);
-  openBtn.textContent = "Close";
-});
+        // Build the editor UI inside this panel
+        buildEditorPanel(panel, tpl);
+        openBtn.textContent = "Close";
+      });
 
       savedTemplatesList.appendChild(wrapper);
     });
@@ -1501,7 +1520,12 @@ const App = (() => {
     workoutsScreen = document.getElementById("workoutsScreen");
     progressScreen = document.getElementById("progressScreen");
     settingsScreen = document.getElementById("settingsScreen");
-        
+
+    if (menuButton) {
+      menuButton.setAttribute("aria-haspopup", "true");
+      menuButton.setAttribute("aria-expanded", "false");
+    }
+
     const progressBackBtn = document.getElementById("backToLoggerFromProgress");
     if (progressBackBtn) {
       progressBackBtn.addEventListener("click", () => showScreen("home"));
@@ -1514,7 +1538,8 @@ const App = (() => {
 
     if (menuButton && menuDropdown) {
       menuButton.addEventListener("click", () => {
-        menuDropdown.classList.toggle("open");
+        const isOpen = menuDropdown.classList.toggle("open");
+        menuButton.setAttribute("aria-expanded", isOpen ? "true" : "false");
       });
 
       document.addEventListener("click", (e) => {
@@ -1540,7 +1565,7 @@ const App = (() => {
           closeMenu();
         });
       });
-    } // <-- close the if here
+    }
 
     // Init modules
     Logger.init({
@@ -1622,6 +1647,9 @@ const App = (() => {
   function closeMenu() {
     if (menuDropdown) {
       menuDropdown.classList.remove("open");
+    }
+    if (menuButton) {
+      menuButton.setAttribute("aria-expanded", "false");
     }
   }
 
