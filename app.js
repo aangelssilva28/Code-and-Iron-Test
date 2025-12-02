@@ -1203,6 +1203,8 @@ const Progress = (() => {
       progressDetailEl.appendChild(row);
     });
 
+  }
+
   function closeDetail() {
     if (!progressDetailEl) return;
     progressDetailEl.classList.remove("open");
