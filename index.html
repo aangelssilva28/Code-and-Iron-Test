@@ -789,6 +789,49 @@
       margin-top: 0;
     }
 
+    /* Reuse this list style for volume/charts selection */
+    .settings-volume-list {
+      margin-top: 6px;
+      max-height: 220px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    .settings-volume-list .settings-row {
+      font-size: 13px;
+      padding: 2px 0;
+    }
+
+    /* --------------------------
+       CHARTS
+    --------------------------- */
+
+    .charts-container {
+      margin-top: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .chart-card {
+      padding: 10px 12px 14px;
+      border-radius: 18px;
+      background-color: #101010;
+      border: 1px solid #262626;
+    }
+
+    .chart-card-title {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+
+    .chart-card-sub {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+
     /* --------------------------
        SETTINGS
     --------------------------- */
@@ -971,12 +1014,13 @@
     </div>
 
     <!-- Menu -->
-    <div class="menu-dropdown" id="menuDropdown">
-      <div class="menu-item" data-nav="workouts">Routines</div>
-      <div class="menu-item" data-nav="progress">Progress</div>
-      <div class="menu-item" data-nav="settings">Settings</div>
-      <div class="menu-item" id="menuTutorial">Tutorial</div>
-    </div>
+<div class="menu-dropdown" id="menuDropdown">
+  <div class="menu-item" data-nav="workouts">Routines</div>
+  <div class="menu-item" data-nav="progress">Progress</div>
+  <div class="menu-item" data-nav="charts">Charts</div> <!-- NEW -->
+  <div class="menu-item" data-nav="settings">Settings</div>
+  <div class="menu-item" id="menuTutorial">Tutorial</div>
+</div>
 
     <!-- HOME / LOGGER SCREEN -->
     <main id="homeScreen" class="screen active">
@@ -1066,6 +1110,33 @@
         </button>
 
         <div class="link-back" id="backToLoggerFromProgress">
+          <span>←</span> Back to workout logger
+        </div>
+      </section>
+    </main>
+
+    <!-- CHARTS SCREEN -->
+    <main id="chartsScreen" class="screen">
+      <section class="card">
+        <h2 class="card-title">Charts</h2>
+        <p class="card-subtitle">
+          Pick exercises and see how their sessions trend over time.
+        </p>
+
+        <div class="settings-group">
+          <h3 class="card-subtitle" style="margin-top:0;margin-bottom:4px;">
+            Choose exercises to chart
+          </h3>
+          <div
+            id="chartsExerciseList"
+            class="settings-volume-list"
+            style="margin-top:4px;"
+          ></div>
+        </div>
+
+        <div id="chartsContainer" class="charts-container"></div>
+
+        <div class="link-back" id="backToLoggerFromCharts">
           <span>←</span> Back to workout logger
         </div>
       </section>
