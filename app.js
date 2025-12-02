@@ -1490,8 +1490,15 @@ const Charts = (() => {
       "10px system-ui, -apple-system, BlinkMacSystemFont, sans-serif";
     ctx.textAlign = "left";
     ctx.textBaseline = "top";
-    ctx.fillText(`${label} — max ${maxVal}`, paddingLeft, 2);
+ctx.fillText(`${label} — max ${maxVal}`, paddingLeft, 2);
   }
+
+  // Public API for Charts
+  return {
+    init,
+    refresh,
+  };
+})();
 
 // ======================================================
 // Templates module (routines screen + share + backup)
