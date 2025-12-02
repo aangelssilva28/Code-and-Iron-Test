@@ -1,4 +1,30 @@
 // ======================================================
+// DOM helpers
+// ======================================================
+const $ = (sel, root = document) => root.querySelector(sel);
+const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
+
+// Tiny utility: make sure only one panel with `.open` is active
+function openSinglePanel(
+  container,
+  targetPanel,
+  { panelSelector = ".open-panel.open", openClass = "open", onClose } = {}
+) {
+  if (!container || !targetPanel) return;
+
+  $$(panelSelector, container).forEach((panel) => {
+    if (panel === targetPanel) return;
+    if (onClose) {
+      onClose(panel);
+    } else {
+      panel.classList.remove(openClass);
+    }
+  });
+
+  targetPanel.classList.add(openClass);
+}
+
+// ======================================================
 // Storage module (versioned templates + progress)
 // ======================================================
 const Storage = (() => {
@@ -109,7 +135,7 @@ const Settings = (() => {
   const SETTINGS_KEY = "codeAndIronSettings_v1";
 
   let state = {
-    unit: "lb",          // "lb" | "kg"
+    unit: "lb", // "lb" | "kg"
     highContrast: false, // boolean
   };
 
@@ -161,10 +187,10 @@ const Settings = (() => {
     load();
     applyTheme();
 
-    const unitSelect = document.querySelector(unitSelectSelector);
-    const contrastCheckbox = document.querySelector(highContrastSelector);
-    const exportBtn = document.querySelector(exportButtonSelector);
-    const resetBtn = document.querySelector(resetButtonSelector);
+    const unitSelect = $(unitSelectSelector);
+    const contrastCheckbox = $(highContrastSelector);
+    const exportBtn = $(exportButtonSelector);
+    const resetBtn = $(resetButtonSelector);
 
     if (unitSelect) {
       unitSelect.value = state.unit;
@@ -187,13 +213,11 @@ const Settings = (() => {
     if (exportBtn) {
       exportBtn.addEventListener("click", () => {
         // Reuse the existing Progress backup button
-        const progressBackupBtn = document.getElementById("exportBackupBtn");
+        const progressBackupBtn = $("#exportBackupBtn");
         if (progressBackupBtn) {
           progressBackupBtn.click();
         } else {
-          alert(
-            "Open the Progress screen to use backup, then try again."
-          );
+          alert("Open the Progress screen to use backup, then try again.");
         }
       });
     }
@@ -256,7 +280,7 @@ const Logger = (() => {
   let workoutsContainer = null;
 
   function init({ containerSelector, saveButtonSelector, onSave }) {
-    workoutsContainer = document.querySelector(containerSelector);
+    workoutsContainer = $(containerSelector);
 
     if (!workoutsContainer) {
       console.warn("Logger: workouts container not found:", containerSelector);
@@ -266,7 +290,7 @@ const Logger = (() => {
     // Start with one blank card
     createWorkoutCard(workoutsContainer);
 
-    const saveBtn = document.querySelector(saveButtonSelector);
+    const saveBtn = $(saveButtonSelector);
     if (saveBtn && typeof onSave === "function") {
       saveBtn.addEventListener("click", () => {
         onSave(getCurrentWorkoutLayout());
@@ -554,7 +578,6 @@ const Logger = (() => {
   };
 })();
 
-
 // ======================================================
 // Progress module (A–Z grid + detail + saving progress)
 // ======================================================
@@ -569,9 +592,9 @@ const Progress = (() => {
   let activeProgressLetter = null;
 
   function init({ gridSelector, listSelector, detailSelector }) {
-    progressLetterGrid = document.getElementById(gridSelector.replace("#", ""));
-    progressListEl = document.getElementById(listSelector.replace("#", ""));
-    progressDetailEl = document.getElementById(detailSelector.replace("#", ""));
+    progressLetterGrid = $(gridSelector);
+    progressListEl = $(listSelector);
+    progressDetailEl = $(detailSelector);
 
     renderProgressList();
   }
@@ -799,8 +822,7 @@ const Progress = (() => {
       row.appendChild(nameDiv);
 
       const detail = document.createElement("div");
-      detail.style.fontSize = "13px";
-      detail.style.color = "#bbbbbb";
+      detail.className = "progress-detail-meta";
 
       let prText = "";
       if (ex.bestRepsDate && ex.bestRepsDate.startsWith(today)) {
@@ -844,16 +866,13 @@ const Progress = (() => {
     progressDetailEl.innerHTML = "";
 
     const title = document.createElement("div");
-    title.className = "card-subtitle";
-    title.style.marginBottom = "8px";
+    title.className = "card-subtitle progress-detail-title";
     title.textContent = ex.name + " — last sessions";
     progressDetailEl.appendChild(title);
 
     if (ex.bestRepsDate || ex.bestWeightDate) {
       const prInfo = document.createElement("div");
-      prInfo.style.fontSize = "13px";
-      prInfo.style.color = "#bbbbbb";
-      prInfo.style.marginBottom = "8px";
+      prInfo.className = "progress-detail-pr";
 
       const parts = [];
       if (ex.bestRepsDate) {
@@ -878,8 +897,7 @@ const Progress = (() => {
     const history = (ex.history || []).slice(0, 5);
     if (!history.length) {
       const empty = document.createElement("div");
-      empty.style.fontSize = "13px";
-      empty.style.color = "#bbbbbb";
+      empty.className = "progress-detail-empty";
       empty.textContent =
         "No detailed history yet. Save progress a few times for this exercise.";
       progressDetailEl.appendChild(empty);
@@ -925,7 +943,6 @@ const Progress = (() => {
   };
 })();
 
-
 // ======================================================
 // Templates module (routines screen + share + backup)
 // ======================================================
@@ -954,14 +971,14 @@ const Templates = (() => {
     exportButtonSelector,
     importButtonSelector,
   }) {
-    templateNameInput = document.querySelector(nameInputSelector);
-    saveTemplateBtn = document.querySelector(saveButtonSelector);
-    savedTemplatesList = document.querySelector(listSelector);
-    backToLoggerBtn = document.querySelector(backButtonSelector);
+    templateNameInput = $(nameInputSelector);
+    saveTemplateBtn = $(saveButtonSelector);
+    savedTemplatesList = $(listSelector);
+    backToLoggerBtn = $(backButtonSelector);
 
-    backupText = document.querySelector(backupTextSelector);
-    exportBackupBtn = document.querySelector(exportButtonSelector);
-    importBackupBtn = document.querySelector(importButtonSelector);
+    backupText = $(backupTextSelector);
+    exportBackupBtn = $(exportButtonSelector);
+    importBackupBtn = $(importButtonSelector);
 
     if (saveTemplateBtn) {
       saveTemplateBtn.addEventListener("click", onSaveTemplateClicked);
@@ -979,9 +996,7 @@ const Templates = (() => {
         const backupString = createBackupString();
         if (!backupString) return;
         backupText.value = backupString;
-        alert(
-          "Backup code generated. Copy it and save it somewhere safe."
-        );
+        alert("Backup code generated. Copy it and save it somewhere safe.");
       });
     }
 
@@ -1233,16 +1248,16 @@ const Templates = (() => {
           return;
         }
 
-        // Close any other open panels first
-        document.querySelectorAll(".open-panel.open").forEach((p) => {
-          if (p !== panel) {
-            const btnIndex = p.dataset.index;
-            const otherBtn = savedTemplatesList.querySelector(
-              `.saved-wrapper:nth-child(${parseInt(btnIndex, 10) + 1}) .small-btn.open`
-            );
-            if (otherBtn) otherBtn.textContent = "Open";
-            closePanelAndSave(p);
+        // Reset all "Open" button labels
+        $$(".saved-wrapper .small-btn.open", savedTemplatesList).forEach(
+          (btn) => {
+            btn.textContent = "Open";
           }
+        );
+
+        // Close any other open panels first, saving their data
+        openSinglePanel(savedTemplatesList, panel, {
+          onClose: closePanelAndSave,
         });
 
         // Build the editor UI inside this panel
@@ -1303,7 +1318,6 @@ const Templates = (() => {
   };
 })();
 
-
 // ======================================================
 // Tutorial module (overlay + menu item)
 // ======================================================
@@ -1314,8 +1328,8 @@ const Tutorial = (() => {
   let menuReopenItem;
 
   function init({ overlaySelector, menuItemSelector }) {
-    overlay = document.getElementById(overlaySelector.replace("#", ""));
-    menuReopenItem = document.querySelector(menuItemSelector);
+    overlay = $(overlaySelector);
+    menuReopenItem = $(menuItemSelector);
 
     if (menuReopenItem) {
       menuReopenItem.addEventListener("click", () => {
@@ -1356,8 +1370,8 @@ const Tutorial = (() => {
     overlay.classList.add("visible");
     showStep(currentIndex);
 
-    const skipBtn = document.getElementById("tutorialSkipBtn");
-    const startBtn = document.getElementById("tutorialStartBtn");
+    const skipBtn = $("#tutorialSkipBtn");
+    const startBtn = $("#tutorialStartBtn");
 
     if (skipBtn) {
       skipBtn.addEventListener("click", () => {
@@ -1403,7 +1417,6 @@ const Tutorial = (() => {
     init,
   };
 })();
-
 
 // ======================================================
 // QuickAdd module (weight chips)
@@ -1452,7 +1465,6 @@ const QuickAdd = (() => {
     init,
   };
 })();
-
 
 // ======================================================
 // App orchestrator (navigation, wiring everything)
@@ -1505,8 +1517,8 @@ const App = (() => {
 
   function init() {
     // Privacy footer toggle
-    const togglePrivacy = document.getElementById("toggle-privacy");
-    const privacyPanel = document.getElementById("privacy-panel");
+    const togglePrivacy = $("#toggle-privacy");
+    const privacyPanel = $("#privacy-panel");
     if (togglePrivacy && privacyPanel) {
       togglePrivacy.addEventListener("click", () => {
         privacyPanel.classList.toggle("hidden");
@@ -1514,24 +1526,24 @@ const App = (() => {
     }
 
     // Screens & nav
-    menuButton = document.getElementById("menuButton");
-    menuDropdown = document.getElementById("menuDropdown");
-    homeScreen = document.getElementById("homeScreen");
-    workoutsScreen = document.getElementById("workoutsScreen");
-    progressScreen = document.getElementById("progressScreen");
-    settingsScreen = document.getElementById("settingsScreen");
+    menuButton = $("#menuButton");
+    menuDropdown = $("#menuDropdown");
+    homeScreen = $("#homeScreen");
+    workoutsScreen = $("#workoutsScreen");
+    progressScreen = $("#progressScreen");
+    settingsScreen = $("#settingsScreen");
 
     if (menuButton) {
       menuButton.setAttribute("aria-haspopup", "true");
       menuButton.setAttribute("aria-expanded", "false");
     }
 
-    const progressBackBtn = document.getElementById("backToLoggerFromProgress");
+    const progressBackBtn = $("#backToLoggerFromProgress");
     if (progressBackBtn) {
       progressBackBtn.addEventListener("click", () => showScreen("home"));
     }
 
-    const settingsBackBtn = document.getElementById("backToLoggerFromSettings");
+    const settingsBackBtn = $("#backToLoggerFromSettings");
     if (settingsBackBtn) {
       settingsBackBtn.addEventListener("click", () => showScreen("home"));
     }
@@ -1551,7 +1563,7 @@ const App = (() => {
         }
       });
 
-      document.querySelectorAll(".menu-item[data-nav]").forEach((item) => {
+      $$(".menu-item[data-nav]").forEach((item) => {
         item.addEventListener("click", () => {
           const nav = item.dataset.nav;
 
@@ -1659,7 +1671,6 @@ const App = (() => {
     closeMenu,
   };
 })();
-
 
 // ======================================================
 // Boot
