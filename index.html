@@ -1005,10 +1005,8 @@
             <li>See your best weight × reps and max reps for each exercise</li>
             <li>New PRs are tagged when you beat your old best on that day</li>
             <li>Tap an exercise to see recent history and best sets by date</li>
-            <li>See your best weight × reps and max reps for each exercise</li>
-            <li>Tap an exercise to see recent history and best sets by date</li>
-            <li>If you have a backup code, go to <strong>Settings → Data</strong>,
-              paste it, and tap <strong>Restore from backup</strong> to recover data</li>
+            <li>In <strong>Settings → Data</strong>, use <strong>Generate Code</strong> to back up your routines and progress</li>
+            <li>Paste a saved code there and tap <strong>Restore from backup</strong> if you ever need to recover data</li>
           </ul>
           <div class="tutorial-actions">
             <button data-tutorial-back class="tutorial-secondary-btn" type="button">
@@ -1175,29 +1173,31 @@
           </p>
         </div>
 
-<!-- Data / backup -->
-<div class="settings-group">
-  <h3 class="card-subtitle" style="margin-top:8px;margin-bottom:4px;">
-    Data
-  </h3>
+        <!-- Data / backup -->
+        <div class="settings-group">
+          <h3 class="card-subtitle" style="margin-top:8px;margin-bottom:4px;">
+            Data
+          </h3>
 
-  <h4 class="card-subtitle" style="margin-top:4px;margin-bottom:4px;">
-    Backup &amp; Restore
-  </h4>
-  <p class="settings-note">
-    If you have a backup code saved from an earlier version, paste it here
-    to restore your routines and progress.
-  </p>
+          <h4 class="card-subtitle" style="margin-top:4px;margin-bottom:4px;">
+            Backup &amp; Restore
+          </h4>
+          <p class="settings-note">
+            Generate a backup code and save it somewhere (Notes, email, etc.).
+            If your browser data ever gets cleared, paste it here to restore
+            your routines and progress.
+          </p>
 
-  <textarea
-    id="backupText"
-    class="text-input"
-    rows="3"
-    placeholder="Paste a backup code here, then tap Restore from backup."
-  ></textarea>
+          <textarea
+            id="backupText"
+            class="text-input"
+            rows="3"
+            placeholder="Your backup code will appear here. Copy it and save it. To restore, paste a code and tap Restore."
+          ></textarea>
 
-  <!-- Hidden button so existing JS that looks for exportBackupBtn won't break -->
-  <button id="exportBackupBtn" type="button" style="display:none;"></button>
+          <button id="exportBackupBtn" class="primary-btn footer-btn" type="button">
+            Generate Code
+          </button>
 
           <button id="importBackupBtn" class="primary-btn footer-btn" type="button">
             Restore from backup
