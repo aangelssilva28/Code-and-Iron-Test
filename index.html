@@ -5,12 +5,12 @@
   <title>Code and Iron Test</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-<!-- PWA -->
-<meta name="theme-color" content="#1A1E2C">
-<link rel="manifest" href="manifest.webmanifest">
-<link rel="apple-touch-icon" href="icons/icon-192.png">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <!-- PWA -->
+  <meta name="theme-color" content="#1A1E2C">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
 
   <!-- Germania One font -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1005,8 +1005,8 @@
             <li>See your best weight × reps and max reps for each exercise</li>
             <li>New PRs are tagged when you beat your old best on that day</li>
             <li>Tap an exercise to see recent history and best sets by date</li>
-            <li>At the bottom, use <strong>Generate Code</strong> to back up your routines and progress</li>
-            <li>Paste a saved code and tap <strong>Restore from backup</strong> if you ever need to recover data</li>
+            <li>In <strong>Settings → Data</strong>, use <strong>Generate Code</strong> to back up your routines and progress</li>
+            <li>Paste a saved code there and tap <strong>Restore from backup</strong> if you ever need to recover data</li>
           </ul>
           <div class="tutorial-actions">
             <button data-tutorial-back class="tutorial-secondary-btn" type="button">
@@ -1021,13 +1021,13 @@
     </div>
 
     <!-- Menu -->
-<div class="menu-dropdown" id="menuDropdown">
-  <div class="menu-item" data-nav="workouts">Routines</div>
-  <div class="menu-item" data-nav="progress">Progress</div>
-  <div class="menu-item" data-nav="charts">Charts</div> <!-- NEW -->
-  <div class="menu-item" data-nav="settings">Settings</div>
-  <div class="menu-item" id="menuTutorial">Tutorial</div>
-</div>
+    <div class="menu-dropdown" id="menuDropdown">
+      <div class="menu-item" data-nav="workouts">Routines</div>
+      <div class="menu-item" data-nav="progress">Progress</div>
+      <div class="menu-item" data-nav="charts">Charts</div> <!-- NEW -->
+      <div class="menu-item" data-nav="settings">Settings</div>
+      <div class="menu-item" id="menuTutorial">Tutorial</div>
+    </div>
 
     <!-- HOME / LOGGER SCREEN -->
     <main id="homeScreen" class="screen active">
@@ -1091,61 +1091,36 @@
         <!-- Detail panel for a single exercise -->
         <div id="progressDetail" class="open-panel"></div>
 
-        <h3 class="card-subtitle" style="margin-top:18px;margin-bottom:4px;">
-          Backup &amp; Restore
-        </h3>
-
-        <p class="card-subtitle" style="margin-top:0;margin-bottom:8px;">
-          Generate a backup code and save it somewhere (Notes, email, etc.).
-          If your browser data ever gets cleared, paste it here to restore
-          your routines and progress.
-        </p>
-
-        <textarea
-          id="backupText"
-          class="text-input"
-          rows="3"
-          placeholder="Your backup code will appear here. Copy it and save it. To restore, paste a code and tap Restore."
-        ></textarea>
-
-        <button id="exportBackupBtn" class="primary-btn footer-btn" type="button">
-          Generate Code
-        </button>
-
-        <button id="importBackupBtn" class="primary-btn footer-btn" type="button">
-          Restore from backup
-        </button>
-
         <div class="link-back" id="backToLoggerFromProgress">
           <span>←</span> Back to workout logger
         </div>
       </section>
     </main>
 
-<!-- Charts Screen -->
-<main id="chartsScreen" class="screen">
-  <section class="card main-card">
-    <h2 class="card-title">Charts</h2>
-    <p class="card-subtitle">
-      Pick exercises and see how their sessions trend over time.
-    </p>
+    <!-- Charts Screen -->
+    <main id="chartsScreen" class="screen">
+      <section class="card main-card">
+        <h2 class="card-title">Charts</h2>
+        <p class="card-subtitle">
+          Pick exercises and see how their sessions trend over time.
+        </p>
 
-    <h3 class="card-subtitle" style="margin-top: 1.25rem;">
-      Choose exercises to chart
-    </h3>
+        <h3 class="card-subtitle" style="margin-top: 1.25rem;">
+          Choose exercises to chart
+        </h3>
 
-    <div id="chartsExerciseList" class="settings-list"></div>
+        <div id="chartsExerciseList" class="settings-list"></div>
 
-    <div id="chartsContainer" class="charts-container" style="margin-top: 1.5rem;"></div>
+        <div id="chartsContainer" class="charts-container" style="margin-top: 1.5rem;"></div>
 
-    <button id="backToLoggerFromCharts"
-            class="primary-btn footer-btn"
-            type="button"
-            style="margin-top: 2rem;">
-      ← Back to workout logger
-    </button>
-  </section>
-</main>
+        <button id="backToLoggerFromCharts"
+                class="primary-btn footer-btn"
+                type="button"
+                style="margin-top: 2rem;">
+          ← Back to workout logger
+        </button>
+      </section>
+    </main>
 
     <!-- SETTINGS SCREEN -->
     <main id="settingsScreen" class="screen">
@@ -1204,22 +1179,38 @@
             Data
           </h3>
 
-          <button
-            id="settingsExportBackupBtn"
-            class="primary-btn footer-btn"
-            type="button"
-          >
-            Export backup
+          <h4 class="card-subtitle" style="margin-top:4px;margin-bottom:4px;">
+            Backup &amp; Restore
+          </h4>
+          <p class="settings-note">
+            Generate a backup code and save it somewhere (Notes, email, etc.).
+            If your browser data ever gets cleared, paste it here to restore
+            your routines and progress.
+          </p>
+
+          <textarea
+            id="backupText"
+            class="text-input"
+            rows="3"
+            placeholder="Your backup code will appear here. Copy it and save it. To restore, paste a code and tap Restore."
+          ></textarea>
+
+          <button id="exportBackupBtn" class="primary-btn footer-btn" type="button">
+            Generate Code
           </button>
+
+          <button id="importBackupBtn" class="primary-btn footer-btn" type="button">
+            Restore from backup
+          </button>
+
+          <p class="settings-note" style="margin-top:10px;">
+            Resetting clears routines, progress, tutorial status, and settings
+            from this browser. This cannot be undone.
+          </p>
 
           <button id="resetAllDataBtn" class="danger-btn" type="button">
             Reset all data
           </button>
-
-          <p class="settings-note">
-            Resetting clears routines, progress, tutorial status, and settings
-            from this browser. This cannot be undone.
-          </p>
         </div>
 
         <div class="link-back" id="backToLoggerFromSettings">
