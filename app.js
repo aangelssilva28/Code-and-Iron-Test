@@ -25,6 +25,41 @@ function openSinglePanel(
 }
 
 // ======================================================
+// App version + toast helper
+// ======================================================
+const APP_VERSION = "0.9.1";
+const VERSION_STORAGE_KEY = "codeAndIronLastSeenVersion_v1";
+
+let toastTimeoutId = null;
+
+function showToast(message, options = {}) {
+  const duration = options.duration ?? 2500;
+  const toastEl = document.getElementById("toast");
+
+  // Fallback if the element is missing for some reason
+  if (!toastEl) {
+    alert(message);
+    return;
+  }
+
+  // Set message
+  toastEl.textContent = message;
+
+  // Show
+  toastEl.classList.add("visible");
+
+  // Reset any existing timer
+  if (toastTimeoutId) {
+    clearTimeout(toastTimeoutId);
+  }
+
+  // Hide after duration
+  toastTimeoutId = setTimeout(() => {
+    toastEl.classList.remove("visible");
+  }, duration);
+}
+
+// ======================================================
 // Exercise key normalization + migration helpers
 // ======================================================
 
@@ -384,8 +419,12 @@ const Settings = (() => {
             "Type RESET (all caps) to confirm."
         );
 
-        if (confirmText !== "RESET") {
-          alert("Reset cancelled.");
+                if (confirmText !== "RESET") {
+          if (typeof showToast === "function") {
+            showToast("Reset cancelled.");
+          } else {
+            alert("Reset cancelled.");
+          }
           return;
         }
 
@@ -1548,22 +1587,35 @@ const Templates = (() => {
     }
 
     // Backup handlers
-    if (exportBackupBtn && backupText) {
-      exportBackupBtn.addEventListener("click", () => {
+          exportBackupBtn.addEventListener("click", () => {
         const backupString = createBackupString();
         if (!backupString) return;
         backupText.value = backupString;
-        alert("Backup code generated. Copy it and save it somewhere safe.");
-      });
-    }
 
-    if (importBackupBtn && backupText) {
+        if (typeof showToast === "function") {
+          showToast("Backup code generated. Copy & save it!");
+        } else {
+          alert("Backup code generated. Copy it and save it somewhere safe.");
+        }
+      });
+
+        if (importBackupBtn && backupText) {
       importBackupBtn.addEventListener("click", () => {
         const str = backupText.value.trim();
         if (!str) {
           alert("Paste a backup code first.");
           return;
         }
+
+        const ok = window.confirm(
+          "Restoring from backup will overwrite your current routines and progress " +
+          "with the data in the box.\n\n" +
+          "Are you sure you want to restore from backup?"
+        );
+        if (!ok) {
+          return;
+        }
+
         restoreFromBackupString(str);
       });
     }
@@ -1667,12 +1719,18 @@ const Templates = (() => {
         renderTemplatesList();
       }
 
-      if (parsed.progressData && typeof parsed.progressData === "object") {
+            if (parsed.progressData && typeof parsed.progressData === "object") {
         Storage.saveProgress(parsed.progressData);
         // refresh internal state in Progress
         Progress.refreshUI();
       }
 
+      if (typeof showToast === "function") {
+        showToast("Backup restored!");
+      } else {
+        alert("Backup restored!");
+      }
+      
       alert("Backup restored!");
     } catch (e) {
       console.error("Error restoring backup", e);
@@ -1771,21 +1829,31 @@ const Templates = (() => {
       openBtn.textContent = "Open";
       btnWrap.appendChild(openBtn);
 
-      const delBtn = document.createElement("button");
-      delBtn.className = "small-btn delete";
-      delBtn.type = "button";
-      delBtn.textContent = "Delete";
-      delBtn.addEventListener("click", () => {
+            delBtn.addEventListener("click", () => {
+        const routineName = tpl.name || "this routine";
+
+        const ok = window.confirm(
+          `Delete "${routineName}"?\n\n` +
+          "This will remove the routine from your saved workouts, " +
+          "but it will NOT delete any past progress."
+        );
+        if (!ok) return;
+
         const panel = savedTemplatesList.querySelector(
           `.open-panel[data-index="${index}"]`
         );
         if (panel && panel.classList.contains("open")) {
           closePanelAndSave(panel);
         }
+
         templates.splice(index, 1);
         Storage.saveTemplates(templates);
         renderTemplatesList();
         Progress.refreshUI();
+
+        if (typeof showToast === "function") {
+          showToast("Routine deleted.");
+        }
       });
       btnWrap.appendChild(delBtn);
 
@@ -1843,10 +1911,15 @@ const Templates = (() => {
         name: imported.name,
         workouts: JSON.parse(JSON.stringify(imported.workouts)),
       });
-      Storage.saveTemplates(templates);
+            Storage.saveTemplates(templates);
       renderTemplatesList();
       templateNameInput.value = "";
-      alert(`Shared routine imported as "${imported.name}".`);
+
+      if (typeof showToast === "function") {
+        showToast(`Imported "${imported.name}".`);
+      } else {
+        alert(`Shared routine imported as "${imported.name}".`);
+      }
       return;
     }
 
@@ -2035,6 +2108,20 @@ const App = (() => {
   let chartsScreen;
   let settingsScreen;
 
+  function handleVersionChange() {
+    try {
+      const lastSeen = localStorage.getItem(VERSION_STORAGE_KEY);
+      if (lastSeen !== APP_VERSION) {
+        // Store new version
+        localStorage.setItem(VERSION_STORAGE_KEY, APP_VERSION);
+        // Force the tutorial / "What's new" overlay to show once per version
+        localStorage.removeItem("codeAndIronTutorialSeen_v1");
+      }
+    } catch (e) {
+      console.error("Error checking app version", e);
+    }
+  }
+
   function sanitizeWorkoutsForSave(workouts) {
     if (!Array.isArray(workouts)) return [];
 
@@ -2167,8 +2254,13 @@ const App = (() => {
           return;
         }
 
-        Progress.saveFromWorkouts(workouts);
-        alert("Progress saved!");
+         Progress.saveFromWorkouts(workouts);
+
+        if (typeof showToast === "function") {
+          showToast("Progress saved!");
+        } else {
+          alert("Progress saved!");
+        }
       },
     });
 
@@ -2187,6 +2279,8 @@ const App = (() => {
       exportButtonSelector: "#exportBackupBtn",
       importButtonSelector: "#importBackupBtn",
     });
+
+handleVersionChange();
 
     Tutorial.init({
       overlaySelector: "#tutorialOverlay",
