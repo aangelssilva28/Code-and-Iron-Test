@@ -1731,7 +1731,7 @@ const Templates = (() => {
         alert("Backup restored!");
       }
       
-      alert("Backup restored!");
+      
     } catch (e) {
       console.error("Error restoring backup", e);
       alert(
@@ -1829,32 +1829,38 @@ const Templates = (() => {
       openBtn.textContent = "Open";
       btnWrap.appendChild(openBtn);
 
-            delBtn.addEventListener("click", () => {
-        const routineName = tpl.name || "this routine";
+const delBtn = document.createElement("button");
+delBtn.className = "small-btn delete";
+delBtn.type = "button";
+delBtn.textContent = "Delete";
 
-        const ok = window.confirm(
-          `Delete "${routineName}"?\n\n` +
-          "This will remove the routine from your saved workouts, " +
-          "but it will NOT delete any past progress."
-        );
-        if (!ok) return;
+delBtn.addEventListener("click", () => {
+  const routineName = tpl.name || "this routine";
 
-        const panel = savedTemplatesList.querySelector(
-          `.open-panel[data-index="${index}"]`
-        );
-        if (panel && panel.classList.contains("open")) {
-          closePanelAndSave(panel);
-        }
+  const ok = window.confirm(
+    `Delete "${routineName}"?\n\n` +
+    "This will remove the routine from your saved workouts, " +
+    "but it will NOT delete any past progress."
+  );
+  if (!ok) return;
 
-        templates.splice(index, 1);
-        Storage.saveTemplates(templates);
-        renderTemplatesList();
-        Progress.refreshUI();
+  const panel = savedTemplatesList.querySelector(
+    `.open-panel[data-index="${index}"]`
+  );
+  if (panel && panel.classList.contains("open")) {
+    closePanelAndSave(panel);
+  }
 
-        if (typeof showToast === "function") {
-          showToast("Routine deleted.");
-        }
-      });
+  templates.splice(index, 1);
+  Storage.saveTemplates(templates);
+  renderTemplatesList();
+  Progress.refreshUI();
+
+  if (typeof showToast === "function") {
+    showToast("Routine deleted.");
+  }
+});
+
       btnWrap.appendChild(delBtn);
 
       row.appendChild(btnWrap);
