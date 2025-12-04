@@ -3,8 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <title>Code and Iron Test</title>
-<meta name="viewport"
-      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">  <!-- PWA -->
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <!-- PWA -->
   <meta name="theme-color" content="#1A1E2C">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
@@ -324,6 +325,29 @@
     .danger-btn:active {
       background-color: var(--danger-soft);
       outline: 1px solid var(--copper);
+    }
+
+    /* --------------------------
+       BACK TO LOGGER BUTTON
+    --------------------------- */
+
+    .back-nav-wrap {
+      margin-top: 1.75rem;
+      padding: 0.65rem;
+      border-radius: var(--radius-card);
+      border: 2px solid var(--copper);
+      background: transparent;
+      box-shadow: var(--shadow-soft);
+    }
+
+    .back-nav-btn {
+      margin-top: 0; /* override primary-btn margin */
+      height: 48px;
+      font-size: 1.15rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
     }
 
     /* --------------------------
@@ -894,8 +918,8 @@
     body.theme-high-contrast .saved-item {
       border-color: var(--accent);
     }
-    
-        /* --------------------------
+
+    /* --------------------------
        TOAST / SNACKBAR
     --------------------------- */
 
@@ -928,7 +952,7 @@
       transform: translateX(-50%) translateY(0);
       opacity: 1;
     }
-    
+
   </style>
 </head>
 <body>
@@ -1102,8 +1126,15 @@
         </h3>
         <div id="savedTemplatesList" class="saved-list"></div>
 
-        <div class="link-back" id="backToLogger">
-          <span>←</span> Back to workout logger
+        <!-- UPDATED BACK BUTTON -->
+        <div class="back-nav-wrap">
+          <button
+            id="backToLogger"
+            class="primary-btn back-nav-btn"
+            type="button"
+          >
+            ← Back to workout logger
+          </button>
         </div>
       </section>
     </main>
@@ -1125,8 +1156,15 @@
         <!-- Detail panel for a single exercise -->
         <div id="progressDetail" class="open-panel"></div>
 
-        <div class="link-back" id="backToLoggerFromProgress">
-          <span>←</span> Back to workout logger
+        <!-- UPDATED BACK BUTTON -->
+        <div class="back-nav-wrap">
+          <button
+            id="backToLoggerFromProgress"
+            class="primary-btn back-nav-btn"
+            type="button"
+          >
+            ← Back to workout logger
+          </button>
         </div>
       </section>
     </main>
@@ -1147,12 +1185,16 @@
 
         <div id="chartsContainer" class="charts-container" style="margin-top: 1.5rem;"></div>
 
-        <button id="backToLoggerFromCharts"
-                class="primary-btn footer-btn"
-                type="button"
-                style="margin-top: 2rem;">
-          ← Back to workout logger
-        </button>
+        <!-- UPDATED BACK BUTTON -->
+        <div class="back-nav-wrap">
+          <button
+            id="backToLoggerFromCharts"
+            class="primary-btn back-nav-btn"
+            type="button"
+          >
+            ← Back to workout logger
+          </button>
+        </div>
       </section>
     </main>
 
@@ -1247,8 +1289,15 @@
           </button>
         </div>
 
-        <div class="link-back" id="backToLoggerFromSettings">
-          <span>←</span> Back to workout logger
+        <!-- UPDATED BACK BUTTON -->
+        <div class="back-nav-wrap">
+          <button
+            id="backToLoggerFromSettings"
+            class="primary-btn back-nav-btn"
+            type="button"
+          >
+            ← Back to workout logger
+          </button>
         </div>
       </section>
     </main>
@@ -1284,16 +1333,13 @@
       </p>
     </div>
   </footer>
-  
-    <div
+
+  <div
     id="toast"
     role="status"
     aria-live="polite"
     aria-atomic="true"
   ></div>
-
-
-  
 
   <script src="app.js"></script>
 
