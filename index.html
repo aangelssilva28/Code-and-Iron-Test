@@ -440,6 +440,11 @@
       margin-top: 12px;
     }
 
+    /* Complex rows: exercise name + weight + reps row */
+    .set-box.complex-row {
+      grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) auto;
+    }
+
     .set-label {
       font-size: 18px;
       color: var(--copper);
@@ -972,7 +977,106 @@
     </header>
 
     <!-- Tutorial Overlay (one-time walkthrough) -->
-    <!-- ... unchanged tutorial markup ... -->
+    <div id="tutorialOverlay" class="tutorial-overlay">
+      <div class="tutorial-card">
+        <!-- Step 0: Welcome / choice -->
+        <div class="tutorial-screen active" data-tutorial-step="0">
+          <div class="tutorial-title">Welcome to Code & Iron</div>
+          <div class="tutorial-body">
+            This is your workout logger, routines builder, and progress tracker —
+            all in one place. You can always re-open this walkthrough later from
+            the menu (tap the three lines → <strong>Tutorial</strong>).
+            <br><br>
+            <strong>What’s new in v0.9.1:</strong>
+          </div>
+          <ul class="tutorial-bullets">
+            <li>Collapse and expand exercise cards with the <strong>▼</strong> button</li>
+            <li>Use the A–Z letter grid on the Progress screen to filter exercises</li>
+            <li>Share/import routines using compact share codes in the Routines screen</li>
+            <li>Re-open this tutorial any time from the menu</li>
+          </ul>
+          <div class="tutorial-actions">
+            <button id="tutorialSkipBtn" class="tutorial-secondary-btn" type="button">
+              Skip for now
+            </button>
+            <button id="tutorialStartBtn" class="tutorial-primary-btn" type="button">
+              Show me around
+            </button>
+          </div>
+        </div>
+
+        <!-- Step 1: Logger -->
+        <div class="tutorial-screen" data-tutorial-step="1">
+          <div class="tutorial-title">1. Log your workout</div>
+          <div class="tutorial-body">
+            On the home screen:
+          </div>
+          <ul class="tutorial-bullets">
+            <li>Type an exercise name (e.g. Bench Press, Push Ups)</li>
+            <li>Use the + / – next to sets to add or remove sets</li>
+            <li>Use the top-right + to add another exercise card</li>
+            <li>Tap the <strong>▼</strong> button to collapse a card; tap the name to open it again</li>
+            <li>Hit “Save progress” when you're done to update your PRs</li>
+          </ul>
+          <div class="tutorial-actions">
+            <button data-tutorial-back class="tutorial-secondary-btn" type="button">
+              Back
+            </button>
+            <button data-tutorial-next class="tutorial-primary-btn" type="button">
+              Next
+            </button>
+          </div>
+        </div>
+
+        <!-- Step 2: Routines -->
+        <div class="tutorial-screen" data-tutorial-step="2">
+          <div class="tutorial-title">2. Save & share routines</div>
+          <div class="tutorial-body">
+            In the <strong>Routines</strong> menu:
+          </div>
+          <ul class="tutorial-bullets">
+            <li>Give your routine a name (e.g. Push Day, Leg Day)</li>
+            <li>Tap “Create” to save the current layout from the home screen</li>
+            <li>Tap “Load” to send that routine back to the home screen</li>
+            <li>Tap “Open” to edit the template itself</li>
+            <li>Tap “Share” to generate a share code (it appears in the name box)</li>
+            <li>To import a routine, paste a share code into the name box and tap “Create”</li>
+          </ul>
+          <div class="tutorial-actions">
+            <button data-tutorial-back class="tutorial-secondary-btn" type="button">
+              Back
+            </button>
+            <button data-tutorial-next class="tutorial-primary-btn" type="button">
+              Next
+            </button>
+          </div>
+        </div>
+
+        <!-- Step 3: Progress, PRs & Backup -->
+        <div class="tutorial-screen" data-tutorial-step="3">
+          <div class="tutorial-title">3. Progress, PRs & backup</div>
+          <div class="tutorial-body">
+            In the <strong>Progress</strong> menu:
+          </div>
+          <ul class="tutorial-bullets">
+            <li>Use the A–Z buttons to filter exercises by their first letter</li>
+            <li>See your best weight × reps and max reps for each exercise</li>
+            <li>New PRs are tagged when you beat your old best on that day</li>
+            <li>Tap an exercise to see recent history and best sets by date</li>
+            <li>In <strong>Settings → Data</strong>, use <strong>Generate Code</strong> to back up your routines and progress</li>
+            <li>Paste a saved code there and tap <strong>Restore from backup</strong> if you ever need to recover data</li>
+          </ul>
+          <div class="tutorial-actions">
+            <button data-tutorial-back class="tutorial-secondary-btn" type="button">
+              Back
+            </button>
+            <button data-tutorial-done class="tutorial-primary-btn" type="button">
+              Got it
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <!-- Menu -->
     <div class="menu-dropdown" id="menuDropdown">
@@ -986,7 +1090,8 @@
     <!-- HOME / LOGGER SCREEN -->
     <main id="homeScreen" class="screen active">
       <section class="card card--logger">
-        <!-- NEW: Standard / Complex toggle -->
+
+        <!-- NEW: Standard / Complex mode toggle -->
         <div class="settings-row" style="margin-top:0;margin-bottom:8px;">
           <span>Mode</span>
           <button
@@ -1009,29 +1114,237 @@
     </main>
 
     <!-- ROUTINES SCREEN -->
-    <!-- (unchanged) -->
     <main id="workoutsScreen" class="screen">
-      <!-- ... all the same as you pasted ... -->
+      <section class="card">
+        <h2 class="card-title">Workouts</h2>
+        <p class="card-subtitle">
+          Create and save exercise routines you can load later on the main page.
+        </p>
+
+        <div class="input-group">
+          <label class="input-label" for="templateNameInput">New routine name</label>
+          <input
+            id="templateNameInput"
+            class="text-input"
+            placeholder="e.g. Chest, Legs, Shoulders, Back"
+          />
+        </div>
+
+        <button id="saveTemplateBtn" class="primary-btn" type="button">
+          Create
+        </button>
+
+        <h3 class="card-subtitle" style="margin-top:18px;margin-bottom:4px;">
+          Saved workouts
+        </h3>
+        <div id="savedTemplatesList" class="saved-list"></div>
+
+        <!-- UPDATED BACK BUTTON -->
+        <div class="back-nav-wrap">
+          <button
+            id="backToLogger"
+            class="primary-btn back-nav-btn"
+            type="button"
+          >
+            ← Back to workout logger
+          </button>
+        </div>
+      </section>
     </main>
 
     <!-- PROGRESS SCREEN -->
     <main id="progressScreen" class="screen">
-      <!-- ... unchanged ... -->
+      <section class="card">
+        <h2 class="card-title">Progress</h2>
+        <p class="card-subtitle">
+          Your best sets for each exercise based on saved workouts.
+        </p>
+
+        <!-- Letter grid A–Z -->
+        <div id="progressLetterGrid" class="progress-letter-grid"></div>
+
+        <!-- Exercises for selected letter -->
+        <div id="progressList" class="saved-list"></div>
+
+        <!-- Detail panel for a single exercise -->
+        <div id="progressDetail" class="open-panel"></div>
+
+        <!-- UPDATED BACK BUTTON -->
+        <div class="back-nav-wrap">
+          <button
+            id="backToLoggerFromProgress"
+            class="primary-btn back-nav-btn"
+            type="button"
+          >
+            ← Back to workout logger
+          </button>
+        </div>
+      </section>
     </main>
 
     <!-- Charts Screen -->
     <main id="chartsScreen" class="screen">
-      <!-- ... unchanged ... -->
+      <section class="card main-card">
+        <h2 class="card-title">Charts</h2>
+        <p class="card-subtitle">
+          Pick exercises and see how their sessions trend over time.
+        </p>
+
+        <h3 class="card-subtitle" style="margin-top: 1.25rem;">
+          Choose exercises to chart
+        </h3>
+
+        <div id="chartsExerciseList" class="settings-list"></div>
+
+        <div id="chartsContainer" class="charts-container" style="margin-top: 1.5rem;"></div>
+
+        <!-- UPDATED BACK BUTTON -->
+        <div class="back-nav-wrap">
+          <button
+            id="backToLoggerFromCharts"
+            class="primary-btn back-nav-btn"
+            type="button"
+          >
+            ← Back to workout logger
+          </button>
+        </div>
+      </section>
     </main>
 
     <!-- SETTINGS SCREEN -->
     <main id="settingsScreen" class="screen">
-      <!-- ... unchanged ... -->
+      <section class="card">
+        <h2 class="card-title">Settings</h2>
+        <p class="card-subtitle">
+          Adjust units, theme, and how your data is handled.
+        </p>
+
+        <!-- Units -->
+        <div class="settings-group">
+          <h3 class="card-subtitle" style="margin-top:0;margin-bottom:4px;">
+            Units
+          </h3>
+          <div class="settings-row">
+            <span>Weight units</span>
+            <select
+              id="settingsUnitSelect"
+              class="text-input"
+              style="max-width:160px;height:36px;padding:0 10px;text-align:left;"
+            >
+              <option value="lb">Pounds (lb)</option>
+              <option value="kg">Kilograms (kg)</option>
+            </select>
+          </div>
+          <p class="settings-note">
+            Internally everything is stored consistently. This only changes how
+            weights are shown in the logger.
+          </p>
+        </div>
+
+        <!-- Theme -->
+        <div class="settings-group">
+          <h3 class="card-subtitle" style="margin-top:8px;margin-bottom:4px;">
+            Theme
+          </h3>
+          <div class="settings-row">
+            <span>High contrast mode</span>
+            <label style="display:flex;align-items:center;gap:6px;">
+              <input
+                id="settingsHighContrast"
+                type="checkbox"
+                class="settings-checkbox"
+              />
+              <span style="font-size:13px;">Boost contrast</span>
+            </label>
+          </div>
+          <p class="settings-note">
+            Useful if the copper text feels too dim or low contrast.
+          </p>
+        </div>
+
+        <!-- Data / backup -->
+        <div class="settings-group">
+          <h3 class="card-subtitle" style="margin-top:8px;margin-bottom:4px;">
+            Data
+          </h3>
+
+          <h4 class="card-subtitle" style="margin-top:4px;margin-bottom:4px;">
+            Backup &amp; Restore
+          </h4>
+          <p class="settings-note">
+            Generate a backup code and save it somewhere (Notes, email, etc.).
+            If your browser data ever gets cleared, paste it here to restore
+            your routines and progress.
+          </p>
+
+          <textarea
+            id="backupText"
+            class="text-input"
+            rows="3"
+            placeholder="Your backup code will appear here. Copy it and save it. To restore, paste a code and tap Restore."
+          ></textarea>
+
+          <button id="exportBackupBtn" class="primary-btn footer-btn" type="button">
+            Generate Code
+          </button>
+
+          <button id="importBackupBtn" class="primary-btn footer-btn" type="button">
+            Restore from backup
+          </button>
+
+          <p class="settings-note" style="margin-top:10px;">
+            Resetting clears routines, progress, tutorial status, and settings
+            from this browser. This cannot be undone.
+          </p>
+
+          <button id="resetAllDataBtn" class="danger-btn" type="button">
+            Reset all data
+          </button>
+        </div>
+
+        <!-- UPDATED BACK BUTTON -->
+        <div class="back-nav-wrap">
+          <button
+            id="backToLoggerFromSettings"
+            class="primary-btn back-nav-btn"
+            type="button"
+          >
+            ← Back to workout logger
+          </button>
+        </div>
+      </section>
     </main>
   </div>
 
   <footer class="legal-footer">
-    <!-- ... unchanged footer ... -->
+    <button id="toggle-privacy" class="legal-link" type="button">
+      Privacy &amp; Data
+    </button>
+
+    <div id="privacy-panel" class="legal-panel hidden">
+      <p>
+        This app does not collect, store, or transmit any personal data.
+        All workout entries and progress logs are saved locally on your device
+        using your browser's localStorage.
+      </p>
+      <p>
+        No data is sent to the developer, and the developer cannot access your
+        information in any way. Clearing your browser data may erase your saved
+        progress.
+      </p>
+      <p>
+        If you have ideas, run into bugs, or want to suggest features,
+        please email me at
+        <a href="mailto:aangel.ssilva28@gmail.com">
+          aangel.ssilva28@gmail.com
+        </a>.
+        Please subject the email "Code and Iron" I read every message and use your feedback to make this app better.
+      </p>
+      <p style="margin-top: 12px; opacity: .7;">
+        <strong>Version:</strong> v0.9.1 Beta<br>
+        <strong>Last updated:</strong> November 30, 2025
+      </p>
+    </div>
   </footer>
 
   <div
