@@ -27,7 +27,7 @@ function openSinglePanel(
 // ======================================================
 // App version + toast helper
 // ======================================================
-const APP_VERSION = "0.9.1";
+const APP_VERSION = "0.9.2";
 const VERSION_STORAGE_KEY = "codeAndIronLastSeenVersion_v1";
 
 let toastTimeoutId = null;
@@ -889,7 +889,7 @@ const Progress = (() => {
     });
 
     // Now fold per-exercise sessionData into overall progress
-    Object.entries(sessionData).forEach(([key, acc]) => {
+    Object.entries(sessionData).forEach((([key, acc]) => {
       // If nothing meaningful logged for this exercise, skip it
       if (acc.maxReps === 0 && acc.bestWeight === null) return;
 
@@ -969,7 +969,7 @@ const Progress = (() => {
       existing.name = acc.rawName;
 
       updated[key] = existing;
-    });
+    }));
 
     // Save back
     progressData = updated;
@@ -1529,7 +1529,7 @@ const Charts = (() => {
       "10px system-ui, -apple-system, BlinkMacSystemFont, sans-serif";
     ctx.textAlign = "left";
     ctx.textBaseline = "top";
-ctx.fillText(`${label} — max ${maxVal}`, paddingLeft, 2);
+    ctx.fillText(`${label} — max ${maxVal}`, paddingLeft, 2);
   }
 
   // Public API for Charts
