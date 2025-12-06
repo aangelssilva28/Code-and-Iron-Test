@@ -856,8 +856,10 @@ const Logger = (() => {
     const header = document.createElement("div");
     header.className = "workout-header";
 
-    const nameInput = document.createElement("input");
-    nameInput.className = "text-input workout-name";
+const nameInput = document.createElement("input");
+// reuse the same label font by adding the set-label class
+nameInput.className = "workout-name complex-set-name set-label";
+
 
     // Instead of "Complex name (optional)", use an auto Set # label
     const existingCards = parent.querySelectorAll(".workout-card").length;
@@ -866,11 +868,19 @@ const Logger = (() => {
     nameInput.readOnly = true; // acts like a label
     nameInput.setAttribute("aria-label", `Set ${setNumber}`);
 
-    nameInput.addEventListener("click", () => {
-      if (card.classList.contains("collapsed")) {
-        setCardCollapsed(card, false);
-      }
-    });
+nameInput.addEventListener("click", () => {
+  if (card.classList.contains("collapsed")) {
+    setCardCollapsed(card, false);
+  }
+  // highlight the whole "Set X" text when tapped
+  nameInput.select();
+});
+
+nameInput.addEventListener("focus", () => {
+  // also select when it receives focus via keyboard
+  nameInput.select();
+});
+
 
     const headerActions = document.createElement("div");
     headerActions.className = "workout-header-actions";
