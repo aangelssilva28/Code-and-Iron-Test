@@ -846,26 +846,25 @@ const Logger = (() => {
   }
 
   // NEW: complex card (multiple exercises inside one card)
-function createComplexCard(parent, complexData) {
-  const card = document.createElement("div");
-  card.className = "workout-card";
+  function createComplexCard(parent, complexData) {
+    const card = document.createElement("div");
+    card.className = "workout-card";
 
-  const setsWrapper = document.createElement("div");
-  setsWrapper.className = "sets-wrapper";
+    const setsWrapper = document.createElement("div");
+    setsWrapper.className = "sets-wrapper";
 
-  const header = document.createElement("div");
-  header.className = "workout-header";
+    const header = document.createElement("div");
+    header.className = "workout-header";
 
-  const nameInput = document.createElement("input");
-  nameInput.className = "text-input workout-name";
+    const nameInput = document.createElement("input");
+    nameInput.className = "text-input workout-name";
 
-  // 🔹 Instead of "Complex name (optional)", use an auto Set # label
-  const existingCards = parent.querySelectorAll(".workout-card").length;
-  const setNumber = existingCards + 1;
-  nameInput.value = `Set ${setNumber}`;
-  nameInput.readOnly = true; // user can’t type here; acts like a label
-  nameInput.setAttribute("aria-label", `Set ${setNumber}`);
-}
+    // Instead of "Complex name (optional)", use an auto Set # label
+    const existingCards = parent.querySelectorAll(".workout-card").length;
+    const setNumber = existingCards + 1;
+    nameInput.value = `Set ${setNumber}`;
+    nameInput.readOnly = true; // acts like a label
+    nameInput.setAttribute("aria-label", `Set ${setNumber}`);
 
     nameInput.addEventListener("click", () => {
       if (card.classList.contains("collapsed")) {
@@ -884,18 +883,18 @@ function createComplexCard(parent, complexData) {
     removeWorkoutBtn.addEventListener("click", () => {
       const allCards = parent.querySelectorAll(".workout-card");
       if (allCards.length <= 1) {
-// Keep a single empty card as Set 1
-    nameInput.value = "Set 1";
-    const setsWrapper = card.querySelector(".sets-wrapper");
-    if (setsWrapper) {
-      setsWrapper.innerHTML = "";
-      setsWrapper.appendChild(createComplexRow(card));
-    }
-  } else {
-    card.remove();
-    renumberComplexCards(parent);
-  }
-});
+        // keep a single empty card as Set 1
+        nameInput.value = "Set 1";
+        const setsWrapper = card.querySelector(".sets-wrapper");
+        if (setsWrapper) {
+          setsWrapper.innerHTML = "";
+          setsWrapper.appendChild(createComplexRow(card));
+        }
+      } else {
+        card.remove();
+        renumberComplexCards(parent);
+      }
+    });
 
     const collapseBtn = document.createElement("button");
     collapseBtn.className = "round-btn collapse-btn";
@@ -936,7 +935,6 @@ function createComplexCard(parent, complexData) {
     });
 
     attachQuickAddRow(card);
-
     parent.appendChild(card);
 
     if (complexData && complexData.collapsed) {
@@ -945,6 +943,7 @@ function createComplexCard(parent, complexData) {
 
     return card;
   }
+
 
   // ---------- Helpers ----------
 
