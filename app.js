@@ -609,13 +609,12 @@ const Logger = (() => {
     });
   }
 
-  function renumberComplexCards(parent) {
+ function renumberComplexCards(parent) {
   const cards = parent.querySelectorAll(".workout-card");
   cards.forEach((card, index) => {
-    const nameInput = card.querySelector(".workout-name");
-    if (nameInput) {
-      nameInput.value = `Set ${index + 1}`;
-      nameInput.setAttribute("aria-label", `Set ${index + 1}`);
+    const nameEl = card.querySelector(".workout-name");
+    if (nameEl) {
+      const labelText = `Set ${index + 1}`;
     }
   });
 }
@@ -749,25 +748,30 @@ const Logger = (() => {
     const setsWrapper = document.createElement("div");
     setsWrapper.className = "sets-wrapper";
 
-    const header = document.createElement("div");
-    header.className = "workout-header";
+const header = document.createElement("div");
+header.className = "workout-header";
 
-    const nameInput = document.createElement("input");
-    nameInput.className = "text-input workout-name";
-    nameInput.placeholder = "Enter exercise name";
-    nameInput.setAttribute("aria-label", "Exercise name");
-    if (workoutData && workoutData.name) {
-      nameInput.value = workoutData.name;
-    }
+// 🔹 static label instead of input
+const nameLabel = document.createElement("div");
+nameLabel.className = "workout-name complex-set-label set-label";
 
-    nameInput.addEventListener("click", () => {
-      if (card.classList.contains("collapsed")) {
-        setCardCollapsed(card, false);
-      }
-    });
+// figure out which set number this card is
+const existingCards = parent.querySelectorAll(".workout-card").length;
+const setNumber = existingCards + 1;
 
-    const headerActions = document.createElement("div");
-    headerActions.className = "workout-header-actions";
+nameLabel.textContent = `Set ${setNumber}`;
+nameLabel.setAttribute("aria-label", `Set ${setNumber}`);
+
+// clicking the header (but not the small buttons) expands/collapses
+header.addEventListener("click", (e) => {
+  if (e.target.closest(".workout-header-actions")) return; // ignore clicks on buttons
+  const isCollapsed = card.classList.contains("collapsed");
+  setCardCollapsed(card, !isCollapsed);
+});
+
+const headerActions = document.createElement("div");
+headerActions.className = "workout-header-actions";
+
 
     const removeWorkoutBtn = document.createElement("button");
     removeWorkoutBtn.className = "round-btn minus";
@@ -818,11 +822,12 @@ const Logger = (() => {
     headerActions.appendChild(collapseBtn);
     headerActions.appendChild(addExerciseBtn);
 
-    header.appendChild(nameInput);
-    header.appendChild(headerActions);
+header.appendChild(nameLabel);
+header.appendChild(headerActions);
 
-    card.appendChild(header);
-    card.appendChild(setsWrapper);
+card.appendChild(header);
+card.appendChild(setsWrapper);
+
 
     const setsFromData =
       workoutData && Array.isArray(workoutData.sets)
