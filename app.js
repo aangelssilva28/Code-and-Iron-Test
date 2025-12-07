@@ -474,12 +474,112 @@ const Logger = (() => {
   let mode = "standard";
   let modeToggleBtn = null;
 
+  // NEW: sticky footer buttons for complex mode
+  let complexAddCardBtn = null;
+  let complexRemoveCardBtn = null;
+  let complexAddRowBtn = null;
+  let complexRemoveRowBtn = null;
+
+  function updateFooterVisibility() {
+    const show = mode === "complex";
+    const display = show ? "" : "none";
+
+    if (complexAddCardBtn) complexAddCardBtn.style.display = display;
+    if (complexRemoveCardBtn) complexRemoveCardBtn.style.display = display;
+    if (complexAddRowBtn) complexAddRowBtn.style.display = display;
+    if (complexRemoveRowBtn) complexRemoveRowBtn.style.display = display;
+  }
+
+  function getComplexCards() {
+    if (!workoutsContainer) return [];
+    return Array.from(workoutsContainer.querySelectorAll(".workout-card"));
+  }
+
+  function getLastComplexCard() {
+    const cards = getComplexCards();
+    return cards.length ? cards[cards.length - 1] : null;
+  }
+
   function init({ containerSelector, saveButtonSelector, onSave }) {
     workoutsContainer = $(containerSelector);
 
     if (!workoutsContainer) {
       console.warn("Logger: workouts container not found:", containerSelector);
       return;
+    }
+
+    // Sticky footer buttons (complex mode only)
+    complexAddCardBtn = $("#complexAddCardBtn");
+    complexRemoveCardBtn = $("#complexRemoveCardBtn");
+    complexAddRowBtn = $("#complexAddRowBtn");
+    complexRemoveRowBtn = $("#complexRemoveRowBtn");
+
+    if (complexAddCardBtn) {
+      complexAddCardBtn.addEventListener("click", () => {
+        if (mode !== "complex" || !workoutsContainer) return;
+        createComplexCard(workoutsContainer);
+      });
+    }
+
+    if (complexRemoveCardBtn) {
+      complexRemoveCardBtn.addEventListener("click", () => {
+        if (mode !== "complex" || !workoutsContainer) return;
+
+        const cards = getComplexCards();
+        if (!cards.length) return;
+
+        if (cards.length === 1) {
+          // Reset the single remaining card instead of deleting it
+          const card = cards[0];
+          const label = card.querySelector(".complex-set-label");
+          if (label) {
+            label.textContent = "Set 1";
+            label.setAttribute("aria-label", "Set 1");
+          }
+
+          const setsWrapper = card.querySelector(".sets-wrapper");
+          if (setsWrapper) {
+            setsWrapper.innerHTML = "";
+            setsWrapper.appendChild(createComplexRow(card));
+          }
+        } else {
+          cards[cards.length - 1].remove();
+          renumberComplexCards(workoutsContainer);
+        }
+      });
+    }
+
+    if (complexAddRowBtn) {
+      complexAddRowBtn.addEventListener("click", () => {
+        if (mode !== "complex" || !workoutsContainer) return;
+        const card = getLastComplexCard();
+        if (!card) return;
+
+        const setsWrapper = card.querySelector(".sets-wrapper");
+        if (!setsWrapper) return;
+
+        setsWrapper.appendChild(createComplexRow(card));
+      });
+    }
+
+    if (complexRemoveRowBtn) {
+      complexRemoveRowBtn.addEventListener("click", () => {
+        if (mode !== "complex" || !workoutsContainer) return;
+        const card = getLastComplexCard();
+        if (!card) return;
+
+        const rows = card.querySelectorAll(".set-box");
+        if (!rows.length) return;
+
+        if (rows.length === 1) {
+          // Just clear the last row instead of removing it
+          rows[0].querySelectorAll("input").forEach((input) => {
+            input.value = "";
+          });
+        } else {
+          rows[rows.length - 1].remove();
+        }
+      });
     }
 
     // Mode toggle button
@@ -524,6 +624,8 @@ const Logger = (() => {
     } else {
       createComplexCard(workoutsContainer);
     }
+
+    updateFooterVisibility();
   }
 
   // ---------- Set rows (Weight / Reps) for STANDARD mode ----------
@@ -633,6 +735,19 @@ function renumberComplexCards(parent) {
     exerciseInput.value = rowData?.name || "";
     exerciseInput.style.width = "100%";
 
+    // Spacer takes the place of the old weight box column so layout stays aligned
+    const spacer = document.createElement("div");
+    spacer.className = "complex-row-spacer";
+
+    const repsInput = document.createElement("input");
+    repsInput.className = "set-input";
+    repsInput.placeholder = "Reps";
+    repsInput.type = "number";
+    repsInput.inputMode = "numeric";
+    repsInput.min = "0";
+    repsInput.value = rowData?.reps ?? "";
+    repsInput.dataset.field = "reps";
+
     const weightInput = document.createElement("input");
     weightInput.className = "set-input";
     weightInput.placeholder =
@@ -645,49 +760,15 @@ function renumberComplexCards(parent) {
     weightInput.value = rowData?.weight ?? "";
     weightInput.dataset.field = "weight";
 
-    const weightGroup = document.createElement("div");
-    weightGroup.className = "set-weight-group";
-    weightGroup.appendChild(weightInput);
-
-    const repsInput = document.createElement("input");
-    repsInput.className = "set-input";
-    repsInput.placeholder = "Reps";
-    repsInput.type = "number";
-    repsInput.inputMode = "numeric";
-    repsInput.min = "0";
-    repsInput.value = rowData?.reps ?? "";
-    repsInput.dataset.field = "reps";
-
-    const minusBtn = document.createElement("button");
-    minusBtn.className = "round-btn";
-    minusBtn.type = "button";
-    minusBtn.setAttribute("aria-label", "Remove exercise row");
-    minusBtn.textContent = "–";
-    minusBtn.addEventListener("click", () => {
-      const rows = card.querySelectorAll(".set-box");
-      if (rows.length > 1) {
-        box.remove();
-      }
-    });
-
-    const plusBtn = document.createElement("button");
-    plusBtn.className = "round-btn";
-    plusBtn.type = "button";
-    plusBtn.setAttribute("aria-label", "Add exercise row");
-    plusBtn.textContent = "+";
-    plusBtn.addEventListener("click", () => {
-      const wrapper = card.querySelector(".sets-wrapper") || card;
-      wrapper.appendChild(createComplexRow(card));
-    });
-
     const rightGroup = document.createElement("div");
     rightGroup.className = "set-right-group";
+
+    // Order: Reps where the "-" button was, Weight where the "+" button was
     rightGroup.appendChild(repsInput);
-    rightGroup.appendChild(minusBtn);
-    rightGroup.appendChild(plusBtn);
+    rightGroup.appendChild(weightInput);
 
     box.appendChild(exerciseInput);
-    box.appendChild(weightGroup);
+    box.appendChild(spacer);
     box.appendChild(rightGroup);
 
     return box;
@@ -856,7 +937,7 @@ function createComplexCard(parent, complexData) {
   const header = document.createElement("div");
   header.className = "workout-header";
 
-  // COMPLEX MODE: static "Set #" label (not editable, not selectable)
+  // COMPLEX MODE: static "Set #" label
   const nameLabel = document.createElement("div");
   nameLabel.className = "complex-set-label set-label";
 
@@ -866,65 +947,14 @@ function createComplexCard(parent, complexData) {
   nameLabel.textContent = labelText;
   nameLabel.setAttribute("aria-label", labelText);
 
-  // Clicking header (but not buttons) toggles collapse/expand
+  // Clicking the header toggles collapse/expand
   header.addEventListener("click", (e) => {
-    if (e.target.closest(".workout-header-actions")) return;
+    // No header action buttons anymore, so no special exclusions
     const isCollapsed = card.classList.contains("collapsed");
     setCardCollapsed(card, !isCollapsed);
   });
-
-  const headerActions = document.createElement("div");
-  headerActions.className = "workout-header-actions";
-
-  const removeWorkoutBtn = document.createElement("button");
-  removeWorkoutBtn.className = "round-btn minus";
-  removeWorkoutBtn.type = "button";
-  removeWorkoutBtn.setAttribute("aria-label", "Remove complex card");
-  removeWorkoutBtn.textContent = "–";
-  removeWorkoutBtn.addEventListener("click", () => {
-    const allCards = parent.querySelectorAll(".workout-card");
-    if (allCards.length <= 1) {
-      // keep a single empty card as Set 1
-      const firstLabelText = "Set 1";
-      nameLabel.textContent = firstLabelText;
-      nameLabel.setAttribute("aria-label", firstLabelText);
-
-      const setsWrapper = card.querySelector(".sets-wrapper");
-      if (setsWrapper) {
-        setsWrapper.innerHTML = "";
-        setsWrapper.appendChild(createComplexRow(card));
-      }
-    } else {
-      card.remove();
-      renumberComplexCards(parent);
-    }
-  });
-
-  const collapseBtn = document.createElement("button");
-  collapseBtn.className = "round-btn collapse-btn";
-  collapseBtn.type = "button";
-  collapseBtn.setAttribute("aria-label", "Collapse or expand complex");
-  collapseBtn.textContent = "▼";
-  collapseBtn.addEventListener("click", () => {
-    const isCollapsed = card.classList.contains("collapsed");
-    setCardCollapsed(card, !isCollapsed);
-  });
-
-  const addComplexBtn = document.createElement("button");
-  addComplexBtn.className = "round-btn plus";
-  addComplexBtn.type = "button";
-  addComplexBtn.setAttribute("aria-label", "Add new complex card");
-  addComplexBtn.textContent = "+";
-  addComplexBtn.addEventListener("click", () => {
-    createComplexCard(parent);
-  });
-
-  headerActions.appendChild(removeWorkoutBtn);
-  headerActions.appendChild(collapseBtn);
-  headerActions.appendChild(addComplexBtn);
 
   header.appendChild(nameLabel);
-  header.appendChild(headerActions);
 
   card.appendChild(header);
   card.appendChild(setsWrapper);
