@@ -609,12 +609,14 @@ const Logger = (() => {
     });
   }
 
- function renumberComplexCards(parent) {
+function renumberComplexCards(parent) {
   const cards = parent.querySelectorAll(".workout-card");
   cards.forEach((card, index) => {
-    const nameEl = card.querySelector(".workout-name");
+    const nameEl = card.querySelector(".complex-set-label");
     if (nameEl) {
       const labelText = `Set ${index + 1}`;
+      nameEl.textContent = labelText;
+      nameEl.setAttribute("aria-label", labelText);
     }
   });
 }
@@ -742,222 +744,207 @@ const Logger = (() => {
   }
 
   function createWorkoutCard(parent, workoutData) {
-    const card = document.createElement("div");
-    card.className = "workout-card";
+  const card = document.createElement("div");
+  card.className = "workout-card";
 
-    const setsWrapper = document.createElement("div");
-    setsWrapper.className = "sets-wrapper";
+  const setsWrapper = document.createElement("div");
+  setsWrapper.className = "sets-wrapper";
 
-const header = document.createElement("div");
-header.className = "workout-header";
+  const header = document.createElement("div");
+  header.className = "workout-header";
 
-// 🔹 static label instead of input
-const nameLabel = document.createElement("div");
-nameLabel.className = "workout-name complex-set-label set-label";
+  // STANDARD MODE: editable exercise name input
+  const nameInput = document.createElement("input");
+  nameInput.className = "text-input workout-name";
+  nameInput.placeholder = "Enter exercise name";
+  nameInput.value = (workoutData && workoutData.name) || "";
 
-// figure out which set number this card is
-const existingCards = parent.querySelectorAll(".workout-card").length;
-const setNumber = existingCards + 1;
-
-nameLabel.textContent = `Set ${setNumber}`;
-nameLabel.setAttribute("aria-label", `Set ${setNumber}`);
-
-// clicking the header (but not the small buttons) expands/collapses
-header.addEventListener("click", (e) => {
-  if (e.target.closest(".workout-header-actions")) return; // ignore clicks on buttons
-  const isCollapsed = card.classList.contains("collapsed");
-  setCardCollapsed(card, !isCollapsed);
-});
-
-const headerActions = document.createElement("div");
-headerActions.className = "workout-header-actions";
-
-
-    const removeWorkoutBtn = document.createElement("button");
-    removeWorkoutBtn.className = "round-btn minus";
-    removeWorkoutBtn.type = "button";
-    removeWorkoutBtn.setAttribute("aria-label", "Remove exercise card");
-    removeWorkoutBtn.textContent = "–";
-    removeWorkoutBtn.addEventListener("click", () => {
-      const allCards = parent.querySelectorAll(".workout-card");
-
-      if (allCards.length <= 1) {
-        // Reset last card instead of deleting
-        nameInput.value = "";
-        const setsWrapper = card.querySelector(".sets-wrapper");
-        if (setsWrapper) {
-          setsWrapper.innerHTML = "";
-          const setBox = createSetBox(card, { weight: "", reps: "" }, 1);
-          setsWrapper.appendChild(setBox);
-        }
-      } else {
-        card.remove();
-      }
-    });
-
-    const collapseBtn = document.createElement("button");
-    collapseBtn.className = "round-btn collapse-btn";
-    collapseBtn.type = "button";
-    collapseBtn.setAttribute("aria-label", "Collapse or expand exercise");
-    collapseBtn.textContent = "▼";
-    collapseBtn.addEventListener("click", () => {
-      const isCollapsed = card.classList.contains("collapsed");
-      setCardCollapsed(card, !isCollapsed);
-    });
-
-    const addExerciseBtn = document.createElement("button");
-    addExerciseBtn.className = "round-btn plus";
-    addExerciseBtn.type = "button";
-    addExerciseBtn.setAttribute("aria-label", "Add new exercise card");
-    addExerciseBtn.textContent = "+";
-    addExerciseBtn.addEventListener("click", () => {
-      if (mode === "standard") {
-        createWorkoutCard(parent);
-      } else {
-        createComplexCard(parent);
-      }
-    });
-
-    headerActions.appendChild(removeWorkoutBtn);
-    headerActions.appendChild(collapseBtn);
-    headerActions.appendChild(addExerciseBtn);
-
-header.appendChild(nameLabel);
-header.appendChild(headerActions);
-
-card.appendChild(header);
-card.appendChild(setsWrapper);
-
-
-    const setsFromData =
-      workoutData && Array.isArray(workoutData.sets)
-        ? workoutData.sets
-        : [{ weight: "", reps: "" }];
-
-    setsFromData.forEach((set, idx) => {
-      const setBox = createSetBox(card, set, idx + 1);
-      setsWrapper.appendChild(setBox);
-    });
-
-    attachQuickAddRow(card);
-
-    parent.appendChild(card);
-
-    if (workoutData && workoutData.collapsed) {
-      setCardCollapsed(card, true);
+  // If the card is collapsed, tapping the name expands it
+  nameInput.addEventListener("click", () => {
+    if (card.classList.contains("collapsed")) {
+      setCardCollapsed(card, false);
     }
+  });
 
-    return card;
+  const headerActions = document.createElement("div");
+  headerActions.className = "workout-header-actions";
+
+  const removeWorkoutBtn = document.createElement("button");
+  removeWorkoutBtn.className = "round-btn minus";
+  removeWorkoutBtn.type = "button";
+  removeWorkoutBtn.setAttribute("aria-label", "Remove exercise card");
+  removeWorkoutBtn.textContent = "–";
+  removeWorkoutBtn.addEventListener("click", () => {
+    const allCards = parent.querySelectorAll(".workout-card");
+
+    if (allCards.length <= 1) {
+      // Reset last card instead of deleting
+      nameInput.value = "";
+      const setsWrapper = card.querySelector(".sets-wrapper");
+      if (setsWrapper) {
+        setsWrapper.innerHTML = "";
+        const setBox = createSetBox(card, { weight: "", reps: "" }, 1);
+        setsWrapper.appendChild(setBox);
+      }
+    } else {
+      card.remove();
+    }
+  });
+
+  const collapseBtn = document.createElement("button");
+  collapseBtn.className = "round-btn collapse-btn";
+  collapseBtn.type = "button";
+  collapseBtn.setAttribute("aria-label", "Collapse or expand exercise");
+  collapseBtn.textContent = "▼";
+  collapseBtn.addEventListener("click", () => {
+    const isCollapsed = card.classList.contains("collapsed");
+    setCardCollapsed(card, !isCollapsed);
+  });
+
+  const addExerciseBtn = document.createElement("button");
+  addExerciseBtn.className = "round-btn plus";
+  addExerciseBtn.type = "button";
+  addExerciseBtn.setAttribute("aria-label", "Add new exercise card");
+  addExerciseBtn.textContent = "+";
+  addExerciseBtn.addEventListener("click", () => {
+    if (mode === "standard") {
+      createWorkoutCard(parent);
+    } else {
+      createComplexCard(parent);
+    }
+  });
+
+  headerActions.appendChild(removeWorkoutBtn);
+  headerActions.appendChild(collapseBtn);
+  headerActions.appendChild(addExerciseBtn);
+
+  header.appendChild(nameInput);
+  header.appendChild(headerActions);
+
+  card.appendChild(header);
+  card.appendChild(setsWrapper);
+
+  const setsFromData =
+    workoutData && Array.isArray(workoutData.sets)
+      ? workoutData.sets
+      : [{ weight: "", reps: "" }];
+
+  setsFromData.forEach((set, idx) => {
+    const setBox = createSetBox(card, set, idx + 1);
+    setsWrapper.appendChild(setBox);
+  });
+
+  attachQuickAddRow(card);
+
+  parent.appendChild(card);
+
+  if (workoutData && workoutData.collapsed) {
+    setCardCollapsed(card, true);
   }
+
+  return card;
+}
 
   // NEW: complex card (multiple exercises inside one card)
-  function createComplexCard(parent, complexData) {
-    const card = document.createElement("div");
-    card.className = "workout-card";
+function createComplexCard(parent, complexData) {
+  const card = document.createElement("div");
+  card.className = "workout-card";
 
-    const setsWrapper = document.createElement("div");
-    setsWrapper.className = "sets-wrapper";
+  const setsWrapper = document.createElement("div");
+  setsWrapper.className = "sets-wrapper";
 
-    const header = document.createElement("div");
-    header.className = "workout-header";
+  const header = document.createElement("div");
+  header.className = "workout-header";
 
-const nameInput = document.createElement("input");
-// reuse the same label font by adding the set-label class
-nameInput.className = "workout-name complex-set-name set-label";
+  // COMPLEX MODE: static "Set #" label (not editable, not selectable)
+  const nameLabel = document.createElement("div");
+  nameLabel.className = "complex-set-label set-label";
 
+  const existingCards = parent.querySelectorAll(".workout-card").length;
+  const setNumber = existingCards + 1;
+  const labelText = `Set ${setNumber}`;
+  nameLabel.textContent = labelText;
+  nameLabel.setAttribute("aria-label", labelText);
 
-    // Instead of "Complex name (optional)", use an auto Set # label
-    const existingCards = parent.querySelectorAll(".workout-card").length;
-    const setNumber = existingCards + 1;
-    nameInput.value = `Set ${setNumber}`;
-    nameInput.readOnly = true; // acts like a label
-    nameInput.setAttribute("aria-label", `Set ${setNumber}`);
+  // Clicking header (but not buttons) toggles collapse/expand
+  header.addEventListener("click", (e) => {
+    if (e.target.closest(".workout-header-actions")) return;
+    const isCollapsed = card.classList.contains("collapsed");
+    setCardCollapsed(card, !isCollapsed);
+  });
 
-nameInput.addEventListener("click", () => {
-  if (card.classList.contains("collapsed")) {
-    setCardCollapsed(card, false);
-  }
-  // highlight the whole "Set X" text when tapped
-  nameInput.select();
-});
+  const headerActions = document.createElement("div");
+  headerActions.className = "workout-header-actions";
 
-nameInput.addEventListener("focus", () => {
-  // also select when it receives focus via keyboard
-  nameInput.select();
-});
+  const removeWorkoutBtn = document.createElement("button");
+  removeWorkoutBtn.className = "round-btn minus";
+  removeWorkoutBtn.type = "button";
+  removeWorkoutBtn.setAttribute("aria-label", "Remove complex card");
+  removeWorkoutBtn.textContent = "–";
+  removeWorkoutBtn.addEventListener("click", () => {
+    const allCards = parent.querySelectorAll(".workout-card");
+    if (allCards.length <= 1) {
+      // keep a single empty card as Set 1
+      const firstLabelText = "Set 1";
+      nameLabel.textContent = firstLabelText;
+      nameLabel.setAttribute("aria-label", firstLabelText);
 
-
-    const headerActions = document.createElement("div");
-    headerActions.className = "workout-header-actions";
-
-    const removeWorkoutBtn = document.createElement("button");
-    removeWorkoutBtn.className = "round-btn minus";
-    removeWorkoutBtn.type = "button";
-    removeWorkoutBtn.setAttribute("aria-label", "Remove complex card");
-    removeWorkoutBtn.textContent = "–";
-    removeWorkoutBtn.addEventListener("click", () => {
-      const allCards = parent.querySelectorAll(".workout-card");
-      if (allCards.length <= 1) {
-        // keep a single empty card as Set 1
-        nameInput.value = "Set 1";
-        const setsWrapper = card.querySelector(".sets-wrapper");
-        if (setsWrapper) {
-          setsWrapper.innerHTML = "";
-          setsWrapper.appendChild(createComplexRow(card));
-        }
-      } else {
-        card.remove();
-        renumberComplexCards(parent);
+      const setsWrapper = card.querySelector(".sets-wrapper");
+      if (setsWrapper) {
+        setsWrapper.innerHTML = "";
+        setsWrapper.appendChild(createComplexRow(card));
       }
-    });
-
-    const collapseBtn = document.createElement("button");
-    collapseBtn.className = "round-btn collapse-btn";
-    collapseBtn.type = "button";
-    collapseBtn.setAttribute("aria-label", "Collapse or expand complex");
-    collapseBtn.textContent = "▼";
-    collapseBtn.addEventListener("click", () => {
-      const isCollapsed = card.classList.contains("collapsed");
-      setCardCollapsed(card, !isCollapsed);
-    });
-
-    const addComplexBtn = document.createElement("button");
-    addComplexBtn.className = "round-btn plus";
-    addComplexBtn.type = "button";
-    addComplexBtn.setAttribute("aria-label", "Add new complex card");
-    addComplexBtn.textContent = "+";
-    addComplexBtn.addEventListener("click", () => {
-      createComplexCard(parent);
-    });
-
-    headerActions.appendChild(removeWorkoutBtn);
-    headerActions.appendChild(collapseBtn);
-    headerActions.appendChild(addComplexBtn);
-
-    header.appendChild(nameInput);
-    header.appendChild(headerActions);
-
-    card.appendChild(header);
-    card.appendChild(setsWrapper);
-
-    const rows =
-      complexData && Array.isArray(complexData.rows)
-        ? complexData.rows
-        : [{}];
-
-    rows.forEach((row) => {
-      setsWrapper.appendChild(createComplexRow(card, row));
-    });
-
-    attachQuickAddRow(card);
-    parent.appendChild(card);
-
-    if (complexData && complexData.collapsed) {
-      setCardCollapsed(card, true);
+    } else {
+      card.remove();
+      renumberComplexCards(parent);
     }
+  });
 
-    return card;
+  const collapseBtn = document.createElement("button");
+  collapseBtn.className = "round-btn collapse-btn";
+  collapseBtn.type = "button";
+  collapseBtn.setAttribute("aria-label", "Collapse or expand complex");
+  collapseBtn.textContent = "▼";
+  collapseBtn.addEventListener("click", () => {
+    const isCollapsed = card.classList.contains("collapsed");
+    setCardCollapsed(card, !isCollapsed);
+  });
+
+  const addComplexBtn = document.createElement("button");
+  addComplexBtn.className = "round-btn plus";
+  addComplexBtn.type = "button";
+  addComplexBtn.setAttribute("aria-label", "Add new complex card");
+  addComplexBtn.textContent = "+";
+  addComplexBtn.addEventListener("click", () => {
+    createComplexCard(parent);
+  });
+
+  headerActions.appendChild(removeWorkoutBtn);
+  headerActions.appendChild(collapseBtn);
+  headerActions.appendChild(addComplexBtn);
+
+  header.appendChild(nameLabel);
+  header.appendChild(headerActions);
+
+  card.appendChild(header);
+  card.appendChild(setsWrapper);
+
+  const rows =
+    complexData && Array.isArray(complexData.rows) ? complexData.rows : [{}];
+
+  rows.forEach((row) => {
+    setsWrapper.appendChild(createComplexRow(card, row));
+  });
+
+  attachQuickAddRow(card);
+  parent.appendChild(card);
+
+  if (complexData && complexData.collapsed) {
+    setCardCollapsed(card, true);
   }
+
+  return card;
+}
 
 
   // ---------- Helpers ----------
