@@ -475,18 +475,25 @@
       margin-top: 12px;
     }
 
-    /* Complex rows: exercise name + weight + reps row */
-    .set-box.complex-row {
-      grid-template-columns: minmax(0, 1.7fr) 56px;
-    }
-    
- 
+   /* Complex rows: exercise name + (reps+weight) row */
+.set-box.complex-row {
+  /* two columns:
+     1) Exercise name (flex)
+     2) Reps+Weig group (auto, stays pinned to the right) */
+  grid-template-columns: minmax(0, 1fr) auto;
+}
 
-    /* spacer so the grid cell where the old weight box lived still holds its width */
-    .complex-row-spacer {
-      width: 56px;
-      height: 44px;
-    }
+/* spacer no longer needed – hide it */
+.complex-row-spacer {
+  display: none;
+}
+
+/* let the right group stay pushed to the right like before */
+.set-right-group {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+}
 
     .set-label {
       font-size: 18px;
