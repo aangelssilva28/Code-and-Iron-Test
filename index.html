@@ -1031,6 +1031,7 @@
     <!-- Menu -->
     <div class="menu-dropdown" id="menuDropdown">
       <div class="menu-item" data-nav="workouts">Routines</div>
+      <div class="menu-item" data-nav="aft">AFT</div>
       <div class="menu-item" data-nav="progress">Progress</div>
       <div class="menu-item" data-nav="charts">Charts</div>
       <div class="menu-item" data-nav="settings">Settings</div>
@@ -1062,6 +1063,71 @@
             type="button"
           >
             Save progress
+          </button>
+        </div>
+      </section>
+    </main>
+
+    <!-- AFT SCREEN -->
+    <main id="aftScreen" class="screen">
+      <section class="card">
+        <h2 class="card-title">AFT – Army Fitness Test</h2>
+        <p class="card-subtitle">
+          Fixed Army Fitness Test sequence. Exercise names are locked and cannot be renamed.
+        </p>
+
+        <div class="input-group">
+          <input
+            class="text-input"
+            type="text"
+            value="3 MDL"
+            readonly
+          />
+        </div>
+
+        <div class="input-group">
+          <input
+            class="text-input"
+            type="text"
+            value="HRP"
+            readonly
+          />
+        </div>
+
+        <div class="input-group">
+          <input
+            class="text-input"
+            type="text"
+            value="SDC"
+            readonly
+          />
+        </div>
+
+        <div class="input-group">
+          <input
+            class="text-input"
+            type="text"
+            value="PLK"
+            readonly
+          />
+        </div>
+
+        <div class="input-group">
+          <input
+            class="text-input"
+            type="text"
+            value="2MR"
+            readonly
+          />
+        </div>
+
+        <div class="back-nav-wrap">
+          <button
+            id="backToLoggerFromAft"
+            class="primary-btn back-nav-btn"
+            type="button"
+          >
+            ← Back to workout logger
           </button>
         </div>
       </section>
