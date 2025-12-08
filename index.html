@@ -54,32 +54,29 @@
        LAYOUT SHELL
     --------------------------- */
 
-/* Complex-mode Set label in header: same font as .set-label, not selectable */
-.workout-header .complex-set-label {
-  border: none;
-  background: transparent;
-  padding: 0;
-  margin: 0;
-  user-select: none;   /* no text highlight */
-  cursor: pointer;     /* optional: feels tappable */
-}
+    /* Complex-mode Set label in header: same font as .set-label, not selectable */
+    .workout-header .complex-set-label {
+      border: none;
+      background: transparent;
+      padding: 0;
+      margin: 0;
+      user-select: none;   /* no text highlight */
+      cursor: pointer;     /* optional: feels tappable */
+    }
     
-/* Complex mode set label in the header */
-.workout-header .complex-set-name {
-  border: none;
-  background: transparent;
-  padding: 0;
-  margin: 0;
-}
+    /* Complex mode set label in the header */
+    .workout-header .complex-set-name {
+      border: none;
+      background: transparent;
+      padding: 0;
+      margin: 0;
+    }
 
-/* remove blue outline but still focusable */
-.workout-header .complex-set-name:focus {
-  outline: none;
-}
+    /* remove blue outline but still focusable */
+    .workout-header .complex-set-name:focus {
+      outline: none;
+    }
 
-
-
-    
     .app-wrapper {
       min-height: 100vh;
       padding: 12px 12px 32px;
@@ -467,15 +464,15 @@
     }
 
     /* Complex rows: exercise name + weight + reps row */
- .set-box.complex-row {
-  grid-template-columns: minmax(0, 2fr) 56px auto;
-}
+    .set-box.complex-row {
+      grid-template-columns: minmax(0, 2fr) 56px auto;
+    }
 
-/* spacer so the grid cell where the old weight box lived still holds its width */
-.complex-row-spacer {
-  width: 56px;
-  height: 44px;
-}
+    /* spacer so the grid cell where the old weight box lived still holds its width */
+    .complex-row-spacer {
+      width: 56px;
+      height: 44px;
+    }
 
     .set-label {
       font-size: 18px;
@@ -851,6 +848,25 @@
       margin-top: 0;
     }
 
+    /* Save row: Save progress + "+ complex" on the same line */
+    .card-sticky-footer-row {
+      display: flex;
+      align-items: center;
+      gap: 8px; /* same gap as between Reps and Weight boxes */
+    }
+
+    .save-progress-btn {
+      flex: 1;
+    }
+
+    .complex-add-btn {
+      width: auto;          /* allow full '+ complex' label */
+      height: 44px;         /* match input/primary button height */
+      padding: 0 14px;
+      font-size: 17px;      /* match primary button text size */
+      box-sizing: border-box;
+    }
+
     /* Reuse this list style for volume/charts selection */
     .settings-volume-list {
       margin-top: 6px;
@@ -1137,49 +1153,56 @@
 
         <div id="workoutsContainer" class="workouts-container"></div>
 
-<div class="card-sticky-footer">
-  <button id="saveProgressBtn" class="primary-btn footer-btn" type="button">
-    Save progress
-  </button>
+        <div class="card-sticky-footer">
+          <div class="card-sticky-footer-row">
+            <button
+              id="saveProgressBtn"
+              class="primary-btn footer-btn save-progress-btn"
+              type="button"
+            >
+              Save progress
+            </button>
 
-  <!-- Complex mode only: add/remove complex cards -->
-  <button
-    id="complexAddCardBtn"
-    class="primary-btn footer-btn"
-    type="button"
-    style="display:none;"
-  >
-    Add complex
-  </button>
+            <!-- Complex mode only: add complex cards -->
+            <button
+              id="complexAddCardBtn"
+              class="round-btn complex-add-btn"
+              type="button"
+              style="display:none;"
+            >
+              + complex
+            </button>
+          </div>
 
-  <button
-    id="complexRemoveCardBtn"
-    class="primary-btn footer-btn"
-    type="button"
-    style="display:none;"
-  >
-    Remove complex
-  </button>
+          <!-- Complex mode only: remove complex cards -->
+          <button
+            id="complexRemoveCardBtn"
+            class="primary-btn footer-btn"
+            type="button"
+            style="display:none;"
+          >
+            Remove complex
+          </button>
 
-  <!-- Complex mode only: add/remove rows (sets) inside the last complex card -->
-  <button
-    id="complexAddRowBtn"
-    class="primary-btn footer-btn"
-    type="button"
-    style="display:none;"
-  >
-    Add set
-  </button>
+          <!-- Complex mode only: add/remove rows (sets) inside the last complex card -->
+          <button
+            id="complexAddRowBtn"
+            class="primary-btn footer-btn"
+            type="button"
+            style="display:none;"
+          >
+            Add set
+          </button>
 
-  <button
-    id="complexRemoveRowBtn"
-    class="primary-btn footer-btn"
-    type="button"
-    style="display:none;"
-  >
-    Remove set
-  </button>
-</div>
+          <button
+            id="complexRemoveRowBtn"
+            class="primary-btn footer-btn"
+            type="button"
+            style="display:none;"
+          >
+            Remove set
+          </button>
+        </div>
       </section>
     </main>
 
