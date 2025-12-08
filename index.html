@@ -843,53 +843,43 @@
       );
     }
 
-    /* Tighten spacing; footer-btn already has margin-top */
     .card-sticky-footer .footer-btn {
       margin-top: 0;
     }
 
-    /* Base row layout */
     .card-sticky-footer-row {
       display: flex;
       align-items: center;
       gap: 8px;
     }
 
-    /* Vertical spacing between rows */
-    .card-sticky-footer-row + .card-sticky-footer-row {
-      margin-top: 10px;
+    /* --------------------------
+       NEW: COMPLEX CONTROLS BAR
+       Set 1  [+C][-C][+S][-S]
+    --------------------------- */
+
+    .complex-controls-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 4px;
+      margin-bottom: 4px;
     }
 
-    /* Rows that hold pairs of small buttons */
-    .card-sticky-footer-row--pairs {
-      justify-content: space-between;
+    .complex-controls-buttons {
+      display: flex;
+      gap: 6px;
+      margin-left: auto;
     }
 
-    .save-progress-btn {
-      flex: 1;
-    }
-
-    /* Small footer buttons (+complex, -complex, +set, -set) */
+    /* all four control buttons same size as weight box (56×44) */
     .complex-add-btn {
-      width: 120px;          /* all four same size */
+      width: 56px;
       height: 44px;
-      padding: 0 14px;
-      font-size: 17px;
+      padding: 0;
+      font-size: 16px;
       box-sizing: border-box;
       justify-content: center;
-    }
-
-    /* Reuse this list style for volume/charts selection */
-    .settings-volume-list {
-      margin-top: 6px;
-      max-height: 220px;
-      overflow-y: auto;
-      padding-right: 4px;
-    }
-
-    .settings-volume-list .settings-row {
-      font-size: 13px;
-      padding: 2px 0;
     }
 
     /* --------------------------
@@ -1163,10 +1153,49 @@
           </button>
         </div>
 
+        <!-- New controls bar: Set 1  [+C][-C][+S][-S] -->
+        <div class="complex-controls-bar">
+          <span class="set-label">Set 1</span>
+          <div class="complex-controls-buttons">
+            <button
+              id="complexAddCardBtn"
+              class="round-btn complex-add-btn"
+              type="button"
+              style="display:none;"
+            >
+              +C
+            </button>
+            <button
+              id="complexRemoveCardBtn"
+              class="round-btn complex-add-btn"
+              type="button"
+              style="display:none;"
+            >
+              -C
+            </button>
+            <button
+              id="complexAddRowBtn"
+              class="round-btn complex-add-btn"
+              type="button"
+              style="display:none;"
+            >
+              +S
+            </button>
+            <button
+              id="complexRemoveRowBtn"
+              class="round-btn complex-add-btn"
+              type="button"
+              style="display:none;"
+            >
+              -S
+            </button>
+          </div>
+        </div>
+
         <div id="workoutsContainer" class="workouts-container"></div>
 
+        <!-- Sticky footer: Save progress only -->
         <div class="card-sticky-footer">
-          <!-- Row 1: Save progress (full width) -->
           <div class="card-sticky-footer-row">
             <button
               id="saveProgressBtn"
@@ -1174,46 +1203,6 @@
               type="button"
             >
               Save progress
-            </button>
-          </div>
-
-          <!-- Row 2: + complex / - complex -->
-          <div class="card-sticky-footer-row card-sticky-footer-row--pairs">
-            <button
-              id="complexAddCardBtn"
-              class="round-btn complex-add-btn footer-btn"
-              type="button"
-              style="display:none;"
-            >
-              + complex
-            </button>
-            <button
-              id="complexRemoveCardBtn"
-              class="round-btn complex-add-btn footer-btn"
-              type="button"
-              style="display:none;"
-            >
-              - complex
-            </button>
-          </div>
-
-          <!-- Row 3: + set / - set -->
-          <div class="card-sticky-footer-row card-sticky-footer-row--pairs">
-            <button
-              id="complexAddRowBtn"
-              class="round-btn complex-add-btn footer-btn"
-              type="button"
-              style="display:none;"
-            >
-              + set
-            </button>
-            <button
-              id="complexRemoveRowBtn"
-              class="round-btn complex-add-btn footer-btn"
-              type="button"
-              style="display:none;"
-            >
-              - set
             </button>
           </div>
         </div>
