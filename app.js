@@ -927,6 +927,7 @@ function renumberComplexCards(parent) {
 }
 
   // NEW: complex card (multiple exercises inside one card)
+// NEW: complex card (multiple exercises inside one card)
 function createComplexCard(parent, complexData) {
   const card = document.createElement("div");
   card.className = "workout-card";
@@ -947,14 +948,36 @@ function createComplexCard(parent, complexData) {
   nameLabel.textContent = labelText;
   nameLabel.setAttribute("aria-label", labelText);
 
-  // Clicking the header toggles collapse/expand
+  // Controls row: +C, -C, +S, -S (same style/size as weight box)
+  const controls = document.createElement("div");
+  controls.className = "complex-header-controls";
+
+  function makeCtl(label, action, aria) {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "round-btn complex-ctl-btn";
+    btn.textContent = label;
+    if (aria) btn.setAttribute("aria-label", aria);
+    btn.dataset.action = action;
+    return btn;
+  }
+
+  const addCardBtn    = makeCtl("+C", "add-card",    "Add complex card");
+  const removeCardBtn = makeCtl("-C", "remove-card", "Remove complex card");
+  const addRowBtn     = makeCtl("+S", "add-row",     "Add set");
+  const removeRowBtn  = makeCtl("-S", "remove-row",  "Remove set");
+
+  controls.append(addCardBtn, removeCardBtn, addRowBtn, removeRowBtn);
+
+  header.appendChild(nameLabel);
+  header.appendChild(controls);
+
+  // Click on header background/label toggles collapse, NOT the control buttons
   header.addEventListener("click", (e) => {
-    // No header action buttons anymore, so no special exclusions
+    if (e.target.closest(".complex-ctl-btn")) return;
     const isCollapsed = card.classList.contains("collapsed");
     setCardCollapsed(card, !isCollapsed);
   });
-
-  header.appendChild(nameLabel);
 
   card.appendChild(header);
   card.appendChild(setsWrapper);
@@ -972,6 +995,56 @@ function createComplexCard(parent, complexData) {
   if (complexData && complexData.collapsed) {
     setCardCollapsed(card, true);
   }
+
+  // ---- Control behaviour ----
+
+  // +C → add another complex card at the bottom
+  addCardBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    createComplexCard(parent);
+    renumberComplexCards(parent);
+  });
+
+  // -C → remove THIS card (or reset if it's the last one)
+  removeCardBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const cards = parent.querySelectorAll(".workout-card");
+    if (cards.length <= 1) {
+      const labelEl = card.querySelector(".complex-set-label");
+      if (labelEl) {
+        labelEl.textContent = "Set 1";
+        labelEl.setAttribute("aria-label", "Set 1");
+      }
+      const wrapper = card.querySelector(".sets-wrapper");
+      if (wrapper) {
+        wrapper.innerHTML = "";
+        wrapper.appendChild(createComplexRow(card));
+      }
+      return;
+    }
+    card.remove();
+    renumberComplexCards(parent);
+  });
+
+  // +S → add a row inside THIS card
+  addRowBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    setsWrapper.appendChild(createComplexRow(card));
+  });
+
+  // -S → remove a row from THIS card
+  removeRowBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const rows = setsWrapper.querySelectorAll(".set-box");
+    if (!rows.length) return;
+    if (rows.length === 1) {
+      rows[0].querySelectorAll("input").forEach((input) => {
+        input.value = "";
+      });
+    } else {
+      rows[rows.length - 1].remove();
+    }
+  });
 
   return card;
 }
