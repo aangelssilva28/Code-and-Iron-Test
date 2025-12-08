@@ -470,9 +470,10 @@ const Settings = (() => {
 const Logger = (() => {
   let workoutsContainer = null;
 
-  // NEW: track current mode ("standard" | "complex")
+  // NEW: track current mode ("standard" | "complex" | "aft")
   let mode = "standard";
   let modeToggleBtn = null;
+  let aftModeBtn = null;
 
   // NEW: sticky footer buttons for complex mode
   let complexAddCardBtn = null;
@@ -582,23 +583,61 @@ const Logger = (() => {
       });
     }
 
-    // Mode toggle button
+    // Mode toggle button (Standard / Complex)
     modeToggleBtn = $("#loggerModeToggle");
     if (modeToggleBtn) {
       modeToggleBtn.textContent = "Standard";
       modeToggleBtn.addEventListener("click", () => {
-        mode = mode === "standard" ? "complex" : "standard";
-        modeToggleBtn.textContent =
-          mode === "standard" ? "Standard" : "Complex";
+        // If we were in AFT, switch back into Standard first
+        if (mode === "aft") {
+          mode = "standard";
+          modeToggleBtn.textContent = "Standard";
+        } else {
+          mode = mode === "standard" ? "complex" : "standard";
+          modeToggleBtn.textContent =
+            mode === "standard" ? "Standard" : "Complex";
+        }
 
         resetForMode();
 
         if (typeof showToast === "function") {
-          showToast(
-            mode === "standard"
-              ? "Standard mode: one exercise per card."
-              : "Complex mode: exercise per row."
-          );
+          if (mode === "standard") {
+            showToast("Standard mode: one exercise per card.");
+          } else if (mode === "complex") {
+            showToast("Complex mode: exercise per row.");
+          } else if (mode === "aft") {
+            showToast("AFT mode: Army Fitness Test template.");
+          }
+        }
+      });
+    }
+
+    // AFT mode button
+    aftModeBtn = $("#aftModeButton");
+    if (aftModeBtn) {
+      aftModeBtn.addEventListener("click", () => {
+        // Toggle AFT on/off
+        if (mode === "aft") {
+          mode = "standard";
+          if (modeToggleBtn) {
+            modeToggleBtn.textContent = "Standard";
+          }
+        } else {
+          mode = "aft";
+          // Keep the mode toggle labelled as Standard when jumping into AFT
+          if (modeToggleBtn) {
+            modeToggleBtn.textContent = "Standard";
+          }
+        }
+
+        resetForMode();
+
+        if (typeof showToast === "function") {
+          if (mode === "aft") {
+            showToast("AFT mode: Army Fitness Test template.");
+          } else {
+            showToast("Standard mode: one exercise per card.");
+          }
         }
       });
     }
@@ -621,8 +660,10 @@ const Logger = (() => {
 
     if (mode === "standard") {
       createWorkoutCard(workoutsContainer);
-    } else {
+    } else if (mode === "complex") {
       createComplexCard(workoutsContainer);
+    } else if (mode === "aft") {
+      createAftCard(workoutsContainer);
     }
 
     updateFooterVisibility();
@@ -1049,6 +1090,79 @@ function createComplexCard(parent, complexData) {
   return card;
 }
 
+  // NEW: AFT card (Army Fitness Test, fixed exercises)
+  function createAftCard(parent) {
+    const card = document.createElement("div");
+    card.className = "workout-card";
+
+    const setsWrapper = document.createElement("div");
+    setsWrapper.className = "sets-wrapper";
+
+    const header = document.createElement("div");
+    header.className = "workout-header";
+
+    // Title for the AFT card (read-only)
+    const titleInput = document.createElement("input");
+    titleInput.className = "text-input workout-name";
+    titleInput.value = "Army Fitness Test (AFT)";
+    titleInput.readOnly = true;
+
+    header.appendChild(titleInput);
+    card.appendChild(header);
+    card.appendChild(setsWrapper);
+
+    const events = ["3 MDL", "HRP", "SDC", "PLK", "2MR"];
+
+    events.forEach((eventName) => {
+      const row = document.createElement("div");
+      row.className = "set-box complex-row";
+
+      const exerciseInput = document.createElement("input");
+      exerciseInput.className = "text-input complex-exercise-name";
+      exerciseInput.value = eventName;
+      exerciseInput.readOnly = true;
+      exerciseInput.style.width = "100%";
+
+      const spacer = document.createElement("div");
+      spacer.className = "complex-row-spacer";
+
+      const repsInput = document.createElement("input");
+      repsInput.className = "set-input";
+      repsInput.placeholder = "Reps";
+      repsInput.type = "number";
+      repsInput.inputMode = "numeric";
+      repsInput.min = "0";
+      repsInput.value = "";
+      repsInput.dataset.field = "reps";
+
+      const weightInput = document.createElement("input");
+      weightInput.className = "set-input";
+      weightInput.placeholder =
+        typeof Settings !== "undefined" && Settings.getWeightPlaceholder
+          ? Settings.getWeightPlaceholder()
+          : "Weight";
+      weightInput.type = "number";
+      weightInput.inputMode = "decimal";
+      weightInput.min = "0";
+      weightInput.value = "";
+      weightInput.dataset.field = "weight";
+
+      const rightGroup = document.createElement("div");
+      rightGroup.className = "set-right-group";
+      rightGroup.appendChild(repsInput);
+      rightGroup.appendChild(weightInput);
+
+      row.appendChild(exerciseInput);
+      row.appendChild(spacer);
+      row.appendChild(rightGroup);
+
+      setsWrapper.appendChild(row);
+    });
+
+    attachQuickAddRow(card);
+    parent.appendChild(card);
+    return card;
+  }
 
   // ---------- Helpers ----------
 
@@ -1106,7 +1220,7 @@ function createComplexCard(parent, complexData) {
 
   function getCurrentWorkoutLayout() {
     if (!workoutsContainer) return [];
-    if (mode === "complex") {
+    if (mode === "complex" || mode === "aft") {
       return getComplexLayoutFromContainer(workoutsContainer);
     }
     return getWorkoutLayoutFrom(workoutsContainer);
