@@ -743,7 +743,7 @@
 
     .tutorial-body {
       font-size: 14px;
-      color: var(--text-muted);
+      color: #text-muted;
       line-height: 1.5;
     }
 
@@ -1031,7 +1031,6 @@
     <!-- Menu -->
     <div class="menu-dropdown" id="menuDropdown">
       <div class="menu-item" data-nav="workouts">Routines</div>
-      <div class="menu-item" data-nav="aft">AFT</div>
       <div class="menu-item" data-nav="progress">Progress</div>
       <div class="menu-item" data-nav="charts">Charts</div>
       <div class="menu-item" data-nav="settings">Settings</div>
@@ -1045,13 +1044,22 @@
         <!-- Standard / Complex mode toggle -->
         <div class="settings-row" style="margin-top:0;margin-bottom:8px;">
           <span>Mode</span>
-          <button
-            id="loggerModeToggle"
-            class="small-btn"
-            type="button"
-          >
-            Standard
-          </button>
+          <div style="display:flex; gap:8px;">
+            <button
+              id="loggerModeToggle"
+              class="small-btn"
+              type="button"
+            >
+              Standard
+            </button>
+            <button
+              id="aftModeButton"
+              class="small-btn"
+              type="button"
+            >
+              AFT
+            </button>
+          </div>
         </div>
 
         <div id="workoutsContainer" class="workouts-container"></div>
@@ -1063,71 +1071,6 @@
             type="button"
           >
             Save progress
-          </button>
-        </div>
-      </section>
-    </main>
-
-    <!-- AFT SCREEN -->
-    <main id="aftScreen" class="screen">
-      <section class="card">
-        <h2 class="card-title">AFT – Army Fitness Test</h2>
-        <p class="card-subtitle">
-          Fixed Army Fitness Test sequence. Exercise names are locked and cannot be renamed.
-        </p>
-
-        <div class="input-group">
-          <input
-            class="text-input"
-            type="text"
-            value="3 MDL"
-            readonly
-          />
-        </div>
-
-        <div class="input-group">
-          <input
-            class="text-input"
-            type="text"
-            value="HRP"
-            readonly
-          />
-        </div>
-
-        <div class="input-group">
-          <input
-            class="text-input"
-            type="text"
-            value="SDC"
-            readonly
-          />
-        </div>
-
-        <div class="input-group">
-          <input
-            class="text-input"
-            type="text"
-            value="PLK"
-            readonly
-          />
-        </div>
-
-        <div class="input-group">
-          <input
-            class="text-input"
-            type="text"
-            value="2MR"
-            readonly
-          />
-        </div>
-
-        <div class="back-nav-wrap">
-          <button
-            id="backToLoggerFromAft"
-            class="primary-btn back-nav-btn"
-            type="button"
-          >
-            ← Back to workout logger
           </button>
         </div>
       </section>
