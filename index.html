@@ -514,8 +514,7 @@
     }
 
     /* AFT labels (non-interactive title + exercise names) */
-    .aft-title,
-    .aft-exercise-label {
+    .aft-title,{
       background-color: var(--gunmetal);
       pointer-events: none;
       user-select: none;
@@ -525,7 +524,13 @@
     }
 
     .aft-exercise-label {
-      width: auto;
+      width: 56px;
+      background-color: var(--gunmetal);
+      pointer-events: none;
+      user-select: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
     .set-right-group .set-input {
