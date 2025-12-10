@@ -1101,11 +1101,10 @@ function createComplexCard(parent, complexData) {
     const header = document.createElement("div");
     header.className = "workout-header";
 
-    // Title for the AFT card (read-only)
-    const titleInput = document.createElement("input");
-    titleInput.className = "text-input workout-name";
-    titleInput.value = "Army Fitness Test (AFT)";
-    titleInput.readOnly = true;
+    // Title for the AFT card (display-only, gunmetal background)
+    const titleInput = document.createElement("div");
+    titleInput.className = "text-input workout-name aft-title";
+    titleInput.textContent = "Army Fitness Test (AFT)";
 
     header.appendChild(titleInput);
     card.appendChild(header);
@@ -1215,11 +1214,10 @@ function createComplexCard(parent, complexData) {
       const row = document.createElement("div");
       row.className = "set-box complex-row";
 
-      const exerciseInput = document.createElement("input");
-      exerciseInput.className = "text-input complex-exercise-name";
-      exerciseInput.value = eventName;
-      exerciseInput.readOnly = true;
-      exerciseInput.style.width = "100%";
+      const exerciseInput = document.createElement("div");
+      exerciseInput.className =
+        "text-input complex-exercise-name aft-exercise-label";
+      exerciseInput.textContent = eventName;
 
       const spacer = document.createElement("div");
       spacer.className = "complex-row-spacer";
@@ -1334,7 +1332,11 @@ function createComplexCard(parent, complexData) {
         const weightInput = box.querySelector('.set-input[data-field="weight"]');
         const repsInput = box.querySelector('.set-input[data-field="reps"]');
 
-        const name = exInput ? exInput.value.trim() : "";
+        const rawName =
+          exInput && typeof exInput.value === "string"
+            ? exInput.value
+            : (exInput && exInput.textContent) || "";
+        const name = rawName.trim();
         const weight = weightInput ? weightInput.value : "";
         const reps = repsInput ? repsInput.value : "";
 
