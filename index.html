@@ -475,17 +475,14 @@
       margin-top: 12px;
     }
 
-   /* Complex rows: exercise name + (reps+weight) row */
+    /* Complex rows: exercise name + spacer + right group */
 .set-box.complex-row {
-  /* two columns:
-     1) Exercise name (flex)
-     2) Reps+Weig group (auto, stays pinned to the right) */
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: auto 1fr auto;
 }
 
-/* spacer no longer needed – hide it */
+/* spacer column flexes to push the right group to the edge */
 .complex-row-spacer {
-  display: none;
+  display: block;
 }
 
 /* let the right group stay pushed to the right like before */
@@ -515,6 +512,18 @@
       gap: 8px;
       margin-left: auto;
     }
+
+    /* AFT labels (non-interactive title + exercise names) */
+    .aft-title,
+    .aft-exercise-label {
+      background-color: var(--gunmetal);
+      pointer-events: none;
+      user-select: none;
+    }
+
+    .aft-exercise-label {
+      width: auto;
+   }
 
     .set-right-group .set-input {
       width: 56px;
