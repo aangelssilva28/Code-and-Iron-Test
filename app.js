@@ -1093,7 +1093,7 @@ function createComplexCard(parent, complexData) {
   // NEW: AFT card (Army Fitness Test, fixed exercises)
   function createAftCard(parent) {
     const card = document.createElement("div");
-    card.className = "workout-card  aft-card";
+    card.className = "workout-card aft-card";
 
     const setsWrapper = document.createElement("div");
     setsWrapper.className = "sets-wrapper";
@@ -1264,6 +1264,8 @@ ageInput.min = "0";
 
       setsWrapper.appendChild(row);
     });
+  });
+  }
 
     // -----------------------------
     // Bottom row: [Total]
