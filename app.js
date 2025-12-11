@@ -1264,8 +1264,6 @@ ageInput.min = "0";
 
       setsWrapper.appendChild(row);
     });
-  });
-  }
 
     // -----------------------------
     // Bottom row: [Total]
