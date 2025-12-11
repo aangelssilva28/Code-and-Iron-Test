@@ -1093,7 +1093,7 @@ function createComplexCard(parent, complexData) {
   // NEW: AFT card (Army Fitness Test, fixed exercises)
   function createAftCard(parent) {
     const card = document.createElement("div");
-    card.className = "workout-card";
+    card.className = "workout-card  aft-card";
 
     const setsWrapper = document.createElement("div");
     setsWrapper.className = "sets-wrapper";
@@ -1124,18 +1124,18 @@ function createComplexCard(parent, complexData) {
     const metaGroup = document.createElement("div");
     metaGroup.className = "set-right-group";
 
-    const genderInput = document.createElement("input");
-    genderInput.className = "set-input";
-    genderInput.placeholder = "M / F";
-    genderInput.type = "text";
-    genderInput.maxLength = 1;
+const genderInput = document.createElement("input");
+genderInput.className = "set-input aft-meta-input";
+genderInput.placeholder = "M / F";
+genderInput.type = "text";
+genderInput.maxLength = 1;
 
-    const ageInput = document.createElement("input");
-    ageInput.className = "set-input";
-    ageInput.placeholder = "Age";
-    ageInput.type = "number";
-    ageInput.inputMode = "numeric";
-    ageInput.min = "0";
+const ageInput = document.createElement("input");
+ageInput.className = "set-input aft-meta-input";
+ageInput.placeholder = "Age";
+ageInput.type = "number";
+ageInput.inputMode = "numeric";
+ageInput.min = "0";
 
     metaGroup.appendChild(genderInput);
     metaGroup.appendChild(ageInput);
@@ -1225,7 +1225,7 @@ function createComplexCard(parent, complexData) {
       const cfg = eventConfig[eventName];
 
       const primaryInput = document.createElement("input");
-      primaryInput.className = "set-input";
+      primaryInput.className = "set-input  aft-primary-input";
       primaryInput.placeholder = cfg.primaryPlaceholder;
       primaryInput.type = cfg.primaryType;
       if (cfg.primaryInputMode) {
@@ -1239,7 +1239,7 @@ function createComplexCard(parent, complexData) {
       }
 
       const secondaryInput = document.createElement("input");
-      secondaryInput.className = "set-input";
+      secondaryInput.className = "set-input  aft-score-input";
       secondaryInput.placeholder = cfg.secondaryPlaceholder;
       secondaryInput.type = cfg.secondaryType;
       if (cfg.secondaryInputMode) {
@@ -1279,7 +1279,7 @@ function createComplexCard(parent, complexData) {
     totalGroup.className = "set-right-group";
 
     const totalInput = document.createElement("input");
-    totalInput.className = "set-input";
+    totalInput.className = "set-input  aft-total-input";
     totalInput.placeholder = "Total";
     totalInput.type = "number";
     totalInput.inputMode = "numeric";
