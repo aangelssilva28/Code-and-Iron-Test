@@ -1092,27 +1092,6 @@
     <main id="homeScreen" class="screen active">
       <section class="card card--logger">
 
-        <!-- Standard / Complex mode toggle -->
-        <div class="settings-row" style="margin-top:0;margin-bottom:8px;">
-          <span>Mode</span>
-          <div style="display:flex; gap:8px;">
-            <button
-              id="loggerModeToggle"
-              class="small-btn"
-              type="button"
-            >
-              Standard
-            </button>
-            <button
-              id="aftModeButton"
-              class="small-btn"
-              type="button"
-            >
-              AFT
-            </button>
-          </div>
-        </div>
-
         <div id="workoutsContainer" class="workouts-container"></div>
 
         <div class="card-sticky-footer">
@@ -1123,6 +1102,27 @@
           >
             Save progress
           </button>
+
+          <!-- Standard / Complex mode toggle moved into sticky footer -->
+          <div class="settings-row" style="margin-top:0;margin-bottom:8px;">
+            <span>Mode</span>
+            <div style="display:flex; gap:8px;">
+              <button
+                id="loggerModeToggle"
+                class="small-btn"
+                type="button"
+              >
+                Standard
+              </button>
+              <button
+                id="aftModeButton"
+                class="small-btn"
+                type="button"
+              >
+                AFT
+              </button>
+            </div>
+          </div>
         </div>
       </section>
     </main>
