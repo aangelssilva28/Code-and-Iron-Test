@@ -899,18 +899,14 @@
     }
 
     /* Sticky footer inside the card */
-    .card-sticky-footer {
-      position: sticky;
-      bottom: 0;
-      margin-top: 16px;
-      padding-top: 12px;
-      background: linear-gradient(
-        to top,
-        rgba(0, 0, 0, 0.98),
-        rgba(0, 0, 0, 0.85),
-        transparent
-      );
-    }
+.card-sticky-footer {
+  position: sticky;
+  bottom: 0;
+  margin-top: 16px;
+  padding-top: 12px;
+  /* remove dark overlay so the card color shows through */
+  background: transparent;
+}
 
     .card-sticky-footer .footer-btn {
       margin-top: 0;
@@ -1129,25 +1125,32 @@
             Save progress
           </button>
 
-          <div class="mode-footer-row">
-            <span class="mode-footer-label">Mode</span>
-            <div class="mode-footer-buttons">
-              <button
-                id="loggerModeToggle"
-                class="primary-btn mode-btn"
-                type="button"
-              >
-                Standard
-              </button>
-              <button
-                id="aftModeButton"
-                class="primary-btn mode-btn"
-                type="button"
-              >
-                AFT
-              </button>
-            </div>
-          </div>
+<div class="mode-footer-row">
+  <span class="mode-footer-label">Mode</span>
+  <div class="mode-footer-buttons">
+    <button
+      id="loggerModeToggle"
+      class="primary-btn mode-btn"
+      type="button"
+    >
+      Standard
+    </button>
+    <button
+      id="complexModeButton"
+      class="primary-btn mode-btn"
+      type="button"
+    >
+      Complex
+    </button>
+    <button
+      id="aftModeButton"
+      class="primary-btn mode-btn"
+      type="button"
+    >
+      AFT
+    </button>
+  </div>
+</div>
         </div>
       </section>
     </main>
