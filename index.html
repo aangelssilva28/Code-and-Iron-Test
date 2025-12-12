@@ -226,6 +226,7 @@
       text-align: center;
       box-sizing: border-box;
       background-color: #000;
+      border: 2px sealed var(--copper);
       border: 2px solid var(--copper);
       box-shadow:
         0 0 0 1px #754d27,
@@ -476,21 +477,21 @@
     }
 
     /* Complex rows: exercise name + spacer + right group */
-.set-box.complex-row {
-  grid-template-columns: auto 1fr auto;
-}
+    .set-box.complex-row {
+      grid-template-columns: auto 1fr auto;
+    }
 
-/* spacer column flexes to push the right group to the edge */
-.complex-row-spacer {
-  display: block;
-}
+    /* spacer column flexes to push the right group to the edge */
+    .complex-row-spacer {
+      display: block;
+    }
 
-/* let the right group stay pushed to the right like before */
-.set-right-group {
-  display: flex;
-  gap: 8px;
-  margin-left: auto;
-}
+    /* let the right group stay pushed to the right like before */
+    .set-right-group {
+      display: flex;
+      gap: 8px;
+      margin-left: auto;
+    }
 
     .set-label {
       font-size: 18px;
@@ -513,40 +514,39 @@
       margin-left: auto;
     }
     
-        .set-right-group .set-input {
+    .set-right-group .set-input {
       width: 56px;
     }
     
-/* --------------------------
-   AFT CARD ONLY
---------------------------- */
+    /* --------------------------
+       AFT CARD ONLY
+    --------------------------- */
 
-/* Wrapper so AFT tweaks don't touch other cards */
-.aft-card {}
+    /* Wrapper so AFT tweaks don't touch other cards */
+    .aft-card {}
 
-/* M/F + Age */
-.aft-card .aft-meta-input {
+    /* M/F + Age */
+    .aft-card .aft-meta-input {
       margin-left: auto;
       display: flex;
       gap: 8px;
-  
-}
+    }
 
-/* (Weight / Rep / Time) */
-.aft-card .aft-primary-input {
-}
+    /* (Weight / Rep / Time) */
+    .aft-card .aft-primary-input {
+    }
 
-/* Event Score boxes */
-.aft-card .aft-score-input {
-}
+    /* Event Score boxes */
+    .aft-card .aft-score-input {
+    }
 
-/* Total box at the bottom */
-.aft-card .aft-total-input {
-}
+    /* Total box at the bottom */
+    .aft-card .aft-total-input {
+    }
 
-/* If you ever want different spacing on AFT rows only */
-.aft-card .set-right-group {
-}
+    /* If you ever want different spacing on AFT rows only */
+    .aft-card .set-right-group {
+    }
     
     .aft-title {
       background-color: var(--gunmetal);
@@ -568,8 +568,6 @@
       align-items: center;
       justify-content: center;
     }
-
-
 
     /* --------------------------
        PROGRESS LIST / LETTER GRID
@@ -918,6 +916,34 @@
       margin-top: 0;
     }
 
+    /* NEW: Mode row inside sticky footer */
+    .mode-footer-row {
+      margin-top: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .mode-footer-label {
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+
+    .mode-footer-buttons {
+      display: flex;
+      gap: 8px;
+    }
+
+    .mode-btn {
+      width: auto;
+      height: 36px;
+      font-size: 14px;
+      padding: 0 14px;
+      margin-top: 0; /* override primary-btn default */
+      flex: 0 0 auto;
+    }
+
     /* Reuse this list style for volume/charts selection */
     .settings-volume-list {
       margin-top: 6px;
@@ -1103,20 +1129,19 @@
             Save progress
           </button>
 
-          <!-- Standard / Complex mode toggle moved into sticky footer -->
-          <div class="settings-row" style="margin-top:0;margin-bottom:8px;">
-            <span>Mode</span>
-            <div style="display:flex; gap:8px;">
+          <div class="mode-footer-row">
+            <span class="mode-footer-label">Mode</span>
+            <div class="mode-footer-buttons">
               <button
                 id="loggerModeToggle"
-                class="small-btn"
+                class="primary-btn mode-btn"
                 type="button"
               >
                 Standard
               </button>
               <button
                 id="aftModeButton"
-                class="small-btn"
+                class="primary-btn mode-btn"
                 type="button"
               >
                 AFT
