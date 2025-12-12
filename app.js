@@ -473,6 +473,7 @@ const Logger = (() => {
   // NEW: track current mode ("standard" | "complex" | "aft")
   let mode = "standard";
   let modeToggleBtn = null;
+  let complexModeBtn = null;
   let aftModeBtn = null;
 
   // NEW: sticky footer buttons for complex mode
@@ -584,62 +585,34 @@ const Logger = (() => {
     }
 
     // Mode toggle button (Standard / Complex)
-    modeToggleBtn = $("#loggerModeToggle");
-    if (modeToggleBtn) {
-      modeToggleBtn.textContent = "Standard";
-      modeToggleBtn.addEventListener("click", () => {
-        // If we were in AFT, switch back into Standard first
-        if (mode === "aft") {
-          mode = "standard";
-          modeToggleBtn.textContent = "Standard";
-        } else {
-          mode = mode === "standard" ? "complex" : "standard";
-          modeToggleBtn.textContent =
-            mode === "standard" ? "Standard" : "Complex";
-        }
+    // Mode buttons: Standard, Complex, AFT
+    modeToggleBtn = $("#loggerModeToggle");     // Standard
+    complexModeBtn = $("#complexModeButton");  // Complex
+    aftModeBtn = $("#aftModeButton");          // AFT
 
-        resetForMode();
+    function setMode(newMode) {
+      mode = newMode;
+      resetForMode();
 
-        if (typeof showToast === "function") {
-          if (mode === "standard") {
-            showToast("Standard mode: one exercise per card.");
-          } else if (mode === "complex") {
-            showToast("Complex mode: exercise per row.");
-          } else if (mode === "aft") {
-            showToast("AFT mode: Army Fitness Test template.");
-          }
+      if (typeof showToast === "function") {
+        if (mode === "standard") {
+          showToast("Standard mode: one exercise per card.");
+        } else if (mode === "complex") {
+          showToast("Complex mode: exercise per row.");
+        } else if (mode === "aft") {
+          showToast("AFT mode: Army Fitness Test template.");
         }
-      });
+      }
     }
 
-    // AFT mode button
-    aftModeBtn = $("#aftModeButton");
+    if (modeToggleBtn) {
+      modeToggleBtn.addEventListener("click", () => setMode("standard"));
+    }
+    if (complexModeBtn) {
+      complexModeBtn.addEventListener("click", () => setMode("complex"));
+    }
     if (aftModeBtn) {
-      aftModeBtn.addEventListener("click", () => {
-        // Toggle AFT on/off
-        if (mode === "aft") {
-          mode = "standard";
-          if (modeToggleBtn) {
-            modeToggleBtn.textContent = "Standard";
-          }
-        } else {
-          mode = "aft";
-          // Keep the mode toggle labelled as Standard when jumping into AFT
-          if (modeToggleBtn) {
-            modeToggleBtn.textContent = "Standard";
-          }
-        }
-
-        resetForMode();
-
-        if (typeof showToast === "function") {
-          if (mode === "aft") {
-            showToast("AFT mode: Army Fitness Test template.");
-          } else {
-            showToast("Standard mode: one exercise per card.");
-          }
-        }
-      });
+      aftModeBtn.addEventListener("click", () => setMode("aft"));
     }
 
     // Start with one blank card in current mode
