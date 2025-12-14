@@ -1082,7 +1082,7 @@ function createAftCard(parent) {
   const titleLabel = document.createElement("div");
   titleLabel.className =
     "text-input complex-exercise-name aft-exercise-label";
-  titleLabel.textContent = "Army Fitness Test (AFT)";
+  titleLabel.textContent = "Army Fitness Test";
 
   // Middle column: spacer (keeps layout matching other rows)
   const topSpacer = document.createElement("div");
