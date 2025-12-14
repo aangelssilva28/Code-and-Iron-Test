@@ -906,6 +906,17 @@
   background: transparent;
 }
 
+/* AFT mode only: no inner scroll + tighter bottom space */
+body.mode-aft .card.card--logger {
+  max-height: none;        /* turn off the scroll limit */
+  overflow-y: visible;     /* no scrolling inside the card */
+  padding-bottom: 32px;    /* smaller gap at the bottom just for AFT */
+}
+
+body.mode-aft .card.card--logger .card-sticky-footer {
+  margin-top: 12px;        /* slightly tighter spacing above Save/Mode */
+}
+
     .card-sticky-footer .footer-btn {
       margin-top: 0;
     }
