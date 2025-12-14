@@ -590,20 +590,25 @@ const Logger = (() => {
     complexModeBtn = $("#complexModeButton");  // Complex
     aftModeBtn = $("#aftModeButton");          // AFT
 
-    function setMode(newMode) {
-      mode = newMode;
-      resetForMode();
+function setMode(newMode) {
+  mode = newMode;
 
-      if (typeof showToast === "function") {
-        if (mode === "standard") {
-          showToast("Standard mode: one exercise per card.");
-        } else if (mode === "complex") {
-          showToast("Complex mode: exercise per row.");
-        } else if (mode === "aft") {
-          showToast("AFT mode: Army Fitness Test template.");
-        }
-      }
+  // Update body class so CSS can style each mode differently
+  document.body.classList.remove("mode-standard", "mode-complex", "mode-aft");
+  document.body.classList.add(`mode-${mode}`);
+
+  resetForMode();
+
+  if (typeof showToast === "function") {
+    if (mode === "standard") {
+      showToast("Standard mode: one exercise per card.");
+    } else if (mode === "complex") {
+      showToast("Complex mode: exercise per row.");
+    } else if (mode === "aft") {
+      showToast("AFT mode: Army Fitness Test template.");
     }
+  }
+}
 
     if (modeToggleBtn) {
       modeToggleBtn.addEventListener("click", () => setMode("standard"));
@@ -615,8 +620,10 @@ const Logger = (() => {
       aftModeBtn.addEventListener("click", () => setMode("aft"));
     }
 
-    // Start with one blank card in current mode
-    resetForMode();
+// Start in Standard mode (also sets the body class)
+setMode("standard");
+
+const saveBtn = $(saveButtonSelector);
 
     const saveBtn = $(saveButtonSelector);
     if (saveBtn && typeof onSave === "function") {
