@@ -1086,16 +1086,22 @@ function createComplexCard(parent, complexData) {
     // -----------------------------
     // Top row: [M/F] [Age]
     // -----------------------------
-    const metaRow = document.createElement("div");
-    metaRow.className = "set-box complex-row";
+// Top row: [M/F] [Age]
+const metaRow = document.createElement("div");
+metaRow.className = "set-box complex-row";
 
-    // invisible left cell to keep right group in the same place
-    const metaLeft = document.createElement("div");
-    metaLeft.style.visibility = "hidden";
-    metaLeft.textContent = "X";
+// column 1: hidden cell so it lines up with the event name column
+const metaLeft = document.createElement("div");
+metaLeft.style.visibility = "hidden";
+metaLeft.textContent = "X";
 
-    const metaGroup = document.createElement("div");
-    metaGroup.className = "set-right-group";
+// column 2: spacer so this row matches the 3-column layout
+const metaSpacer = document.createElement("div");
+metaSpacer.className = "complex-row-spacer";
+
+// column 3: right group (M/F, Age) in same column as Weight/Score
+const metaGroup = document.createElement("div");
+metaGroup.className = "set-right-group";
 
 const genderInput = document.createElement("input");
 genderInput.className = "set-input aft-meta-input";
@@ -1110,12 +1116,15 @@ ageInput.type = "number";
 ageInput.inputMode = "numeric";
 ageInput.min = "0";
 
-    metaGroup.appendChild(genderInput);
-    metaGroup.appendChild(ageInput);
+metaGroup.appendChild(genderInput);
+metaGroup.appendChild(ageInput);
 
-    metaRow.appendChild(metaLeft);
-    metaRow.appendChild(metaGroup);
-    setsWrapper.appendChild(metaRow);
+// now 3 children: [hidden][spacer][group]
+metaRow.appendChild(metaLeft);
+metaRow.appendChild(metaSpacer);
+metaRow.appendChild(metaGroup);
+
+setsWrapper.appendChild(metaRow);
 
     // -----------------------------
     // AFT events
