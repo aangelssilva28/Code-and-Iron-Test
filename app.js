@@ -622,9 +622,6 @@ function setMode(newMode) {
 
 // Start in Standard mode (also sets the body class)
 setMode("standard");
-
-const saveBtn = $(saveButtonSelector);
-
     const saveBtn = $(saveButtonSelector);
     if (saveBtn && typeof onSave === "function") {
       saveBtn.addEventListener("click", () => {
