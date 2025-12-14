@@ -1264,48 +1264,6 @@ function createAftCard(parent) {
   return card;
 }
 
-// -----------------------------
-// Bottom row: [Total]
-// -----------------------------
-const totalRow = document.createElement("div");
-totalRow.className = "set-box complex-row";
-
-// hidden left cell so column 1 lines up with the event name column
-const totalLeft = document.createElement("div");
-totalLeft.style.visibility = "hidden";
-totalLeft.textContent = "X";
-
-// spacer so this row has the SAME 3 columns as the event rows
-const totalSpacer = document.createElement("div");
-totalSpacer.className = "complex-row-spacer";
-
-// right group lives in the same column as [Time][Score]
-const totalGroup = document.createElement("div");
-totalGroup.className = "set-right-group";
-
-const totalInput = document.createElement("input");
-totalInput.className = "set-input aft-total-input";
-totalInput.placeholder = "Total";
-totalInput.type = "number";
-totalInput.inputMode = "numeric";
-totalInput.min = "0";
-
-totalGroup.appendChild(totalInput);
-
-// 3 children → columns 1 (hidden), 2 (spacer), 3 (Total)
-// so Total lines up under Time+Score
-totalRow.appendChild(totalLeft);
-totalRow.appendChild(totalSpacer);
-totalRow.appendChild(totalGroup);
-
-setsWrapper.appendChild(totalRow);
-
-    // IMPORTANT: no quick-add chips on the AFT card
-    // (leave quick-add available for Standard / Complex modes only)
-    parent.appendChild(card);
-    return card;
-  }
-
   // ---------- Helpers ----------
 
   function getWorkoutLayoutFrom(container) {
