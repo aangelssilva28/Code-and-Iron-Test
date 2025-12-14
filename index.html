@@ -521,53 +521,53 @@
        AFT CARD ONLY
     --------------------------- */
 
-    /* Wrapper so AFT tweaks don't touch other cards */
-    .aft-card {}
+/* Wrapper so AFT tweaks don't touch other cards */
+.aft-card {}
 
-    /* M/F + Age */
-    .aft-card .aft-meta-input {
-      margin-left: auto;
-      display: flex;
-      gap: 8px;
-      width: 66px;
-    }
-
-    /* (Weight / Rep / Time) */
-    .aft-card .aft-primary-input {
-      width: 66px;
-    }
-
-    /* Event Score boxes */
-    .aft-card .aft-score-input {
-      width: 66px;
-    }
-
-    
-    /* Total box at the bottom */
-    .aft-card .aft-total-input {
-     width: calc(2 * 66px);  
+/* M/F + Age */
+.aft-card .aft-meta-input {
+  margin-left: auto;
+  display: flex;
+  gap: 8px;
+  width: 66px;
 }
-    
-    .aft-title {
-      background-color: var(--gunmetal);
-      pointer-events: none;
-      user-select: none;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
 
-    .aft-exercise-label {
-      width: 156px;
-      margin-right: auto;
-      gap: 8px;
-      background-color: var(--gunmetal);
-      pointer-events: none;
-      user-select: none;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
+/* (Weight / Rep / Time) */
+.aft-card .aft-primary-input {
+  width: 66px;
+}
+
+/* Event Score boxes */
+.aft-card .aft-score-input {
+  width: 66px;
+}
+
+/* Total box at the bottom */
+.aft-card .aft-total-input {
+  width: calc(2 * 66px);  
+  margin-left: auto;  /* Add this to align it under the right boxes */
+}
+
+.aft-title {
+  background-color: var(--gunmetal);
+  pointer-events: none;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.aft-exercise-label {
+  width: 156px;
+  margin-right: 16px;  /* Change from auto to a fixed small value to reduce center gap */
+  gap: 8px;
+  background-color: var(--gunmetal);
+  pointer-events: none;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 
     /* --------------------------
        PROGRESS LIST / LETTER GRID
