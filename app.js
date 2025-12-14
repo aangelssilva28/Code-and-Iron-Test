@@ -1063,189 +1063,206 @@ function createComplexCard(parent, complexData) {
   return card;
 }
 
-  // NEW: AFT card (Army Fitness Test, fixed exercises)
-  function createAftCard(parent) {
-    const card = document.createElement("div");
-    card.className = "workout-card aft-card";
+// NEW: AFT card (Army Fitness Test, fixed exercises)
+function createAftCard(parent) {
+  const card = document.createElement("div");
+  card.className = "workout-card aft-card";
 
-    const setsWrapper = document.createElement("div");
-    setsWrapper.className = "sets-wrapper";
+  const setsWrapper = document.createElement("div");
+  setsWrapper.className = "sets-wrapper";
+  card.appendChild(setsWrapper);
 
-    const header = document.createElement("div");
-    header.className = "workout-header";
+  // -----------------------------
+  // Top row: [AFT title]  [M/F] [Age]
+  // -----------------------------
+  const topRow = document.createElement("div");
+  topRow.className = "set-box complex-row aft-top-row";
 
-    // Title for the AFT card (display-only, gunmetal background)
-    const titleInput = document.createElement("div");
-    titleInput.className = "text-input workout-name aft-title";
-    titleInput.textContent = "Army Fitness Test (AFT)";
+  // Left column: title box (same size as event name boxes)
+  const titleLabel = document.createElement("div");
+  titleLabel.className =
+    "text-input complex-exercise-name aft-exercise-label";
+  titleLabel.textContent = "Army Fitness Test (AFT)";
 
-    header.appendChild(titleInput);
-    card.appendChild(header);
-    card.appendChild(setsWrapper);
+  // Middle column: spacer (keeps layout matching other rows)
+  const topSpacer = document.createElement("div");
+  topSpacer.className = "complex-row-spacer";
 
-    // -----------------------------
-    // Top row: [M/F] [Age]
-    // -----------------------------
-// Top row: [M/F] [Age]
-const metaRow = document.createElement("div");
-metaRow.className = "set-box complex-row";
+  // Right column: [M/F] [Age] in the same place as Weight/Score
+  const metaGroup = document.createElement("div");
+  metaGroup.className = "set-right-group";
 
-// column 1: hidden cell so it lines up with the event name column
-const metaLeft = document.createElement("div");
-metaLeft.style.visibility = "hidden";
-metaLeft.textContent = "X";
+  const genderInput = document.createElement("input");
+  genderInput.className = "set-input aft-meta-input";
+  genderInput.placeholder = "M / F";
+  genderInput.type = "text";
+  genderInput.maxLength = 1;
 
-// column 2: spacer so this row matches the 3-column layout
-const metaSpacer = document.createElement("div");
-metaSpacer.className = "complex-row-spacer";
+  const ageInput = document.createElement("input");
+  ageInput.className = "set-input aft-meta-input";
+  ageInput.placeholder = "Age";
+  ageInput.type = "number";
+  ageInput.inputMode = "numeric";
+  ageInput.min = "0";
 
-// column 3: right group (M/F, Age) in same column as Weight/Score
-const metaGroup = document.createElement("div");
-metaGroup.className = "set-right-group";
+  metaGroup.appendChild(genderInput);
+  metaGroup.appendChild(ageInput);
 
-const genderInput = document.createElement("input");
-genderInput.className = "set-input aft-meta-input";
-genderInput.placeholder = "M / F";
-genderInput.type = "text";
-genderInput.maxLength = 1;
+  topRow.appendChild(titleLabel);
+  topRow.appendChild(topSpacer);
+  topRow.appendChild(metaGroup);
 
-const ageInput = document.createElement("input");
-ageInput.className = "set-input aft-meta-input";
-ageInput.placeholder = "Age";
-ageInput.type = "number";
-ageInput.inputMode = "numeric";
-ageInput.min = "0";
+  setsWrapper.appendChild(topRow);
 
-metaGroup.appendChild(genderInput);
-metaGroup.appendChild(ageInput);
+  // -----------------------------
+  // AFT events
+  // 3 MDL  -> [Weight] [Score]
+  // HRP    -> [Rep]    [Score]
+  // SDC    -> [Time]   [Score]
+  // PLK    -> [Time]   [Score]
+  // 2MR    -> [Time]   [Score]
+  // -----------------------------
+  const events = ["3 MDL", "HRP", "SDC", "PLK", "2MR"];
 
-// now 3 children: [hidden][spacer][group]
-metaRow.appendChild(metaLeft);
-metaRow.appendChild(metaSpacer);
-metaRow.appendChild(metaGroup);
+  const eventConfig = {
+    "3 MDL": {
+      primaryPlaceholder:
+        typeof Settings !== "undefined" && Settings.getWeightPlaceholder
+          ? Settings.getWeightPlaceholder()
+          : "Weight",
+      primaryType: "number",
+      primaryInputMode: "decimal",
+      primaryDataset: "weight", // actual weight
+      secondaryPlaceholder: "Score",
+      secondaryType: "number",
+      secondaryInputMode: "numeric",
+      secondaryDataset: "reps", // save score as "reps" for progress
+    },
+    HRP: {
+      primaryPlaceholder: "Rep",
+      primaryType: "number",
+      primaryInputMode: "numeric",
+      primaryDataset: "reps", // raw reps
+      secondaryPlaceholder: "Score",
+      secondaryType: "number",
+      secondaryInputMode: "numeric",
+      secondaryDataset: null, // score not tied to weight/reps field
+    },
+    SDC: {
+      primaryPlaceholder: "Time",
+      primaryType: "text",
+      primaryInputMode: "text",
+      primaryDataset: null,
+      secondaryPlaceholder: "Score",
+      secondaryType: "number",
+      secondaryInputMode: "numeric",
+      secondaryDataset: "reps", // store score
+    },
+    PLK: {
+      primaryPlaceholder: "Time",
+      primaryType: "text",
+      primaryInputMode: "text",
+      primaryDataset: null,
+      secondaryPlaceholder: "Score",
+      secondaryType: "number",
+      secondaryInputMode: "numeric",
+      secondaryDataset: "reps",
+    },
+    "2MR": {
+      primaryPlaceholder: "Time",
+      primaryType: "text",
+      primaryInputMode: "text",
+      primaryDataset: null,
+      secondaryPlaceholder: "Score",
+      secondaryType: "number",
+      secondaryInputMode: "numeric",
+      secondaryDataset: "reps",
+    },
+  };
 
-setsWrapper.appendChild(metaRow);
+  events.forEach((eventName) => {
+    const row = document.createElement("div");
+    row.className = "set-box complex-row";
 
-    // -----------------------------
-    // AFT events
-    // 3 MDL  -> [Weight] [Score]
-    // HRP    -> [Rep]    [Score]
-    // SDC    -> [Time]   [Score]
-    // PLK    -> [Time]   [Score]
-    // 2MR    -> [Time]   [Score]
-    // -----------------------------
-    const events = ["3 MDL", "HRP", "SDC", "PLK", "2MR"];
+    const exerciseInput = document.createElement("div");
+    exerciseInput.className =
+      "text-input complex-exercise-name aft-exercise-label";
+    exerciseInput.textContent = eventName;
 
-    const eventConfig = {
-      "3 MDL": {
-        primaryPlaceholder:
-          typeof Settings !== "undefined" && Settings.getWeightPlaceholder
-            ? Settings.getWeightPlaceholder()
-            : "Weight",
-        primaryType: "number",
-        primaryInputMode: "decimal",
-        primaryDataset: "weight", // actual weight
-        secondaryPlaceholder: "Score",
-        secondaryType: "number",
-        secondaryInputMode: "numeric",
-        secondaryDataset: "reps", // save score as "reps" for progress
-      },
-      HRP: {
-        primaryPlaceholder: "Rep",
-        primaryType: "number",
-        primaryInputMode: "numeric",
-        primaryDataset: "reps", // raw reps
-        secondaryPlaceholder: "Score",
-        secondaryType: "number",
-        secondaryInputMode: "numeric",
-        secondaryDataset: null, // score not tied to weight/reps field
-      },
-      SDC: {
-        primaryPlaceholder: "Time",
-        primaryType: "text",
-        primaryInputMode: "text",
-        primaryDataset: null,
-        secondaryPlaceholder: "Score",
-        secondaryType: "number",
-        secondaryInputMode: "numeric",
-        secondaryDataset: "reps", // store score
-      },
-      PLK: {
-        primaryPlaceholder: "Time",
-        primaryType: "text",
-        primaryInputMode: "text",
-        primaryDataset: null,
-        secondaryPlaceholder: "Score",
-        secondaryType: "number",
-        secondaryInputMode: "numeric",
-        secondaryDataset: "reps",
-      },
-      "2MR": {
-        primaryPlaceholder: "Time",
-        primaryType: "text",
-        primaryInputMode: "text",
-        primaryDataset: null,
-        secondaryPlaceholder: "Score",
-        secondaryType: "number",
-        secondaryInputMode: "numeric",
-        secondaryDataset: "reps",
-      },
-    };
+    const spacer = document.createElement("div");
+    spacer.className = "complex-row-spacer";
 
-    events.forEach((eventName) => {
-      const row = document.createElement("div");
-      row.className = "set-box complex-row";
+    const cfg = eventConfig[eventName];
 
-      const exerciseInput = document.createElement("div");
-      exerciseInput.className =
-        "text-input complex-exercise-name aft-exercise-label";
-      exerciseInput.textContent = eventName;
+    const primaryInput = document.createElement("input");
+    primaryInput.className = "set-input aft-primary-input";
+    primaryInput.placeholder = cfg.primaryPlaceholder;
+    primaryInput.type = cfg.primaryType;
+    if (cfg.primaryInputMode) {
+      primaryInput.inputMode = cfg.primaryInputMode;
+    }
+    if (cfg.primaryType === "number") {
+      primaryInput.min = "0";
+    }
+    if (cfg.primaryDataset) {
+      primaryInput.dataset.field = cfg.primaryDataset;
+    }
 
-      const spacer = document.createElement("div");
-      spacer.className = "complex-row-spacer";
+    const secondaryInput = document.createElement("input");
+    secondaryInput.className = "set-input aft-score-input";
+    secondaryInput.placeholder = cfg.secondaryPlaceholder;
+    secondaryInput.type = cfg.secondaryType;
+    if (cfg.secondaryInputMode) {
+      secondaryInput.inputMode = cfg.secondaryInputMode;
+    }
+    if (cfg.secondaryType === "number") {
+      secondaryInput.min = "0";
+    }
+    if (cfg.secondaryDataset) {
+      secondaryInput.dataset.field = cfg.secondaryDataset;
+    }
 
-      const cfg = eventConfig[eventName];
+    const rightGroup = document.createElement("div");
+    rightGroup.className = "set-right-group";
+    rightGroup.appendChild(primaryInput);
+    rightGroup.appendChild(secondaryInput);
 
-      const primaryInput = document.createElement("input");
-      primaryInput.className = "set-input  aft-primary-input";
-      primaryInput.placeholder = cfg.primaryPlaceholder;
-      primaryInput.type = cfg.primaryType;
-      if (cfg.primaryInputMode) {
-        primaryInput.inputMode = cfg.primaryInputMode;
-      }
-      if (cfg.primaryType === "number") {
-        primaryInput.min = "0";
-      }
-      if (cfg.primaryDataset) {
-        primaryInput.dataset.field = cfg.primaryDataset;
-      }
+    row.appendChild(exerciseInput);
+    row.appendChild(spacer);
+    row.appendChild(rightGroup);
 
-      const secondaryInput = document.createElement("input");
-      secondaryInput.className = "set-input  aft-score-input";
-      secondaryInput.placeholder = cfg.secondaryPlaceholder;
-      secondaryInput.type = cfg.secondaryType;
-      if (cfg.secondaryInputMode) {
-        secondaryInput.inputMode = cfg.secondaryInputMode;
-      }
-      if (cfg.secondaryType === "number") {
-        secondaryInput.min = "0";
-      }
-      if (cfg.secondaryDataset) {
-        secondaryInput.dataset.field = cfg.secondaryDataset;
-      }
+    setsWrapper.appendChild(row);
+  });
 
-      const rightGroup = document.createElement("div");
-      rightGroup.className = "set-right-group";
-      // order matters visually: [Weight/Rep/Time] [Score]
-      rightGroup.appendChild(primaryInput);
-      rightGroup.appendChild(secondaryInput);
+  // -----------------------------
+  // Bottom row: [Total]
+  // -----------------------------
+  const totalRow = document.createElement("div");
+  totalRow.className = "set-box complex-row";
 
-      row.appendChild(exerciseInput);
-      row.appendChild(spacer);
-      row.appendChild(rightGroup);
+  const totalLeft = document.createElement("div");
+  totalLeft.style.visibility = "hidden";
+  totalLeft.textContent = "X";
 
-      setsWrapper.appendChild(row);
-    });
+  const totalGroup = document.createElement("div");
+  totalGroup.className = "set-right-group";
+
+  const totalInput = document.createElement("input");
+  totalInput.className = "set-input aft-total-input";
+  totalInput.placeholder = "Total";
+  totalInput.type = "number";
+  totalInput.inputMode = "numeric";
+  totalInput.min = "0";
+
+  totalGroup.appendChild(totalInput);
+  totalRow.appendChild(totalLeft);
+  totalRow.appendChild(totalGroup);
+  setsWrapper.appendChild(totalRow);
+
+  // No quick-add chips on the AFT card
+  parent.appendChild(card);
+  return card;
+}
 
 // -----------------------------
 // Bottom row: [Total]
