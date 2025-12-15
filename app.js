@@ -1238,30 +1238,38 @@ function createAftCard(parent) {
     setsWrapper.appendChild(row);
   });
 
-  // -----------------------------
-  // Bottom row: [Total]
-  // -----------------------------
-  const totalRow = document.createElement("div");
-  totalRow.className = "set-box complex-row";
+// -----------------------------
+// Bottom row: [Total]
+// -----------------------------
+const totalRow = document.createElement("div");
+totalRow.className = "set-box complex-row aft-total-row";
 
-  const totalLeft = document.createElement("div");
-  totalLeft.style.visibility = "hidden";
-  totalLeft.textContent = "X";
+const totalLeft = document.createElement("div");
+totalLeft.style.visibility = "hidden";
+totalLeft.textContent = "X";
 
-  const totalGroup = document.createElement("div");
-  totalGroup.className = "set-right-group";
+// IMPORTANT: add the spacer so the Total group sits in the same grid column
+// as the Time/Score pair above it
+const totalSpacer = document.createElement("div");
+totalSpacer.className = "complex-row-spacer";
 
-  const totalInput = document.createElement("input");
-  totalInput.className = "set-input aft-total-input";
-  totalInput.placeholder = "Total";
-  totalInput.type = "number";
-  totalInput.inputMode = "numeric";
-  totalInput.min = "0";
+const totalGroup = document.createElement("div");
+totalGroup.className = "set-right-group";
 
-  totalGroup.appendChild(totalInput);
-  totalRow.appendChild(totalLeft);
-  totalRow.appendChild(totalGroup);
-  setsWrapper.appendChild(totalRow);
+const totalInput = document.createElement("input");
+totalInput.className = "set-input aft-total-input";
+totalInput.placeholder = "Total";
+totalInput.type = "number";
+totalInput.inputMode = "numeric";
+totalInput.min = "0";
+
+totalGroup.appendChild(totalInput);
+
+totalRow.appendChild(totalLeft);
+totalRow.appendChild(totalSpacer);
+totalRow.appendChild(totalGroup);
+
+setsWrapper.appendChild(totalRow);
 
   // No quick-add chips on the AFT card
   parent.appendChild(card);
