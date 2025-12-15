@@ -512,62 +512,72 @@
       gap: 8px;
       margin-left: auto;
     }
-    
+
     .set-right-group .set-input {
       width: 56px;
     }
-    
+
     /* --------------------------
        AFT CARD ONLY
     --------------------------- */
 
-/* Wrapper so AFT tweaks don't touch other cards */
-.aft-card {}
+    /* Wrapper so AFT tweaks don't touch other cards */
+    .aft-card {}
 
-/* M/F + Age */
-.aft-card .aft-meta-input {
-  margin-left: auto;
-  display: flex;
-  gap: 8px;
-  width: 66px;
-}
+    /* ✅ NEW: AFT rows only — make right boxes sit 8px from the left label boxes */
+    .aft-card .set-box.complex-row {
+      grid-template-columns: auto auto;
+      column-gap: 8px;
+    }
 
-/* (Weight / Rep / Time) */
-.aft-card .aft-primary-input {
-  width: 66px;
-  align-items: center;
-  margin-right: auto;
-}
+    .aft-card .complex-row-spacer {
+      display: none;
+    }
 
-/* Event Score boxes */
-.aft-card .aft-score-input {
-  width: 66px;
-}
+    /* M/F + Age */
+    .aft-card .aft-meta-input {
+      margin-left: auto;
+      display: flex;
+      gap: 8px;
+      width: 66px;
+    }
 
-/* Total box at the bottom */
-.aft-card .aft-total-input {
-  width: calc(2 * 66px);  
-  margin-left: auto;  /* Add this to align it under the right boxes */
-}
+    /* (Weight / Rep / Time) */
+    .aft-card .aft-primary-input {
+      width: 66px;
+      align-items: center;
+      margin-right: auto;
+    }
 
-.aft-title {
-  background-color: var(--gunmetal);
-  pointer-events: none;
-  user-select: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
+    /* Event Score boxes */
+    .aft-card .aft-score-input {
+      width: 66px;
+    }
 
-.aft-exercise-label {
-  width: 156px;
-  background-color: var(--gunmetal);
-  pointer-events: none;
-  user-select: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
+    /* Total box at the bottom */
+    .aft-card .aft-total-input {
+      width: calc(2 * 66px);
+      margin-left: auto;  /* Add this to align it under the right boxes */
+    }
+
+    .aft-title {
+      background-color: var(--gunmetal);
+      pointer-events: none;
+      user-select: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .aft-exercise-label {
+      width: 156px;
+      background-color: var(--gunmetal);
+      pointer-events: none;
+      user-select: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
 
     /* --------------------------
        PROGRESS LIST / LETTER GRID
@@ -790,11 +800,11 @@
       margin-bottom: 6px;
     }
 
-.tutorial-body {
-  font-size: 14px;
-  color: var(--text-muted);
-  line-height: 1.5;
-}
+    .tutorial-body {
+      font-size: 14px;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
 
     .tutorial-bullets {
       margin-top: 8px;
@@ -899,25 +909,25 @@
     }
 
     /* Sticky footer inside the card */
-.card-sticky-footer {
-  position: sticky;
-  bottom: 0;
-  margin-top: 16px;
-  padding-top: 12px;
-  /* remove dark overlay so the card color shows through */
-  background: transparent;
-}
+    .card-sticky-footer {
+      position: sticky;
+      bottom: 0;
+      margin-top: 16px;
+      padding-top: 12px;
+      /* remove dark overlay so the card color shows through */
+      background: transparent;
+    }
 
-/* AFT mode only: no inner scroll + tighter bottom space */
-body.mode-aft .card.card--logger {
-  max-height: none;        /* turn off the scroll limit */
-  overflow-y: visible;     /* no scrolling inside the card */
-  padding-bottom: 32px;    /* smaller gap at the bottom just for AFT */
-}
+    /* AFT mode only: no inner scroll + tighter bottom space */
+    body.mode-aft .card.card--logger {
+      max-height: none;        /* turn off the scroll limit */
+      overflow-y: visible;     /* no scrolling inside the card */
+      padding-bottom: 32px;    /* smaller gap at the bottom just for AFT */
+    }
 
-body.mode-aft .card.card--logger .card-sticky-footer {
-  margin-top: 12px;        /* slightly tighter spacing above Save/Mode */
-}
+    body.mode-aft .card.card--logger .card-sticky-footer {
+      margin-top: 12px;        /* slightly tighter spacing above Save/Mode */
+    }
 
     .card-sticky-footer .footer-btn {
       margin-top: 0;
@@ -1103,6 +1113,8 @@ body.mode-aft .card.card--logger .card-sticky-footer {
         aria-expanded="false"
       >
         <div class="menu-icon">
+
+        >
           <span></span><span></span><span></span>
         </div>
       </button>
@@ -1136,32 +1148,32 @@ body.mode-aft .card.card--logger .card-sticky-footer {
             Save progress
           </button>
 
-<div class="mode-footer-row">
-  <span class="mode-footer-label">Mode</span>
-  <div class="mode-footer-buttons">
-    <button
-      id="loggerModeToggle"
-      class="primary-btn mode-btn"
-      type="button"
-    >
-      Standard
-    </button>
-    <button
-      id="complexModeButton"
-      class="primary-btn mode-btn"
-      type="button"
-    >
-      Complex
-    </button>
-    <button
-      id="aftModeButton"
-      class="primary-btn mode-btn"
-      type="button"
-    >
-      AFT
-    </button>
-  </div>
-</div>
+          <div class="mode-footer-row">
+            <span class="mode-footer-label">Mode</span>
+            <div class="mode-footer-buttons">
+              <button
+                id="loggerModeToggle"
+                class="primary-btn mode-btn"
+                type="button"
+              >
+                Standard
+              </button>
+              <button
+                id="complexModeButton"
+                class="primary-btn mode-btn"
+                type="button"
+              >
+                Complex
+              </button>
+              <button
+                id="aftModeButton"
+                class="primary-btn mode-btn"
+                type="button"
+              >
+                AFT
+              </button>
+            </div>
+          </div>
         </div>
       </section>
     </main>
