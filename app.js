@@ -1082,17 +1082,13 @@ function createAftCard(parent) {
   const topRow = document.createElement("div");
   topRow.className = "set-box complex-row aft-top-row";
 
-  // Left column: title box (same size as event name boxes)
   const titleLabel = document.createElement("div");
-  titleLabel.className =
-    "text-input complex-exercise-name aft-exercise-label";
+  titleLabel.className = "text-input complex-exercise-name aft-exercise-label";
   titleLabel.textContent = "Army Fitness Test";
 
-  // Middle column: spacer (keeps layout matching other rows)
   const topSpacer = document.createElement("div");
   topSpacer.className = "complex-row-spacer";
 
-  // Right column: [M/F] [Age] in the same place as Weight/Score
   const metaGroup = document.createElement("div");
   metaGroup.className = "set-right-group";
 
@@ -1115,16 +1111,10 @@ function createAftCard(parent) {
   topRow.appendChild(titleLabel);
   topRow.appendChild(topSpacer);
   topRow.appendChild(metaGroup);
-
   setsWrapper.appendChild(topRow);
 
   // -----------------------------
-  // AFT events
-  // 3 MDL  -> [Weight] [Score]
-  // HRP    -> [Rep]    [Score]
-  // SDC    -> [Time]   [Score]
-  // PLK    -> [Time]   [Score]
-  // 2MR    -> [Time]   [Score]
+  // AFT events rows
   // -----------------------------
   const events = ["3 MDL", "HRP", "SDC", "PLK", "2MR"];
 
@@ -1136,21 +1126,21 @@ function createAftCard(parent) {
           : "Weight",
       primaryType: "number",
       primaryInputMode: "decimal",
-      primaryDataset: "weight", // actual weight
+      primaryDataset: "weight",
       secondaryPlaceholder: "Score",
       secondaryType: "number",
       secondaryInputMode: "numeric",
-      secondaryDataset: "reps", // save score as "reps" for progress
+      secondaryDataset: "reps",
     },
     HRP: {
       primaryPlaceholder: "Rep",
       primaryType: "number",
       primaryInputMode: "numeric",
-      primaryDataset: "reps", // raw reps
+      primaryDataset: "reps",
       secondaryPlaceholder: "Score",
       secondaryType: "number",
       secondaryInputMode: "numeric",
-      secondaryDataset: null, // score not tied to weight/reps field
+      secondaryDataset: null,
     },
     SDC: {
       primaryPlaceholder: "Time",
@@ -1160,7 +1150,7 @@ function createAftCard(parent) {
       secondaryPlaceholder: "Score",
       secondaryType: "number",
       secondaryInputMode: "numeric",
-      secondaryDataset: "reps", // store score
+      secondaryDataset: "reps",
     },
     PLK: {
       primaryPlaceholder: "Time",
@@ -1188,10 +1178,9 @@ function createAftCard(parent) {
     const row = document.createElement("div");
     row.className = "set-box complex-row";
 
-    const exerciseInput = document.createElement("div");
-    exerciseInput.className =
-      "text-input complex-exercise-name aft-exercise-label";
-    exerciseInput.textContent = eventName;
+    const exerciseLabel = document.createElement("div");
+    exerciseLabel.className = "text-input complex-exercise-name aft-exercise-label";
+    exerciseLabel.textContent = eventName;
 
     const spacer = document.createElement("div");
     spacer.className = "complex-row-spacer";
@@ -1202,74 +1191,67 @@ function createAftCard(parent) {
     primaryInput.className = "set-input aft-primary-input";
     primaryInput.placeholder = cfg.primaryPlaceholder;
     primaryInput.type = cfg.primaryType;
-    if (cfg.primaryInputMode) {
-      primaryInput.inputMode = cfg.primaryInputMode;
-    }
-    if (cfg.primaryType === "number") {
-      primaryInput.min = "0";
-    }
-    if (cfg.primaryDataset) {
-      primaryInput.dataset.field = cfg.primaryDataset;
-    }
+    if (cfg.primaryInputMode) primaryInput.inputMode = cfg.primaryInputMode;
+    if (cfg.primaryType === "number") primaryInput.min = "0";
+    if (cfg.primaryDataset) primaryInput.dataset.field = cfg.primaryDataset;
 
     const secondaryInput = document.createElement("input");
     secondaryInput.className = "set-input aft-score-input";
     secondaryInput.placeholder = cfg.secondaryPlaceholder;
     secondaryInput.type = cfg.secondaryType;
-    if (cfg.secondaryInputMode) {
-      secondaryInput.inputMode = cfg.secondaryInputMode;
-    }
-    if (cfg.secondaryType === "number") {
-      secondaryInput.min = "0";
-    }
-    if (cfg.secondaryDataset) {
-      secondaryInput.dataset.field = cfg.secondaryDataset;
-    }
+    if (cfg.secondaryInputMode) secondaryInput.inputMode = cfg.secondaryInputMode;
+    if (cfg.secondaryType === "number") secondaryInput.min = "0";
+    if (cfg.secondaryDataset) secondaryInput.dataset.field = cfg.secondaryDataset;
 
     const rightGroup = document.createElement("div");
     rightGroup.className = "set-right-group";
     rightGroup.appendChild(primaryInput);
     rightGroup.appendChild(secondaryInput);
 
-    row.appendChild(exerciseInput);
+    row.appendChild(exerciseLabel);
     row.appendChild(spacer);
     row.appendChild(rightGroup);
 
     setsWrapper.appendChild(row);
   });
 
-// -----------------------------
-// Bottom row: [Total]
-// -----------------------------
-const totalRow = document.createElement("div");
-totalRow.className = "set-box complex-row aft-total-row";
+  // -----------------------------
+  // Bottom row: [Total] (FIXED)
+  // Must use the SAME 3-column grid as the other rows:
+  // [label-width box] [spacer] [rightGroup]
+  // -----------------------------
+  const totalRow = document.createElement("div");
+  totalRow.className = "set-box complex-row aft-total-row";
 
-const totalLeft = document.createElement("div");
-totalLeft.style.visibility = "hidden";
-totalLeft.textContent = "X";
+  // Left placeholder that keeps the label column width identical
+  const totalLeft = document.createElement("div");
+  totalLeft.className = "text-input complex-exercise-name aft-exercise-label";
+  totalLeft.style.visibility = "hidden";
+  totalLeft.textContent = "2MR"; // any text, it's hidden
 
-// IMPORTANT: add the spacer so the Total group sits in the same grid column
-// as the Time/Score pair above it
-const totalSpacer = document.createElement("div");
-totalSpacer.className = "complex-row-spacer";
+  const totalSpacer = document.createElement("div");
+  totalSpacer.className = "complex-row-spacer";
 
-const totalGroup = document.createElement("div");
-totalGroup.className = "set-right-group";
+  const totalGroup = document.createElement("div");
+  totalGroup.className = "set-right-group";
 
-const totalInput = document.createElement("input");
-totalInput.className = "set-input aft-total-input";
-totalInput.placeholder = "Total";
-totalInput.type = "number";
-totalInput.inputMode = "numeric";
-totalInput.min = "0";
+  const totalInput = document.createElement("input");
+  totalInput.className = "set-input aft-total-input";
+  totalInput.placeholder = "Total";
+  totalInput.type = "number";
+  totalInput.inputMode = "numeric";
+  totalInput.min = "0";
 
-totalGroup.appendChild(totalInput);
+  // EXACT width of (66 + 8 + 66) so it lines up with both ends
+  totalInput.style.width = "calc((2 * 66px) + 8px)";
 
-totalRow.appendChild(totalLeft);
-totalRow.appendChild(totalSpacer);
-totalRow.appendChild(totalGroup);
+  totalGroup.appendChild(totalInput);
 
-setsWrapper.appendChild(totalRow);
+  totalRow.appendChild(totalLeft);
+  totalRow.appendChild(totalSpacer);
+  totalRow.appendChild(totalGroup);
+
+  setsWrapper.appendChild(totalRow);
 
   // No quick-add chips on the AFT card
   parent.appendChild(card);
