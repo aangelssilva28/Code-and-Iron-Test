@@ -463,6 +463,11 @@
 
     /* Wrapper so AFT tweaks don't touch other cards */
     .aft-card {}
+    
+    /* Make the AFT title the same width as the left event labels */
+.aft-card .aft-title {
+  width: 156px; /* same as .aft-exercise-label */
+}
 
     /* ✅ AFT rows only — make right boxes sit 8px from the left label boxes */
     .aft-card .set-box.complex-row {
@@ -478,6 +483,18 @@
       display: flex;
       gap: 8px;
     }
+    
+    /* Ensure M/F and Age boxes match the other right-side box sizing */
+.aft-card .aft-meta-input {
+  width: 66px;
+}
+
+/* Don't let the meta group auto-push away */
+.aft-card .aft-meta-group {
+  margin-left: 0;
+  display: flex;
+  gap: 8px;
+}
 
     /* (Weight / Rep / Time) */
     .aft-card .aft-primary-input {
