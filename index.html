@@ -37,9 +37,7 @@
       --shadow-soft: 0 10px 30px rgba(0, 0, 0, 0.7);
     }
 
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
     body {
       margin: 0;
@@ -72,9 +70,7 @@
       margin: 0;
     }
 
-    .workout-header .complex-set-name:focus {
-      outline: none;
-    }
+    .workout-header .complex-set-name:focus { outline: none; }
 
     .app-wrapper {
       min-height: 100vh;
@@ -98,14 +94,8 @@
       letter-spacing: 0.5px;
     }
 
-    main.screen {
-      display: none;
-      flex: 1;
-    }
-
-    main.screen.active {
-      display: block;
-    }
+    main.screen { display: none; flex: 1; }
+    main.screen.active { display: block; }
 
     .card {
       max-width: 480px;
@@ -139,9 +129,7 @@
       margin-bottom: 4px;
     }
 
-    .input-group {
-      margin: 6px 0 10px;
-    }
+    .input-group { margin: 6px 0 10px; }
 
     /* --------------------------
        MENU
@@ -159,9 +147,7 @@
       padding: 0;
     }
 
-    .menu-button:active {
-      background-color: #1d1d1d;
-    }
+    .menu-button:active { background-color: #1d1d1d; }
 
     .menu-icon {
       width: 18px;
@@ -206,13 +192,8 @@
       border-bottom: 1px solid #222;
     }
 
-    .menu-item:last-child {
-      border-bottom: none;
-    }
-
-    .menu-item:active {
-      background-color: #1f1f1f;
-    }
+    .menu-item:last-child { border-bottom: none; }
+    .menu-item:active { background-color: #1f1f1f; }
 
     /* --------------------------
        INPUTS & BUTTONS
@@ -328,9 +309,7 @@
       box-shadow: none;
     }
 
-    .footer-btn {
-      margin-top: 10px;
-    }
+    .footer-btn { margin-top: 10px; }
 
     .danger-btn {
       width: 100%;
@@ -353,9 +332,7 @@
        BACK TO LOGGER BUTTON
     --------------------------- */
 
-    .back-nav-wrap {
-      margin-top: 1.75rem;
-    }
+    .back-nav-wrap { margin-top: 1.75rem; }
 
     .back-nav-btn {
       margin-top: 0;
@@ -390,43 +367,23 @@
         0 12px 30px rgba(0, 0, 0, 0.85);
     }
 
-    .workout-card.collapsed .quick-add-row {
-      display: none;
-    }
+    .workout-card.collapsed .quick-add-row { display: none; }
 
-    .workout-card.collapsed {
-      padding: 14px 8px;
-    }
+    .workout-card.collapsed { padding: 14px 8px; }
 
     .workout-card.collapsed .workout-header {
       margin: 0;
       opacity: 0.85;
     }
 
-    .workout-card.collapsed .sets-wrapper {
-      display: none;
-    }
+    .workout-card.collapsed .sets-wrapper { display: none; }
+    .workout-card.collapsed .workout-header-actions { display: none; }
+    .workout-card.collapsed .workout-name { cursor: pointer; }
+    .workout-card.collapsed .workout-name:focus { outline: none; }
 
-    .workout-card.collapsed .workout-header-actions {
-      display: none;
-    }
+    .round-btn.collapse-btn { font-size: 18px; }
 
-    .workout-card.collapsed .workout-name {
-      cursor: pointer;
-    }
-
-    .workout-card.collapsed .workout-name:focus {
-      outline: none;
-    }
-
-    .round-btn.collapse-btn {
-      font-size: 18px;
-    }
-
-    .workout-name {
-      flex: 1;
-      width: 100%;
-    }
+    .workout-name { flex: 1; width: 100%; }
 
     .workout-header {
       display: flex;
@@ -447,9 +404,7 @@
       gap: 8px;
     }
 
-    .sets-wrapper.collapsed {
-      display: none;
-    }
+    .sets-wrapper.collapsed { display: none; }
 
     /* NEW: complex mode control buttons inside card header */
     .complex-header-controls {
@@ -481,9 +436,7 @@
     }
 
     /* spacer column flexes to push the right group to the edge */
-    .complex-row-spacer {
-      display: block;
-    }
+    .complex-row-spacer { display: block; }
 
     /* let the right group stay pushed to the right like before */
     .set-right-group {
@@ -499,23 +452,10 @@
       font-weight: 700;
     }
 
-    .set-weight-group {
-      justify-self: end;
-    }
+    .set-weight-group { justify-self: end; }
+    .set-weight-group .set-input { width: 56px; }
 
-    .set-weight-group .set-input {
-      width: 56px;
-    }
-
-    .set-right-group {
-      display: flex;
-      gap: 8px;
-      margin-left: auto;
-    }
-
-    .set-right-group .set-input {
-      width: 56px;
-    }
+    .set-right-group .set-input { width: 56px; }
 
     /* --------------------------
        AFT CARD ONLY
@@ -524,41 +464,35 @@
     /* Wrapper so AFT tweaks don't touch other cards */
     .aft-card {}
 
-    /* ✅ NEW: AFT rows only — make right boxes sit 8px from the left label boxes */
+    /* ✅ AFT rows only — make right boxes sit 8px from the left label boxes */
     .aft-card .set-box.complex-row {
       grid-template-columns: auto auto;
       column-gap: 8px;
     }
 
-    .aft-card .complex-row-spacer {
-      display: none;
-    }
+    .aft-card .complex-row-spacer { display: none; }
 
-    /* M/F + Age */
+    /* M/F + Age (if you use a wrapper div) */
     .aft-card .aft-meta-input {
       margin-left: auto;
       display: flex;
       gap: 8px;
-      width: 66px;
     }
 
     /* (Weight / Rep / Time) */
     .aft-card .aft-primary-input {
       width: 66px;
-      align-items: center;
       margin-right: auto;
     }
 
     /* Event Score boxes */
-    .aft-card .aft-score-input {
-      width: 66px;
-    }
+    .aft-card .aft-score-input { width: 66px; }
 
-    /* Total box at the bottom */
+    /* ✅ FIXED: Total box at the bottom (spans Time + Score width) */
     .aft-card .aft-total-input {
       width: calc((2 * 66px) + 8px); /* 2 boxes + the 8px gap */
       margin-left: 0;               /* don’t push it inside the group */
-
+    }
 
     .aft-title {
       background-color: var(--gunmetal);
@@ -590,9 +524,7 @@
       gap: 8px;
     }
 
-    .saved-wrapper {
-      margin-top: 4px;
-    }
+    .saved-wrapper { margin-top: 4px; }
 
     .saved-item {
       display: flex;
@@ -618,10 +550,7 @@
       min-width: 0;
     }
 
-    .saved-buttons {
-      display: flex;
-      gap: 6px;
-    }
+    .saved-buttons { display: flex; gap: 6px; }
 
     .small-btn {
       -webkit-appearance: none;
@@ -653,9 +582,7 @@
       display: none;
     }
 
-    .open-panel.open {
-      display: block;
-    }
+    .open-panel.open { display: block; }
 
     .set-header {
       font-size: 15px;
@@ -671,34 +598,13 @@
       margin-bottom: 4px;
     }
 
-    .progress-detail-row span:first-child {
-      color: #bbbbbb;
-    }
+    .progress-detail-row span:first-child { color: #bbbbbb; }
+    .progress-detail-row span:last-child { color: #ffffff; font-weight: 600; }
 
-    .progress-detail-row span:last-child {
-      color: #ffffff;
-      font-weight: 600;
-    }
-
-    .progress-detail-meta {
-      font-size: 13px;
-      color: #bbbbbb;
-    }
-
-    .progress-detail-title {
-      margin-bottom: 8px;
-    }
-
-    .progress-detail-pr {
-      font-size: 13px;
-      color: #bbbbbb;
-      margin-bottom: 8px;
-    }
-
-    .progress-detail-empty {
-      font-size: 13px;
-      color: #bbbbbb;
-    }
+    .progress-detail-meta { font-size: 13px; color: #bbbbbb; }
+    .progress-detail-title { margin-bottom: 8px; }
+    .progress-detail-pr { font-size: 13px; color: #bbbbbb; margin-bottom: 8px; }
+    .progress-detail-empty { font-size: 13px; color: #bbbbbb; }
 
     .progress-letter-grid {
       margin-top: 12px;
@@ -731,10 +637,7 @@
       box-shadow: none;
     }
 
-    .progress-letter-btn.disabled {
-      opacity: 0.25;
-      pointer-events: none;
-    }
+    .progress-letter-btn.disabled { opacity: 0.25; pointer-events: none; }
 
     .progress-letter-btn.active {
       background-color: #1A1E2C;
@@ -756,14 +659,8 @@
       gap: 6px;
     }
 
-    .link-back span {
-      font-size: 18px;
-      line-height: 1;
-    }
-
-    .link-back:active {
-      color: #ffffff;
-    }
+    .link-back span { font-size: 18px; line-height: 1; }
+    .link-back:active { color: #ffffff; }
 
     /* --------------------------
        TUTORIAL OVERLAY
@@ -780,9 +677,7 @@
       z-index: 100;
     }
 
-    .tutorial-overlay.visible {
-      display: flex;
-    }
+    .tutorial-overlay.visible { display: flex; }
 
     .tutorial-card {
       width: 100%;
@@ -794,11 +689,7 @@
       box-shadow: var(--shadow-soft);
     }
 
-    .tutorial-title {
-      font-size: 20px;
-      font-weight: 700;
-      margin-bottom: 6px;
-    }
+    .tutorial-title { font-size: 20px; font-weight: 700; margin-bottom: 6px; }
 
     .tutorial-body {
       font-size: 14px;
@@ -813,9 +704,7 @@
       color: var(--text-muted);
     }
 
-    .tutorial-bullets li {
-      margin-bottom: 4px;
-    }
+    .tutorial-bullets li { margin-bottom: 4px; }
 
     .tutorial-actions {
       margin-top: 16px;
@@ -848,13 +737,8 @@
       opacity: 0.9;
     }
 
-    .tutorial-screen {
-      display: none;
-    }
-
-    .tutorial-screen.active {
-      display: block;
-    }
+    .tutorial-screen { display: none; }
+    .tutorial-screen.active { display: block; }
 
     /* --------------------------
        FOOTER / LEGAL
@@ -886,18 +770,11 @@
       color: var(--text-muted);
     }
 
-    .hidden {
-      display: none;
-    }
+    .hidden { display: none; }
 
     @media (min-width: 500px) {
-      .app-wrapper {
-        align-items: center;
-      }
-
-      .card {
-        width: 430px;
-      }
+      .app-wrapper { align-items: center; }
+      .card { width: 430px; }
     }
 
     /* Logger card: scrollable content + room for sticky footer */
@@ -914,24 +791,21 @@
       bottom: 0;
       margin-top: 16px;
       padding-top: 12px;
-      /* remove dark overlay so the card color shows through */
       background: transparent;
     }
 
     /* AFT mode only: no inner scroll + tighter bottom space */
     body.mode-aft .card.card--logger {
-      max-height: none;        /* turn off the scroll limit */
-      overflow-y: visible;     /* no scrolling inside the card */
-      padding-bottom: 32px;    /* smaller gap at the bottom just for AFT */
+      max-height: none;
+      overflow-y: visible;
+      padding-bottom: 32px;
     }
 
     body.mode-aft .card.card--logger .card-sticky-footer {
-      margin-top: 12px;        /* slightly tighter spacing above Save/Mode */
+      margin-top: 12px;
     }
 
-    .card-sticky-footer .footer-btn {
-      margin-top: 0;
-    }
+    .card-sticky-footer .footer-btn { margin-top: 0; }
 
     /* NEW: Mode row inside sticky footer */
     .mode-footer-row {
@@ -942,22 +816,16 @@
       gap: 12px;
     }
 
-    .mode-footer-label {
-      font-size: 14px;
-      color: var(--text-muted);
-    }
+    .mode-footer-label { font-size: 14px; color: var(--text-muted); }
 
-    .mode-footer-buttons {
-      display: flex;
-      gap: 8px;
-    }
+    .mode-footer-buttons { display: flex; gap: 8px; }
 
     .mode-btn {
       width: auto;
       height: 36px;
       font-size: 14px;
       padding: 0 14px;
-      margin-top: 0; /* override primary-btn default */
+      margin-top: 0;
       flex: 0 0 auto;
     }
 
@@ -969,10 +837,7 @@
       padding-right: 4px;
     }
 
-    .settings-volume-list .settings-row {
-      font-size: 13px;
-      padding: 2px 0;
-    }
+    .settings-volume-list .settings-row { font-size: 13px; padding: 2px 0; }
 
     /* --------------------------
        CHARTS
@@ -992,26 +857,14 @@
       border: 1px solid #262626;
     }
 
-    .chart-card-title {
-      font-size: 15px;
-      font-weight: 600;
-      margin-bottom: 2px;
-    }
-
-    .chart-card-sub {
-      font-size: 12px;
-      color: var(--text-muted);
-      margin-bottom: 6px;
-    }
+    .chart-card-title { font-size: 15px; font-weight: 600; margin-bottom: 2px; }
+    .chart-card-sub { font-size: 12px; color: var(--text-muted); margin-bottom: 6px; }
 
     /* --------------------------
        SETTINGS
     --------------------------- */
 
-    .settings-group {
-      margin-top: 10px;
-      margin-bottom: 14px;
-    }
+    .settings-group { margin-top: 10px; margin-bottom: 14px; }
 
     .settings-row {
       display: flex;
@@ -1022,9 +875,7 @@
       font-size: 14px;
     }
 
-    .settings-row span {
-      color: var(--text-main);
-    }
+    .settings-row span { color: var(--text-main); }
 
     .settings-note {
       font-size: 12px;
@@ -1033,10 +884,7 @@
       line-height: 1.4;
     }
 
-    .settings-checkbox {
-      width: 18px;
-      height: 18px;
-    }
+    .settings-checkbox { width: 18px; height: 18px; }
 
     /* --------------------------
        HIGH CONTRAST THEME
@@ -1057,9 +905,7 @@
         0 4px 0 #000;
     }
 
-    body.theme-high-contrast .saved-item {
-      border-color: var(--accent);
-    }
+    body.theme-high-contrast .saved-item { border-color: var(--accent); }
 
     /* --------------------------
        TOAST / SNACKBAR
@@ -1094,9 +940,9 @@
       transform: translateX(-50%) translateY(0);
       opacity: 1;
     }
-
   </style>
 </head>
+
 <body>
   <div class="app-wrapper">
     <header class="app-header">
@@ -1113,8 +959,6 @@
         aria-expanded="false"
       >
         <div class="menu-icon">
-
-        >
           <span></span><span></span><span></span>
         </div>
       </button>
@@ -1136,7 +980,6 @@
     <!-- HOME / LOGGER SCREEN -->
     <main id="homeScreen" class="screen active">
       <section class="card card--logger">
-
         <div id="workoutsContainer" class="workouts-container"></div>
 
         <div class="card-sticky-footer">
@@ -1177,11 +1020,6 @@
         </div>
       </section>
     </main>
-
-    <!-- ROUTINES SCREEN -->
-    <!-- (keep the rest of your existing ROUTINES, PROGRESS, CHARTS, SETTINGS
-         screens exactly the same as in your last version – they don’t change
-         for this layout tweak) -->
 
     <!-- ROUTINES SCREEN -->
     <main id="workoutsScreen" class="screen">
