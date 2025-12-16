@@ -1454,7 +1454,7 @@ function createAftCard(parent) {
   bottomRow.appendChild(bottomGroup);
 
   setsWrapper.appendChild(bottomRow);
-
+});
   // -----------------------------
   // Auto-scoring wiring
   // -----------------------------
