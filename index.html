@@ -438,6 +438,14 @@
     /* spacer column flexes to push the right group to the edge */
     .complex-row-spacer { display: block; }
 
+    /* ✅ Complex MODE: stretch Exercise name box to line up with the end of the "-C" button */
+    body.mode-complex .set-box.complex-row {
+      grid-template-columns: 1fr auto;
+      column-gap: 8px;
+    }
+
+    body.mode-complex .complex-row-spacer { display: none; }
+
     /* let the right group stay pushed to the right like before */
     .set-right-group {
       display: flex;
