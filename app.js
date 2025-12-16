@@ -1407,6 +1407,20 @@ function createAftCard(parent) {
   });
 
   // -----------------------------
+  // Pass/Fail box (DIRECTLY under 2MR label)
+  // -----------------------------
+  const passFailRow = document.createElement("div");
+  passFailRow.className = "set-box complex-row aft-passfail-row";
+
+  const passFailBox = document.createElement("div");
+  passFailBox.className =
+    "text-input complex-exercise-name aft-exercise-label aft-passfail-box";
+  passFailBox.textContent = "Pass/Fail";
+
+  passFailRow.appendChild(passFailBox);
+  setsWrapper.appendChild(passFailRow);
+
+  // -----------------------------
   // Bottom row: Total (FIXED)
   // Must use the SAME 3-column grid as the other rows:
   // [label-width box] [spacer] [rightGroup]
@@ -1488,6 +1502,37 @@ function createAftCard(parent) {
     });
 
     totalInput.value = anyScore ? String(total) : "";
+
+    // -----------------------------
+    // Pass/Fail logic (AFT)
+    // Pass = all 5 events >= 60 AND total >= 300
+    // -----------------------------
+    passFailBox.classList.remove("pass", "fail");
+    passFailBox.textContent = "Pass/Fail";
+
+    const allScoresReady =
+      !!sex &&
+      !!age &&
+      Object.values(eventInputs).every(({ scoreInput }) => scoreInput.value !== "");
+
+    if (allScoresReady) {
+      const scores = Object.values(eventInputs).map(({ scoreInput }) => {
+        const n = parseInt(scoreInput.value, 10);
+        return Number.isFinite(n) ? n : 0;
+      });
+
+      const totalNum = scores.reduce((a, b) => a + b, 0);
+      const perEventPass = scores.every((s) => s >= 60);
+      const totalPass = totalNum >= 300;
+
+      if (perEventPass && totalPass) {
+        passFailBox.classList.add("pass");
+        passFailBox.textContent = "Pass";
+      } else {
+        passFailBox.classList.add("fail");
+        passFailBox.textContent = "Fail";
+      }
+    }
   }
 
   // Recompute when metadata changes
