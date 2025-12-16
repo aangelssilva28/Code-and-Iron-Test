@@ -1421,24 +1421,20 @@ function createAftCard(parent) {
   setsWrapper.appendChild(passFailRow);
 
   // -----------------------------
-  // Bottom row: Total (FIXED)
-  // Must use the SAME 3-column grid as the other rows:
-  // [label-width box] [spacer] [rightGroup]
+  // Bottom row: Pass/Fail + Total (SAME ROW)
+  // Pass/Fail = underneath the 2MR label
+  // Total     = directly to the right, under the 2MR inputs
   // -----------------------------
-  const totalRow = document.createElement("div");
-  totalRow.className = "set-box complex-row aft-total-row";
+  const bottomRow = document.createElement("div");
+  bottomRow.className = "set-box complex-row aft-bottom-row";
 
-  // Left placeholder that keeps the label column width identical
-  const totalLeft = document.createElement("div");
-  totalLeft.className = "text-input complex-exercise-name aft-exercise-label";
-  totalLeft.style.visibility = "hidden";
-  totalLeft.textContent = "2MR"; // any text, it's hidden
+  const passFailBox = document.createElement("div");
+  passFailBox.className =
+    "text-input complex-exercise-name aft-exercise-label aft-passfail-box";
+  passFailBox.textContent = "Pass/Fail";
 
-  const totalSpacer = document.createElement("div");
-  totalSpacer.className = "complex-row-spacer";
-
-  const totalGroup = document.createElement("div");
-  totalGroup.className = "set-right-group";
+  const bottomGroup = document.createElement("div");
+  bottomGroup.className = "set-right-group";
 
   const totalInput = document.createElement("input");
   totalInput.className = "set-input aft-total-input";
@@ -1452,13 +1448,12 @@ function createAftCard(parent) {
   // EXACT width of (66 + 8 + 66) so it lines up with both ends
   totalInput.style.width = "calc((2 * 66px) + 8px)";
 
-  totalGroup.appendChild(totalInput);
+  bottomGroup.appendChild(totalInput);
 
-  totalRow.appendChild(totalLeft);
-  totalRow.appendChild(totalSpacer);
-  totalRow.appendChild(totalGroup);
+  bottomRow.appendChild(passFailBox);
+  bottomRow.appendChild(bottomGroup);
 
-  setsWrapper.appendChild(totalRow);
+  setsWrapper.appendChild(bottomRow);
 
   // -----------------------------
   // Auto-scoring wiring
