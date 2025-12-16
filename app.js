@@ -1407,20 +1407,6 @@ function createAftCard(parent) {
   });
 
   // -----------------------------
-  // Pass/Fail box (DIRECTLY under 2MR label)
-  // -----------------------------
-  const passFailRow = document.createElement("div");
-  passFailRow.className = "set-box complex-row aft-passfail-row";
-
-  const passFailBox = document.createElement("div");
-  passFailBox.className =
-    "text-input complex-exercise-name aft-exercise-label aft-passfail-box";
-  passFailBox.textContent = "Pass/Fail";
-
-  passFailRow.appendChild(passFailBox);
-  setsWrapper.appendChild(passFailRow);
-
-  // -----------------------------
   // Bottom row: Pass/Fail + Total (SAME ROW)
   // Pass/Fail = underneath the 2MR label
   // Total     = directly to the right, under the 2MR inputs
@@ -1454,7 +1440,6 @@ function createAftCard(parent) {
   bottomRow.appendChild(bottomGroup);
 
   setsWrapper.appendChild(bottomRow);
-});
   // -----------------------------
   // Auto-scoring wiring
   // -----------------------------
