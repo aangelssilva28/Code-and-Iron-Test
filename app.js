@@ -2276,7 +2276,7 @@ const Charts = (() => {
     });
   }
 
-  // Simple line chart: prefers volume, then weight, then reps
+  // Simple line chart (copper line + green under-fill + last-dot only + START/PR labels)
   function drawExerciseChart(canvas, ex) {
     const ctx = canvas.getContext("2d");
 
@@ -2299,66 +2299,121 @@ const Charts = (() => {
     const history = Array.isArray(ex.history) ? ex.history.slice() : [];
     if (!history.length) {
       ctx.fillStyle = "#bbbbbb";
-      ctx.font =
-        "11px system-ui, -apple-system, BlinkMacSystemFont, sans-serif";
+      ctx.font = "11px system-ui, -apple-system, BlinkMacSystemFont, sans-serif";
       ctx.fillText("No history yet.", 10, 20);
       return;
     }
 
-    // Oldest → newest, cap to last 12 entries
-    const ordered = history.slice().reverse(); // now oldest → newest
-    const maxPoints = 12;
-    const slice = ordered.slice(-maxPoints);
+    // Oldest → newest
+    const ordered = history.slice().reverse();
 
-    const points = slice.map((entry) => {
-      let value;
-      let mode = "volume";
+    // Helpers
+    const toNum = (v) => (typeof v === "number" ? v : Number(v) || 0);
 
-      if (
-        typeof entry.totalVolume === "number" &&
-        entry.totalVolume > 0
-      ) {
-        value = entry.totalVolume;
-      } else if (
-        typeof entry.bestWeight === "number" &&
-        entry.bestWeight > 0
-      ) {
-        value = entry.bestWeight;
-        mode = "weight";
-      } else {
-        value = entry.bestReps || 0;
-        mode = "reps";
-      }
+    function pickDate(entry) {
+      const raw =
+        entry?.date ??
+        entry?.sessionDate ??
+        entry?.performedOn ??
+        entry?.createdAt ??
+        entry?.timestamp ??
+        entry?.time;
 
-      return { value, mode };
-    });
+      const d = raw instanceof Date ? raw : new Date(raw);
+      return isNaN(d.getTime()) ? null : d;
+    }
+
+    function fmtDate(d) {
+      if (!d) return "--/--/----";
+      const mm = String(d.getMonth() + 1).padStart(2, "0");
+      const dd = String(d.getDate()).padStart(2, "0");
+      const yy = String(d.getFullYear());
+      return `${mm}/${dd}/${yy}`;
+    }
+
+    function pickWRS(entry) {
+      const w = toNum(entry?.bestWeight ?? entry?.weight ?? entry?.topWeight ?? entry?.heaviestWeight);
+      const r = toNum(entry?.bestReps ?? entry?.reps ?? entry?.topReps ?? entry?.maxReps);
+      const s = Math.max(1, toNum(entry?.sets ?? entry?.bestSets ?? entry?.setCount ?? entry?.totalSets ?? 1));
+      return { w, r, s };
+    }
+
+    // Metric for PR + plotting (W×R×S). If missing, it falls back gracefully.
+    function sessionMetric(entry) {
+      const { w, r, s } = pickWRS(entry);
+      const wrs = w * r * s;
+      if (wrs > 0) return wrs;
+
+      // fallbacks so we still draw something
+      const bw = toNum(entry?.bestWeight);
+      if (bw > 0) return bw;
+
+      const br = toNum(entry?.bestReps);
+      if (br > 0) return br;
+
+      const tv = toNum(entry?.totalVolume);
+      if (tv > 0) return tv;
+
+      return 0;
+    }
+
+    function wrsText(entry) {
+      const { w, r, s } = pickWRS(entry);
+      // Always show W×R×S (as requested) even if some are 0 — keeps it consistent
+      return `${w}×${r}×${s}`;
+    }
+
+    // --- Build points: FIRST entry (START) + LAST 5 entries ---
+    let entriesToPlot;
+    if (ordered.length <= 6) {
+      entriesToPlot = ordered.slice();
+    } else {
+      entriesToPlot = [ordered[0], ...ordered.slice(-5)];
+    }
+
+    const points = entriesToPlot.map((entry) => ({
+      entry,
+      value: sessionMetric(entry),
+    }));
 
     const maxVal = points.reduce((max, p) => Math.max(max, p.value), 0);
+    const minVal = points.reduce((min, p) => Math.min(min, p.value), points[0].value);
+
     if (!maxVal) {
       ctx.fillStyle = "#bbbbbb";
-      ctx.font =
-        "11px system-ui, -apple-system, BlinkMacSystemFont, sans-serif";
+      ctx.font = "11px system-ui, -apple-system, BlinkMacSystemFont, sans-serif";
       ctx.fillText("No numeric data yet.", 10, 20);
       return;
     }
 
-    const minVal = points.reduce((min, p) => Math.min(min, p.value), points[0].value);
+    // Find LAST PR date across ALL history (based on the same W×R×S metric)
+    let best = -Infinity;
+    let lastPrDate = null;
+    for (let i = 0; i < ordered.length; i++) {
+      const v = sessionMetric(ordered[i]);
+      if (v > best) {
+        best = v;
+        lastPrDate = pickDate(ordered[i]);
+      } else if (v === best && v > 0) {
+        // same PR value later → update to most recent PR date
+        const d = pickDate(ordered[i]);
+        if (d) lastPrDate = d;
+      }
+    }
+    const prDateText = fmtDate(lastPrDate);
 
-    // Tactical padding + plot area (in CSS pixels)
+    // Tactical padding + plot area
     const paddingLeft = 16;
     const paddingRight = 10;
-    const paddingTop = 18;
-    const paddingBottom = 16;
+    const paddingTop = 22;  // leave room for labels inside canvas
+    const paddingBottom = 14;
 
     const plotX = paddingLeft;
     const plotY = paddingTop;
     const plotW = cssW - paddingLeft - paddingRight;
     const plotH = cssH - paddingTop - paddingBottom;
-
-    const n = points.length;
     const bottomY = plotY + plotH;
 
-    // Headroom + stable scaling (looks good even if flat data)
     const rawRange = Math.max(0.000001, maxVal - minVal);
     const headroom = rawRange * 0.12;
     const floorroom = rawRange * 0.06;
@@ -2367,22 +2422,21 @@ const Charts = (() => {
     const minPlot = Math.max(0, minVal - floorroom);
     const denom = Math.max(0.000001, maxPlot - minPlot);
 
-    // Compute x/y for each point (CSS pixels)
+    const n = points.length;
+
+    // Compute x/y for each point
     const coords = points.map((p, i) => {
       const ratio = (p.value - minPlot) / denom;
       const y = bottomY - ratio * plotH;
 
       let x;
-      if (n === 1) {
-        x = plotX + plotW / 2;
-      } else {
-        const step = plotW / (n - 1);
-        x = plotX + step * i;
-      }
-      return { x, y, value: p.value, mode: p.mode };
+      if (n === 1) x = plotX + plotW / 2;
+      else x = plotX + (plotW / (n - 1)) * i;
+
+      return { x, y, value: p.value, entry: p.entry };
     });
 
-    // --- Subtle grid (tactical) ---
+    // --- Subtle grid + frame ---
     ctx.save();
     ctx.lineWidth = 1;
     ctx.strokeStyle = "rgba(255,255,255,0.06)";
@@ -2393,13 +2447,11 @@ const Charts = (() => {
       ctx.lineTo(plotX + plotW, y);
       ctx.stroke();
     }
-
-    // Frame
     ctx.strokeStyle = "rgba(255,255,255,0.10)";
     ctx.strokeRect(plotX, plotY, plotW, plotH);
     ctx.restore();
 
-    // Smooth path helper (quadratic through midpoints)
+    // Smooth path helper
     function traceSmoothLine(pts) {
       if (!pts.length) return;
       if (pts.length === 1) {
@@ -2407,7 +2459,6 @@ const Charts = (() => {
         ctx.lineTo(pts[0].x, pts[0].y);
         return;
       }
-
       ctx.moveTo(pts[0].x, pts[0].y);
       for (let i = 0; i < pts.length - 2; i++) {
         const xMid = (pts[i].x + pts[i + 1].x) / 2;
@@ -2422,11 +2473,10 @@ const Charts = (() => {
       );
     }
 
-    // --- Fill under line (subtle neon fade) ---
+    // --- Green under-fill (keep) ---
     const fillGrad = ctx.createLinearGradient(0, plotY, 0, bottomY);
     fillGrad.addColorStop(0, "rgba(57,255,20,0.18)");
     fillGrad.addColorStop(1, "rgba(57,255,20,0)");
-
     ctx.save();
     ctx.beginPath();
     traceSmoothLine(coords);
@@ -2437,36 +2487,61 @@ const Charts = (() => {
     ctx.fill();
     ctx.restore();
 
-    // --- Neon line (gradient + light glow) ---
+    // --- Copper line (use your accent if available) ---
+    const rootStyles = getComputedStyle(document.documentElement);
+    const accentRaw = (rootStyles.getPropertyValue("--accent") || "").trim();
+    const fallbackCopper = "#c07a2b";
+    const copper = accentRaw || fallbackCopper;
+
+    function toRgba(color, a) {
+      const c = (color || "").trim();
+      if (c.startsWith("#")) {
+        let hex = c.slice(1);
+        if (hex.length === 3) hex = hex.split("").map((ch) => ch + ch).join("");
+        const r = parseInt(hex.slice(0, 2), 16);
+        const g = parseInt(hex.slice(2, 4), 16);
+        const b = parseInt(hex.slice(4, 6), 16);
+        return `rgba(${r},${g},${b},${a})`;
+      }
+      if (c.startsWith("rgba(")) {
+        const nums = c.replace("rgba(", "").replace(")", "").split(",").map((x) => x.trim());
+        return `rgba(${nums[0]},${nums[1]},${nums[2]},${a})`;
+      }
+      if (c.startsWith("rgb(")) {
+        const nums = c.replace("rgb(", "").replace(")", "").split(",").map((x) => x.trim());
+        return `rgba(${nums[0]},${nums[1]},${nums[2]},${a})`;
+      }
+      // unknown format → fallback copper rgba
+      return `rgba(192,122,43,${a})`;
+    }
+
     const lineGrad = ctx.createLinearGradient(plotX, 0, plotX + plotW, 0);
-    lineGrad.addColorStop(0, "rgba(57,255,20,0.55)");
-    lineGrad.addColorStop(1, "rgba(57,255,20,1)");
+    lineGrad.addColorStop(0, toRgba(copper, 0.65));
+    lineGrad.addColorStop(1, toRgba(copper, 1));
 
     ctx.save();
     ctx.beginPath();
     traceSmoothLine(coords);
     ctx.strokeStyle = lineGrad;
-    ctx.lineWidth = 2.4;
+    ctx.lineWidth = 2.6;
     ctx.lineJoin = "round";
     ctx.lineCap = "round";
-    ctx.shadowColor = "rgba(57,255,20,0.45)";
+    ctx.shadowColor = toRgba(copper, 0.35);
     ctx.shadowBlur = 6;
     ctx.stroke();
     ctx.restore();
 
-    // --- Last dot only (newest point glow) ---
+    // --- Last dot only (keep dot green) ---
     const last = coords[coords.length - 1];
     ctx.save();
     ctx.shadowColor = "rgba(57,255,20,0.60)";
     ctx.shadowBlur = 10;
 
-    // outer glow blob
     ctx.fillStyle = "rgba(57,255,20,0.22)";
     ctx.beginPath();
     ctx.arc(last.x, last.y, 7, 0, Math.PI * 2);
     ctx.fill();
 
-    // solid dot
     ctx.shadowBlur = 0;
     ctx.fillStyle = "#39ff14";
     ctx.beginPath();
@@ -2474,23 +2549,66 @@ const Charts = (() => {
     ctx.fill();
     ctx.restore();
 
-    // Label: what we're plotting + max value (kept, but cleaner)
-    const lastMode = points[points.length - 1].mode;
-    let label;
-    if (lastMode === "volume") {
-      label = "Volume (weight × reps)";
-    } else if (lastMode === "weight") {
-      label = "Best weight";
-    } else {
-      label = "Best reps";
+    // --- Labels: START (first), PR date above newest, prior entry label ---
+    function drawLabel(text, x, y) {
+      ctx.save();
+      ctx.font = "10px system-ui, -apple-system, BlinkMacSystemFont, sans-serif";
+      ctx.textBaseline = "bottom";
+      ctx.fillStyle = "rgba(187,187,187,0.95)";
+
+      const padX = 6;
+      const padY = 4;
+      const w = ctx.measureText(text).width;
+      const boxW = w + padX * 2;
+      const boxH = 16;
+
+      // keep label inside canvas
+      let bx = x - boxW / 2;
+      bx = Math.max(4, Math.min(bx, cssW - boxW - 4));
+
+      let by = y - 10; // above point
+      by = Math.max(boxH + 2, by);
+
+      // subtle backing so it’s readable
+      ctx.fillStyle = "rgba(10,10,10,0.55)";
+      ctx.strokeStyle = "rgba(255,255,255,0.10)";
+      ctx.lineWidth = 1;
+
+      const r = 8;
+      ctx.beginPath();
+      ctx.moveTo(bx + r, by - boxH);
+      ctx.lineTo(bx + boxW - r, by - boxH);
+      ctx.quadraticCurveTo(bx + boxW, by - boxH, bx + boxW, by - boxH + r);
+      ctx.lineTo(bx + boxW, by - r);
+      ctx.quadraticCurveTo(bx + boxW, by, bx + boxW - r, by);
+      ctx.lineTo(bx + r, by);
+      ctx.quadraticCurveTo(bx, by, bx, by - r);
+      ctx.lineTo(bx, by - boxH + r);
+      ctx.quadraticCurveTo(bx, by - boxH, bx + r, by - boxH);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = "rgba(220,220,220,0.92)";
+      ctx.fillText(text, bx + padX, by - padY);
+
+      ctx.restore();
     }
 
-    ctx.fillStyle = "rgba(187,187,187,0.95)";
-    ctx.font =
-      "10px system-ui, -apple-system, BlinkMacSystemFont, sans-serif";
-    ctx.textAlign = "left";
-    ctx.textBaseline = "top";
-    ctx.fillText(`${label} — max ${maxVal.toLocaleString()}`, plotX, 2);
+    // START over first plotted entry
+    const firstPt = coords[0];
+    drawLabel("START", firstPt.x, firstPt.y);
+
+    // Prior point label (if exists)
+    if (coords.length >= 2) {
+      const prior = coords[coords.length - 2];
+      const priorDate = fmtDate(pickDate(prior.entry));
+      drawLabel(`${priorDate} • ${wrsText(prior.entry)}`, prior.x, prior.y);
+    }
+
+    // Newest point: PR date + newest entry W×R×S
+    const newestEntry = coords[coords.length - 1].entry;
+    drawLabel(`${prDateText} • ${wrsText(newestEntry)}`, last.x, last.y);
   }
 
   // Public API for Charts
