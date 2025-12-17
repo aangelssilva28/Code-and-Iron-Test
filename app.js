@@ -2044,6 +2044,38 @@ const Progress = (() => {
       progressDetailEl.appendChild(prInfo);
     }
 
+    // NEW: inline chart (replaces the separate Charts screen)
+    const chartCard = document.createElement("div");
+    chartCard.className = "chart-card";
+
+    const chartTitle = document.createElement("div");
+    chartTitle.className = "chart-card-title";
+    chartTitle.textContent = "Chart";
+    chartCard.appendChild(chartTitle);
+
+    const chartSub = document.createElement("div");
+    chartSub.className = "chart-card-sub";
+    chartSub.textContent = "Newest sessions are on the right.";
+    chartCard.appendChild(chartSub);
+
+    const chartCanvas = document.createElement("canvas");
+    chartCanvas.style.width = "100%";
+    chartCanvas.style.height = "140px";
+    chartCard.appendChild(chartCanvas);
+
+    progressDetailEl.appendChild(chartCard);
+
+    // Draw after it's in the DOM so clientWidth/clientHeight exist
+    if (typeof Charts !== "undefined" && Charts.drawExerciseChart) {
+      requestAnimationFrame(() => {
+        try {
+          Charts.drawExerciseChart(chartCanvas, ex);
+        } catch (e) {
+          console.warn("Could not draw inline chart", e);
+        }
+      });
+    }
+
     const history = (ex.history || []).slice(0, 5);
     if (!history.length) {
       const empty = document.createElement("div");
@@ -2642,6 +2674,9 @@ const Charts = (() => {
   return {
     init,
     refresh,
+
+    // NEW: allow inline charts elsewhere (ex: Progress detail panel)
+    drawExerciseChart,
   };
 })();
 
@@ -3226,7 +3261,6 @@ const App = (() => {
   let homeScreen;
   let workoutsScreen;
   let progressScreen;
-  let chartsScreen;
   let settingsScreen;
 
   function handleVersionChange() {
@@ -3298,16 +3332,10 @@ const App = (() => {
     workoutsScreen = $("#workoutsScreen");
     progressScreen = $("#progressScreen");
     settingsScreen = $("#settingsScreen");
-    chartsScreen = $("#chartsScreen");
 
     if (menuButton) {
       menuButton.setAttribute("aria-haspopup", "true");
       menuButton.setAttribute("aria-expanded", "false");
-    }
-
-    const chartsBackBtn = $("#backToLoggerFromCharts");
-    if (chartsBackBtn) {
-      chartsBackBtn.addEventListener("click", () => showScreen("home"));
     }
 
     const progressBackBtn = $("#backToLoggerFromProgress");
@@ -3339,20 +3367,11 @@ const App = (() => {
         item.addEventListener("click", () => {
           const nav = item.dataset.nav;
 
-          if (
-            nav === "workouts" ||
-            nav === "progress" ||
-            nav === "charts" ||
-            nav === "settings"
-          ) {
+          if (nav === "workouts" || nav === "progress" || nav === "settings") {
             showScreen(nav);
 
             if (nav === "progress") {
               Progress.refreshUI();
-            } else if (nav === "charts") {
-              if (typeof Charts !== "undefined" && Charts.refresh) {
-                Charts.refresh();
-              }
             }
           }
 
@@ -3426,20 +3445,13 @@ const App = (() => {
   }
 
   function showScreen(which) {
-    if (
-      !homeScreen ||
-      !workoutsScreen ||
-      !progressScreen ||
-      !chartsScreen ||
-      !settingsScreen
-    ) {
+    if (!homeScreen || !workoutsScreen || !progressScreen || !settingsScreen) {
       return;
     }
 
     homeScreen.classList.remove("active");
     workoutsScreen.classList.remove("active");
     progressScreen.classList.remove("active");
-    chartsScreen.classList.remove("active");
     settingsScreen.classList.remove("active");
 
     if (which === "home") {
@@ -3448,10 +3460,11 @@ const App = (() => {
       workoutsScreen.classList.add("active");
     } else if (which === "progress") {
       progressScreen.classList.add("active");
-    } else if (which === "charts") {
-      chartsScreen.classList.add("active");
     } else if (which === "settings") {
       settingsScreen.classList.add("active");
+    } else {
+      // Fallback for any removed/unknown screen keys (ex: "charts")
+      homeScreen.classList.add("active");
     }
   }
 
