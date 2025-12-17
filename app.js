@@ -2489,7 +2489,6 @@ const Charts = (() => {
     const rootStyles = getComputedStyle(document.documentElement);
     const fallbackCopper = "#c07a2b";
 
-    // Try common copper vars first; only use --accent if it isn't your neon green
     const tryVars = [
       "--copper",
       "--copper-accent",
@@ -2512,7 +2511,7 @@ const Charts = (() => {
     for (const v of tryVars) {
       const val = (rootStyles.getPropertyValue(v) || "").trim();
       if (!val) continue;
-      if (v === "--accent" && looksLikeNeonGreen(val)) continue; // skip green accent
+      if (v === "--accent" && looksLikeNeonGreen(val)) continue;
       copper = val;
       break;
     }
@@ -2573,53 +2572,9 @@ const Charts = (() => {
     ctx.fill();
     ctx.restore();
 
-    // --- Labels: START (box), NEWEST (box), prior entry label ---
-    function drawLabel(text, x, y) {
-      ctx.save();
-      ctx.font = "10px system-ui, -apple-system, BlinkMacSystemFont, sans-serif";
-      ctx.textBaseline = "bottom";
-
-      const padX = 6;
-      const padY = 4;
-      const tw = ctx.measureText(text).width;
-      const boxW = tw + padX * 2;
-      const boxH = 16;
-
-      let bx = x - boxW / 2;
-      bx = Math.max(4, Math.min(bx, cssW - boxW - 4));
-
-      let by = y - 10;
-      by = Math.max(boxH + 2, by);
-
-      ctx.fillStyle = "rgba(10,10,10,0.55)";
-      ctx.strokeStyle = "rgba(255,255,255,0.10)";
-      ctx.lineWidth = 1;
-
-      const r = 8;
-      ctx.beginPath();
-      ctx.moveTo(bx + r, by - boxH);
-      ctx.lineTo(bx + boxW - r, by - boxH);
-      ctx.quadraticCurveTo(bx + boxW, by - boxH, bx + boxW, by - boxH + r);
-      ctx.lineTo(bx + boxW, by - r);
-      ctx.quadraticCurveTo(bx + boxW, by, bx + boxW - r, by);
-      ctx.lineTo(bx + r, by);
-      ctx.quadraticCurveTo(bx, by, bx, by - r);
-      ctx.lineTo(bx, by - boxH + r);
-      ctx.quadraticCurveTo(bx, by - boxH, bx + r, by - boxH);
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
-
-      ctx.fillStyle = "rgba(220,220,220,0.92)";
-      ctx.fillText(text, bx + padX, by - padY);
-
-      ctx.restore();
-    }
-
     function drawInfoBox(titleLine, dateLine, wrsLine, x, y) {
       const lines = [titleLine, dateLine, wrsLine];
 
-      // gunmetal background: try your theme vars, fallback to a solid gunmetal
       const bgRaw =
         (rootStyles.getPropertyValue("--card") || "").trim() ||
         (rootStyles.getPropertyValue("--bg") || "").trim() ||
@@ -2638,18 +2593,15 @@ const Charts = (() => {
       const boxW = Math.ceil(maxW + padX * 2);
       const boxH = Math.ceil(padY * 2 + lineH * lines.length);
 
-      // position: same anchor as before (centered above point)
       let bx = x - boxW / 2;
       bx = Math.max(4, Math.min(bx, cssW - boxW - 4));
 
-      const gap = 10; // distance above point
+      const gap = 10;
       let boxBottom = y - gap;
       let by = boxBottom - boxH;
 
-      // keep inside canvas
       by = Math.max(2, Math.min(by, cssH - boxH - 2));
 
-      // draw rounded rect
       const r = 10;
 
       ctx.fillStyle = bgRaw;
@@ -2670,9 +2622,7 @@ const Charts = (() => {
       ctx.fill();
       ctx.stroke();
 
-      // text
       ctx.fillStyle = "rgba(235,235,235,0.92)";
-      // title slightly bolder
       ctx.font = "10px system-ui, -apple-system, BlinkMacSystemFont, sans-serif";
       ctx.fillText(String(lines[0]), bx + padX, by + padY);
 
@@ -2686,7 +2636,7 @@ const Charts = (() => {
       ctx.restore();
     }
 
-    // START box over first plotted entry
+    // START box
     const firstPt = coords[0];
     const firstEntry = coords[0].entry;
     drawInfoBox(
@@ -2697,14 +2647,7 @@ const Charts = (() => {
       firstPt.y
     );
 
-    // Prior point label (keep as-is)
-    if (coords.length >= 2) {
-      const prior = coords[coords.length - 2];
-      const priorDate = fmtDate(pickDate(prior.entry));
-      drawLabel(`${priorDate} • ${wrsText(prior.entry)}`, prior.x, prior.y);
-    }
-
-    // NEWEST box (PR date + newest W×R×S)
+    // NEWEST box
     const newestEntry = coords[coords.length - 1].entry;
     drawInfoBox(
       "PR",
