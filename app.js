@@ -1,3220 +1,1299 @@
-// ======================================================
-// DOM helpers
-// ======================================================
-const $ = (sel, root = document) => root.querySelector(sel);
-const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Code and Iron Test</title>
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <!-- PWA -->
+  <meta name="theme-color" content="#1A1E2C">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
 
-// Tiny utility: make sure only one panel with `.open` is active
-function openSinglePanel(
-  container,
-  targetPanel,
-  { panelSelector = ".open-panel.open", openClass = "open", onClose } = {}
-) {
-  if (!container || !targetPanel) return;
+  <!-- Germania One font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Germania+One&display=swap" rel="stylesheet">
 
-  $$(panelSelector, container).forEach((panel) => {
-    if (panel === targetPanel) return;
-    if (onClose) {
-      onClose(panel);
-    } else {
-      panel.classList.remove(openClass);
+  <style>
+    :root {
+      --bg: #000000;
+      --card: #111214;
+      --card-inner: #141518;
+      --text-main: #ffffff;
+      --text-muted: #b3b3b3;
+      --accent: #39ff14;
+      --accent-soft: #00c853;
+      --accent-dark: #00b34a;
+      --copper: #8b5a2b;
+      --gunmetal: #1A1E2C;
+      --danger: #d93030;
+      --danger-soft: #a52424;
+      --border-soft: #262626;
+      --radius-card: 24px;
+      --radius-pill: 999px;
+      --shadow-soft: 0 10px 30px rgba(0, 0, 0, 0.7);
     }
-  });
 
-  targetPanel.classList.add(openClass);
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: "Germania One", -apple-system, BlinkMacSystemFont,
+        "Segoe UI", Roboto, sans-serif;
+      background-color: var(--gunmetal);
+      color: var(--text-main);
+    }
+
+    /* --------------------------
+       LAYOUT SHELL
+    --------------------------- */
+
+    /* Complex-mode Set label in header: same font as .set-label, not selectable */
+    .workout-header .complex-set-label {
+      border: none;
+      background: transparent;
+      padding: 0;
+      margin: 0;
+      user-select: none;
+      cursor: pointer;
+    }
+
+    /* Complex mode set label in the header */
+    .workout-header .complex-set-name {
+      border: none;
+      background: transparent;
+      padding: 0;
+      margin: 0;
+    }
+
+    .workout-header .complex-set-name:focus { outline: none; }
+
+    .app-wrapper {
+      min-height: 100vh;
+      padding: 12px 12px 32px;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .app-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin: 8px 4px 16px;
+    }
+
+    .app-header h1 {
+      font-size: 32px;
+      font-weight: 800;
+      margin: 0;
+      letter-spacing: 0.5px;
+    }
+
+    main.screen { display: none; flex: 1; }
+    main.screen.active { display: block; }
+
+    .card {
+      max-width: 480px;
+      margin: 0 auto;
+      background-color: var(--card);
+      padding: 18px 16px 24px;
+      border-radius: 22px;
+      border: 2px solid var(--copper);
+      box-shadow:
+        0 0 0 1px #1A1E2C,
+        0 4px 0 #000;
+    }
+
+    .card-title {
+      font-size: 22px;
+      font-weight: 700;
+      margin: 4px 4px 8px;
+    }
+
+    .card-subtitle {
+      font-size: 14px;
+      color: var(--text-muted);
+      margin: 0 4px 16px;
+      line-height: 1.4;
+    }
+
+    .input-label {
+      display: block;
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+
+    .input-group { margin: 6px 0 10px; }
+
+    /* --------------------------
+       MENU
+    --------------------------- */
+
+    .menu-button {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      border: 1px solid #2f2f2f;
+      background-color: #111;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+    }
+
+    .menu-button:active { background-color: #1d1d1d; }
+
+    .menu-icon {
+      width: 18px;
+      height: 18px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .menu-icon span {
+      display: block;
+      height: 3px;
+      border-radius: 999px;
+      background-color: #ffffff;
+    }
+
+    .menu-dropdown {
+      position: absolute;
+      right: 16px;
+      top: 64px;
+      background-color: #111;
+      border-radius: 16px;
+      box-shadow: var(--shadow-soft);
+      overflow: hidden;
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(-8px);
+      transition: opacity 0.18s ease, transform 0.18s ease;
+      min-width: 220px;
+      z-index: 20;
+    }
+
+    .menu-dropdown.open {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateY(0);
+    }
+
+    .menu-item {
+      padding: 14px 18px;
+      font-size: 16px;
+      border-bottom: 1px solid #222;
+    }
+
+    .menu-item:last-child { border-bottom: none; }
+    .menu-item:active { background-color: #1f1f1f; }
+
+    /* --------------------------
+       INPUTS & BUTTONS
+    --------------------------- */
+
+    .text-input,
+    .set-input {
+      width: 100%;
+      height: 44px;
+      border-radius: 12px;
+      text-align: center;
+      box-sizing: border-box;
+      background-color: #000;
+      border: 2px solid var(--copper);
+      box-shadow:
+        0 0 0 1px #754d27,
+        0 4px 0 #000;
+      font-size: 16px;
+      color: #fff;
+    }
+
+    .text-input::placeholder,
+    .set-input::placeholder {
+      color: #727272;
+      text-shadow: 0 0 4px rgba(255, 255, 255, 0.1);
+    }
+
+    .set-input:focus,
+    .text-input:focus {
+      outline: 1px solid var(--copper);
+      box-shadow: 0 0 12px rgba(57, 255, 20, 0.35);
+    }
+
+    .quick-add-row {
+      margin-top: 8px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+      font-size: 12px;
+    }
+
+    .quick-add-label {
+      color: var(--text-muted);
+      opacity: 0.85;
+    }
+
+    .quick-add-chip {
+      -webkit-appearance: none;
+      appearance: none;
+      border-radius: 999px;
+      border: 1px solid var(--copper);
+      padding: 4px 10px;
+      font-size: 12px;
+      font-weight: 600;
+      background-color: #000;
+      color: #fff;
+      box-shadow:
+        0 0 0 1px #754d27,
+        0 3px 0 #000;
+    }
+
+    .quick-add-chip:active {
+      transform: translateY(1px);
+      outline: 1px solid var(--accent);
+      box-shadow: none;
+    }
+
+    .round-btn {
+      background-color: #1A1E2C;
+      height: 44px;
+      width: 56px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid var(--copper);
+      box-shadow:
+        0 0 0 1px #754d27,
+        0 4px 0 #000;
+      font-size: 16px;
+      color: #fff;
+    }
+
+    .round-btn:active {
+      outline: 1px solid var(--copper);
+      transform: translateY(1px);
+      opacity: 0.9;
+      background-color: #0a0b0d;
+      box-shadow: none;
+    }
+
+    .primary-btn {
+      width: 100%;
+      height: 44px;
+      border-radius: 12px;
+      background-color: #1A1E2C;
+      font-size: 17px;
+      font-weight: 600;
+      margin-top: 8px;
+      border: 2px solid var(--copper);
+      box-shadow:
+        0 0 0 1px #754d27,
+        0 4px 0 #000;
+      color: #fff;
+    }
+
+    .primary-btn:active {
+      outline: 1px solid var(--copper);
+      transform: translateY(1px);
+      opacity: 0.9;
+      background-color: #070809;
+      box-shadow: none;
+    }
+
+    .footer-btn { margin-top: 10px; }
+
+    .danger-btn {
+      width: 100%;
+      border-radius: var(--radius-pill);
+      padding: 11px 16px;
+      font-size: 17px;
+      font-weight: 600;
+      border: none;
+      color: #fff;
+      background-color: var(--danger);
+      margin: 4px 0 10px;
+    }
+
+    .danger-btn:active {
+      background-color: var(--danger-soft);
+      outline: 1px solid var(--copper);
+    }
+
+    /* --------------------------
+       BACK TO LOGGER BUTTON
+    --------------------------- */
+
+    .back-nav-wrap { margin-top: 1.75rem; }
+
+    .back-nav-btn {
+      margin-top: 0;
+      height: 48px;
+      font-size: 1.15rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+
+    /* --------------------------
+       WORKOUT CARDS
+    --------------------------- */
+
+    .workouts-container {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 4px;
+      margin-bottom: 12px;
+    }
+
+    .workout-card {
+      border: 1px solid var(--copper);
+      border-radius: 22px;
+      padding: 10px 14px;
+      background-color: var(--card-inner);
+      margin-bottom: 14px;
+      box-shadow:
+        0 0 0 1px #1b1c20,
+        0 12px 30px rgba(0, 0, 0, 0.85);
+    }
+
+    .workout-card.collapsed .quick-add-row { display: none; }
+
+    .workout-card.collapsed { padding: 14px 8px; }
+
+    .workout-card.collapsed .workout-header {
+      margin: 0;
+      opacity: 0.85;
+    }
+
+    .workout-card.collapsed .sets-wrapper { display: none; }
+    .workout-card.collapsed .workout-header-actions { display: none; }
+    .workout-card.collapsed .workout-name { cursor: pointer; }
+    .workout-card.collapsed .workout-name:focus { outline: none; }
+
+    .round-btn.collapse-btn { font-size: 18px; }
+
+    .workout-name { flex: 1; width: 100%; }
+
+    .workout-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 0;
+      margin-top: 4px;
+    }
+
+    .workout-header .workout-name {
+      flex: 1;
+      height: 44px;
+      padding: 0 12px;
+    }
+
+    .workout-header-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .sets-wrapper.collapsed { display: none; }
+
+    /* NEW: complex mode control buttons inside card header */
+    .complex-header-controls {
+      margin-left: auto;
+      display: flex;
+      gap: 8px;
+    }
+
+    .complex-header-controls .round-btn {
+      width: 56px;
+      height: 44px;
+    }
+
+    /* --------------------------
+       SET ROW
+    --------------------------- */
+
+    .set-box {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      column-gap: 10px;
+      align-items: center;
+      margin-top: 12px;
+    }
+
+    /* Complex rows: exercise name + spacer + right group */
+    .set-box.complex-row {
+      grid-template-columns: auto 1fr auto;
+    }
+
+    /* spacer column flexes to push the right group to the edge */
+    .complex-row-spacer { display: block; }
+
+    /* ✅ Complex MODE: stretch Exercise name box to line up with the end of the "-C" button */
+    body.mode-complex .set-box.complex-row {
+      grid-template-columns: 1fr auto;
+      column-gap: 8px;
+    }
+
+    body.mode-complex .complex-row-spacer { display: none; }
+
+    /* let the right group stay pushed to the right like before */
+    .set-right-group {
+      display: flex;
+      gap: 8px;
+      margin-left: auto;
+    }
+
+    .set-label {
+      font-size: 18px;
+      color: var(--copper);
+      font-family: "Germania One", sans-serif;
+      font-weight: 700;
+    }
+
+    .set-weight-group { justify-self: end; }
+    .set-weight-group .set-input { width: 56px; }
+
+    .set-right-group .set-input { width: 56px; }
+
+    /* --------------------------
+       AFT CARD ONLY
+    --------------------------- */
+
+    /* Wrapper so AFT tweaks don't touch other cards */
+    .aft-card {}
+    
+    /* Make the AFT title the same width as the left event labels */
+.aft-card .aft-title {
+  width: 156px; /* same as .aft-exercise-label */
 }
 
-// ======================================================
-// App version + toast helper
-// ======================================================
-const APP_VERSION = "0.9.1";
-const VERSION_STORAGE_KEY = "codeAndIronLastSeenVersion_v1";
+    /* ✅ AFT rows only — make right boxes sit 8px from the left label boxes */
+    .aft-card .set-box.complex-row {
+      grid-template-columns: auto auto;
+      column-gap: 8px;
+    }
 
-let toastTimeoutId = null;
+    .aft-card .complex-row-spacer { display: none; }
 
-function showToast(message, options = {}) {
-  const duration = options.duration ?? 2500;
-  const toastEl = document.getElementById("toast");
-
-  // Fallback if the element is missing for some reason
-  if (!toastEl) {
-    alert(message);
-    return;
-  }
-
-  // Set message
-  toastEl.textContent = message;
-
-  // Show
-  toastEl.classList.add("visible");
-
-  // Reset any existing timer
-  if (toastTimeoutId) {
-    clearTimeout(toastTimeoutId);
-  }
-
-  // Hide after duration
-  toastTimeoutId = setTimeout(() => {
-    toastEl.classList.remove("visible");
-  }, duration);
+    /* M/F + Age (if you use a wrapper div) */
+    .aft-card .aft-meta-input {
+      margin-left: auto;
+      display: flex;
+      gap: 8px;
+    }
+    
+    /* Ensure M/F and Age boxes match the other right-side box sizing */
+.aft-card .aft-meta-input {
+  width: 66px;
 }
 
-// ======================================================
-// Exercise key normalization + migration helpers
-// ======================================================
-
-function normalizeExerciseKey(name) {
-  if (!name) return "";
-  return name
-    .toLowerCase()
-    .trim()
-    .replace(/\s+/g, " ") // collapse multiple spaces
-    .replace(/[^\w\s]/g, ""); // strip punctuation (.,!?-/ etc.)
+/* Don't let the meta group auto-push away */
+.aft-card .aft-meta-group {
+  margin-left: 0;
+  display: flex;
+  gap: 8px;
 }
 
-// Merge two progress entries when keys collide during migration
-function mergeProgressEntries(a, b) {
-  const merged = { ...(a || {}), ...(b || {}) };
-
-  // Choose the "nicer" name (longer wins)
-  const nameA = (a && a.name) || "";
-  const nameB = (b && b.name) || "";
-  merged.name = nameB.length > nameA.length ? nameB : nameA;
-
-  // Best reps
-  const bestRepsA = (a && a.bestReps) || 0;
-  const bestRepsB = (b && b.bestReps) || 0;
-  if (bestRepsB > bestRepsA) {
-    merged.bestReps = bestRepsB;
-    merged.bestRepsDate = b.bestRepsDate || null;
-  } else {
-    merged.bestReps = bestRepsA;
-    merged.bestRepsDate = a.bestRepsDate || null;
-  }
-
-  // Best weight x reps
-  const wA = a && typeof a.bestWeight === "number" ? a.bestWeight : null;
-  const rA = (a && a.bestWeightReps) || 0;
-  const wB = b && typeof b.bestWeight === "number" ? b.bestWeight : null;
-  const rB = (b && b.bestWeightReps) || 0;
-
-  function betterWeight(firstW, firstR, secondW, secondR) {
-    if (secondW === null) return { w: firstW, r: firstR };
-    if (firstW === null) return { w: secondW, r: secondR };
-    if (secondW > firstW) return { w: secondW, r: secondR };
-    if (secondW < firstW) return { w: firstW, r: firstR };
-    // same weight → keep higher reps
-    if (secondR > firstR) return { w: secondW, r: secondR };
-    return { w: firstW, r: firstR };
-  }
-
-  const best = betterWeight(wA, rA, wB, rB);
-  merged.bestWeight = best.w;
-  merged.bestWeightReps = best.r;
-  merged.bestWeightDate =
-    best.w === wB ? b.bestWeightDate || null : a.bestWeightDate || null;
-
-  // Merge history by date (favor entry with higher bestWeight / bestReps)
-  const histA = Array.isArray(a && a.history) ? a.history : [];
-  const histB = Array.isArray(b && b.history) ? b.history : [];
-  const byDate = {};
-
-  histA.concat(histB).forEach((h) => {
-    if (!h || !h.date) return;
-    const existing = byDate[h.date];
-    if (!existing) {
-      byDate[h.date] = h;
-      return;
+    /* (Weight / Rep / Time) */
+    .aft-card .aft-primary-input {
+      width: 66px;
+      margin-right: auto;
     }
 
-    const wE =
-      typeof existing.bestWeight === "number" ? existing.bestWeight : null;
-    const wH = typeof h.bestWeight === "number" ? h.bestWeight : null;
-    const rE = existing.bestWeightReps || 0;
-    const rH = h.bestWeightReps || 0;
-    const repsE = existing.bestReps || 0;
-    const repsH = h.bestReps || 0;
+    /* Event Score boxes */
+    .aft-card .aft-score-input { width: 66px; }
 
-    let takeNew = false;
-    if (wH !== null) {
-      if (wE === null || wH > wE || (wH === wE && rH > rE)) {
-        takeNew = true;
-      }
-    } else if (repsH > repsE) {
-      takeNew = true;
+    /* ✅ FIXED: Total box at the bottom (spans Time + Score width) */
+    .aft-card .aft-total-input {
+      width: calc((2 * 66px) + 8px); /* 2 boxes + the 8px gap */
+      margin-left: 0;               /* don’t push it inside the group */
     }
 
-    if (takeNew) byDate[h.date] = h;
-  });
-
-  merged.history = Object.values(byDate).sort((a, b) =>
-    b.date.localeCompare(a.date)
-  );
-
-  return merged;
-}
-
-// One-time migration: move old keys → normalized keys
-function migrateProgressKeys(rawData) {
-  if (!rawData || typeof rawData !== "object") return {};
-
-  const migrated = {};
-
-  Object.entries(rawData).forEach(([oldKey, ex]) => {
-    if (!ex || typeof ex !== "object") return;
-    const name = (ex.name || "").trim() || oldKey;
-    const newKey = normalizeExerciseKey(name);
-    if (!newKey) return;
-
-    if (!migrated[newKey]) {
-      migrated[newKey] = { ...ex, name };
-    } else {
-      migrated[newKey] = mergeProgressEntries(migrated[newKey], {
-        ...ex,
-        name,
-      });
-    }
-  });
-
-  return migrated;
-}
-
-// When a *new* exercise name looks similar to an existing one,
-// we can offer to merge.
-function findSimilarExistingExercise(normalizedKey, rawName, progressObj) {
-  const entries = Object.entries(progressObj || {});
-  if (!entries.length) return null;
-
-  const lowerName = rawName.toLowerCase().trim();
-  const [firstWordNew] = lowerName.split(/\s+/);
-
-  let candidate = null;
-
-  for (const [key, ex] of entries) {
-    const existingName = (ex.name || "").toLowerCase().trim();
-    if (!existingName) continue;
-    const [firstWordExisting] = existingName.split(/\s+/);
-
-    // same first word and somewhat overlapping text
-    const looksSimilar =
-      firstWordExisting &&
-      firstWordExisting === firstWordNew &&
-      (existingName.includes(firstWordNew) ||
-        lowerName.includes(firstWordExisting));
-
-    if (looksSimilar) {
-      candidate = { key, name: ex.name || existingName };
-      break;
-    }
-  }
-
-  return candidate;
-}
-
-// ======================================================
-// Storage module (versioned templates + progress)
-// ======================================================
-const Storage = (() => {
-  const STORAGE_KEY = "codeAndIronTemplates_v2";
-  const PROGRESS_KEY = "codeAndIronProgress_v1";
-
-  const TEMPLATE_VERSION = 1;
-  const PROGRESS_VERSION = 1;
-
-  // ---- PROGRESS ----
-  function loadProgress() {
-    try {
-      const raw = localStorage.getItem(PROGRESS_KEY);
-      if (!raw) return {};
-
-      const parsed = JSON.parse(raw);
-
-      if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
-        return {};
-      }
-
-      if (!Object.prototype.hasOwnProperty.call(parsed, "version")) {
-        // old format: just data
-        return parsed;
-      }
-
-      if (parsed.version === PROGRESS_VERSION) {
-        return parsed.data || {};
-      }
-
-      console.warn("Newer progress version found — falling back to .data.");
-      return parsed.data || {};
-    } catch (e) {
-      console.error("Error loading progress", e);
-      return {};
-    }
-  }
-
-  function saveProgress(data) {
-    try {
-      const wrapped = {
-        version: PROGRESS_VERSION,
-        data: data,
-      };
-      localStorage.setItem(PROGRESS_KEY, JSON.stringify(wrapped));
-    } catch (e) {
-      console.error("Error saving progress", e);
-    }
-  }
-
-  // ---- TEMPLATES ----
-  function loadTemplates() {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return [];
-
-      const parsed = JSON.parse(raw);
-
-      if (Array.isArray(parsed)) {
-        // very old format
-        return parsed;
-      }
-
-      if (!parsed || typeof parsed !== "object") {
-        return [];
-      }
-
-      if (!Object.prototype.hasOwnProperty.call(parsed, "version")) {
-        return [];
-      }
-
-      if (parsed.version === TEMPLATE_VERSION) {
-        return parsed.data || [];
-      }
-
-      console.warn("Newer template version found — falling back to .data.");
-      return parsed.data || [];
-    } catch (e) {
-      console.error("Error loading templates", e);
-      return [];
-    }
-  }
-
-  function saveTemplates(templates) {
-    try {
-      const wrapped = {
-        version: TEMPLATE_VERSION,
-        data: templates,
-      };
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(wrapped));
-    } catch (e) {
-      console.error("Error saving templates", e);
-    }
-  }
-
-  return {
-    loadProgress,
-    saveProgress,
-    loadTemplates,
-    saveTemplates,
-  };
-})();
-
-// ======================================================
-// Settings module (units, theme, data control)
-// ======================================================
-const Settings = (() => {
-  const SETTINGS_KEY = "codeAndIronSettings_v1";
-
-  let state = {
-    unit: "lb", // "lb" | "kg"
-    highContrast: false, // boolean
-  };
-
-  function load() {
-    try {
-      const raw = localStorage.getItem(SETTINGS_KEY);
-      if (!raw) return;
-      const parsed = JSON.parse(raw);
-      if (parsed && typeof parsed === "object") {
-        state.unit = parsed.unit === "kg" ? "kg" : "lb";
-        state.highContrast = !!parsed.highContrast;
-      }
-    } catch (e) {
-      console.error("Error loading settings", e);
-    }
-  }
-
-  function save() {
-    try {
-      localStorage.setItem(SETTINGS_KEY, JSON.stringify(state));
-    } catch (e) {
-      console.error("Error saving settings", e);
-    }
-  }
-
-  function applyTheme() {
-    if (state.highContrast) {
-      document.body.classList.add("theme-high-contrast");
-    } else {
-      document.body.classList.remove("theme-high-contrast");
-    }
-  }
-
-  function applyUnitPlaceholders() {
-    const label = getWeightPlaceholder();
-    document
-      .querySelectorAll('.set-input[data-field="weight"]')
-      .forEach((input) => {
-        input.placeholder = label;
-      });
-  }
-
-  function init({
-    unitSelectSelector,
-    highContrastSelector,
-    exportButtonSelector,
-    resetButtonSelector,
-  }) {
-    load();
-    applyTheme();
-
-    const unitSelect = $(unitSelectSelector);
-    const contrastCheckbox = $(highContrastSelector);
-    const exportBtn = $(exportButtonSelector);
-    const resetBtn = $(resetButtonSelector);
-
-    if (unitSelect) {
-      unitSelect.value = state.unit;
-      unitSelect.addEventListener("change", () => {
-        state.unit = unitSelect.value === "kg" ? "kg" : "lb";
-        save();
-        applyUnitPlaceholders();
-      });
+    .aft-title {
+      background-color: var(--gunmetal);
+      pointer-events: none;
+      user-select: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
-    if (contrastCheckbox) {
-      contrastCheckbox.checked = state.highContrast;
-      contrastCheckbox.addEventListener("change", () => {
-        state.highContrast = contrastCheckbox.checked;
-        save();
-        applyTheme();
-      });
+    .aft-exercise-label {
+      width: 156px;
+      background-color: var(--gunmetal);
+      pointer-events: none;
+      user-select: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
-    if (exportBtn) {
-      exportBtn.addEventListener("click", () => {
-        // Reuse the existing Progress backup button
-        const progressBackupBtn = $("#exportBackupBtn");
-        if (progressBackupBtn) {
-          progressBackupBtn.click();
-        } else {
-          alert("Open the Progress screen to use backup, then try again.");
-        }
-      });
+    /* Pass/Fail box colors (AFT only) */
+    .aft-card .aft-passfail-box.pass { background-color: #4B5320; } /* Army green */
+    .aft-card .aft-passfail-box.fail { background-color: #4b0d0d; } /* Dark red */
+
+    /* --------------------------
+       PROGRESS LIST / LETTER GRID
+    --------------------------- */
+
+    .saved-list {
+      margin-top: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
     }
 
-    if (resetBtn) {
-      resetBtn.addEventListener("click", () => {
-        const confirmText = prompt(
-          "This will ERASE all Code & Iron data in this browser:\n" +
-            "• Saved routines\n" +
-            "• Progress / PRs\n" +
-            "• Tutorial status\n" +
-            "• Settings\n\n" +
-            "Type RESET (all caps) to confirm."
-        );
+    .saved-wrapper { margin-top: 4px; }
 
-        if (confirmText !== "RESET") {
-          if (typeof showToast === "function") {
-            showToast("Reset cancelled.");
-          } else {
-            alert("Reset cancelled.");
-          }
-          return;
-        }
-
-        try {
-          const keysToRemove = [
-            "codeAndIronTemplates_v2",
-            "codeAndIronProgress_v1",
-            "codeAndIronTutorialSeen_v1",
-            SETTINGS_KEY,
-          ];
-          keysToRemove.forEach((k) => localStorage.removeItem(k));
-        } catch (e) {
-          console.error("Error clearing data", e);
-        }
-
-        window.location.reload();
-      });
+    .saved-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 12px;
+      border-radius: 14px;
+      background-color: #1A1E2C;
+      border: 1px solid var(--copper);
+      box-shadow:
+        0 0 0 1px #754d27,
+        0 4px 0 #000;
+      font-size: 16px;
+      color: #fff;
     }
 
-    // Make sure current logger inputs match chosen unit
-    applyUnitPlaceholders();
-  }
-
-  function getUnit() {
-    return state.unit;
-  }
-
-  function getWeightPlaceholder() {
-    return state.unit === "kg" ? "Weight (kg)" : "Weight (lb)";
-  }
-
-  return {
-    init,
-    getUnit,
-    getWeightPlaceholder,
-  };
-})();
-
-
-// ======================================================
-// AFT scoring tables + scoring helper (from "Aft scoring info .pdf")
-// ======================================================
-const AFT_RAW_TABLES = {"MDL":{"ageGroups":["17-21","22-26","27-31","32-36","37-41","42-46","47-51","52-56","57-61","Over 62"],"male":{"17-21":{"100":"340","99":null,"98":"330","97":null,"96":"320","95":null,"94":"310","93":null,"92":"300","91":null,"90":null,"89":"290","88":null,"87":"280","86":null,"85":"270","84":null,"83":"260","82":null,"81":"250","80":null,"79":"240","78":null,"77":"230","76":null,"75":"220","74":null,"73":"210","72":null,"71":null,"70":"200","69":"190","68":null,"67":"180","66":null,"65":"170","64":null,"63":"160","62":null,"61":null,"60":"150","50":"130","40":"120","30":"110","20":"100","10":"90","0":"80"},"22-26":{"100":"350","99":"340","98":null,"97":"330","96":null,"95":"320","94":null,"93":"310","92":null,"91":"300","90":null,"89":"290","88":null,"87":"280","86":null,"85":"270","84":null,"83":"260","82":null,"81":"250","80":null,"79":"240","78":null,"77":"230","76":null,"75":"220","74":null,"73":"210","72":null,"71":"200","70":"190","69":null,"68":null,"67":"180","66":null,"65":"170","64":null,"63":"160","62":null,"61":null,"60":"150","50":"130","40":"120","30":"110","20":"100","10":"90","0":"80"},"27-31":{"100":"350","99":null,"98":"340","97":"330","96":null,"95":"320","94":null,"93":"310","92":null,"91":"300","90":null,"89":"290","88":null,"87":"280","86":null,"85":"270","84":null,"83":"260","82":null,"81":"250","80":null,"79":"240","78":null,"77":"230","76":null,"75":"220","74":null,"73":"210","72":null,"71":"200","70":"190","69":null,"68":null,"67":"180","66":null,"65":"170","64":null,"63":"160","62":null,"61":null,"60":"150","50":"130","40":"120","30":"110","20":"100","10":"90","0":"80"},"32-36":{"100":"350","99":"340","98":null,"97":"330","96":null,"95":"320","94":null,"93":"310","92":null,"91":"300","90":null,"89":"290","88":null,"87":"280","86":null,"85":"270","84":null,"83":"260","82":null,"81":"250","80":null,"79":"240","78":null,"77":"230","76":null,"75":"220","74":null,"73":"210","72":null,"71":"200","70":"190","69":null,"68":null,"67":"180","66":null,"65":"170","64":null,"63":"160","62":null,"61":"150","60":"140","50":"130","40":"120","30":"110","20":"100","10":"90","0":"80"},"37-41":{"100":"350","99":"340","98":null,"97":"330","96":null,"95":"320","94":null,"93":"310","92":null,"91":"300","90":null,"89":"290","88":null,"87":"280","86":null,"85":"270","84":null,"83":"260","82":null,"81":"250","80":null,"79":"240","78":null,"77":"230","76":null,"75":"220","74":null,"73":"210","72":null,"71":"200","70":"190","69":null,"68":null,"67":"180","66":null,"65":"170","64":null,"63":"160","62":"150","61":null,"60":"140","50":"130","40":"120","30":"110","20":"100","10":"90","0":"80"},"42-46":{"100":"350","99":"340","98":null,"97":"330","96":null,"95":"320","94":null,"93":"310","92":"300","91":null,"90":"290","89":null,"88":"280","87":null,"86":"270","85":null,"84":"260","83":null,"82":"250","81":null,"80":null,"79":"240","78":"230","77":null,"76":"220","75":null,"74":"210","73":null,"72":"200","71":null,"70":"190","69":null,"68":"180","67":null,"66":"170","65":null,"64":"160","63":null,"62":"150","61":null,"60":"140","50":"130","40":"120","30":"110","20":"100","10":"90","0":"80"},"47-51":{"100":"340","99":"330","98":null,"97":"320","96":null,"95":"310","94":null,"93":"300","92":null,"91":"290","90":null,"89":"280","88":null,"87":null,"86":"270","85":null,"84":"260","83":null,"82":"250","81":null,"80":"240","79":null,"78":"230","77":null,"76":"220","75":null,"74":"210","73":null,"72":"200","71":null,"70":"190","69":null,"68":"180","67":null,"66":"170","65":null,"64":"160","63":null,"62":"150","61":null,"60":"140","50":"130","40":"120","30":"110","20":"100","10":"90","0":"80"},"52-56":{"100":"330","99":"320","98":null,"97":"310","96":null,"95":"300","94":null,"93":"290","92":null,"91":"280","90":null,"89":"270","88":null,"87":null,"86":"260","85":null,"84":"250","83":null,"82":"240","81":null,"80":"230","79":null,"78":"220","77":null,"76":"210","75":null,"74":"200","73":null,"72":"190","71":null,"70":"180","69":null,"68":null,"67":"170","66":null,"65":"160","64":null,"63":"150","62":null,"61":null,"60":"140","50":"130","40":"120","30":"110","20":"100","10":"90","0":"80"},"57-61":{"100":"250","99":"240","98":"230","97":"220","96":"210","95":null,"94":"200","93":"190","92":null,"91":"180","90":null,"89":"170","88":null,"87":null,"86":null,"85":null,"84":null,"83":null,"82":null,"81":null,"80":null,"79":"160","78":null,"77":null,"76":null,"75":null,"74":null,"73":null,"72":null,"71":"150","70":null,"69":null,"68":null,"67":null,"66":null,"65":null,"64":null,"63":null,"62":null,"61":null,"60":"140","50":"130","40":"120","30":"110","20":"100","10":"90","0":"80"},"Over 62":{"100":"230","99":"220","98":"210","97":null,"96":null,"95":"200","94":"190","93":"180","92":"170","91":null,"90":null,"89":null,"88":null,"87":null,"86":null,"85":null,"84":null,"83":null,"82":"160","81":null,"80":null,"79":null,"78":null,"77":null,"76":null,"75":null,"74":null,"73":null,"72":"150","71":null,"70":null,"69":null,"68":null,"67":null,"66":null,"65":null,"64":null,"63":null,"62":null,"61":null,"60":"140","50":"130","40":"120","30":"110","20":"100","10":"90","0":"80"}},"female":{"17-21":{"100":"220","99":null,"98":"210","97":"200","96":null,"95":null,"94":"190","93":null,"92":null,"91":"180","90":null,"89":null,"88":"170","87":null,"86":null,"85":null,"84":"160","83":null,"82":null,"81":null,"80":"150","79":null,"78":null,"77":null,"76":null,"75":"140","74":null,"73":null,"72":null,"71":null,"70":null,"69":null,"68":"130","67":null,"66":null,"65":null,"64":null,"63":null,"62":null,"61":null,"60":"120","50":"110","40":"100","30":"90","20":"80","10":"70","0":"60"},"22-26":{"100":"230","99":null,"98":"220","97":"210","96":null,"95":"200","94":null,"93":"190","92":null,"91":null,"90":null,"89":"180","88":null,"87":null,"86":"170","85":null,"84":null,"83":null,"82":"160","81":null,"80":null,"79":null,"78":"150","77":null,"76":null,"75":null,"74":null,"73":"140","72":null,"71":null,"70":null,"69":null,"68":null,"67":"130","66":null,"65":null,"64":null,"63":null,"62":null,"61":null,"60":"120","50":"110","40":"100","30":"90","20":"80","10":"70","0":"60"},"27-31":{"100":"240","99":"230","98":"220","97":null,"96":"210","95":"200","94":null,"93":null,"92":"190","91":null,"90":null,"89":"180","88":null,"87":null,"86":"170","85":null,"84":null,"83":null,"82":"160","81":null,"80":null,"79":null,"78":"150","77":null,"76":null,"75":null,"74":null,"73":"140","72":null,"71":null,"70":null,"69":null,"68":null,"67":"130","66":null,"65":null,"64":null,"63":null,"62":null,"61":null,"60":"120","50":"110","40":"100","30":"90","20":"80","10":"70","0":"60"},"32-36":{"100":"230","99":"220","98":null,"97":"210","96":null,"95":"200","94":null,"93":"190","92":null,"91":null,"90":"180","89":null,"88":null,"87":"170","86":null,"85":null,"84":null,"83":"160","82":null,"81":null,"80":null,"79":"150","78":null,"77":null,"76":null,"75":null,"74":"140","73":null,"72":null,"71":null,"70":null,"69":null,"68":"130","67":null,"66":null,"65":null,"64":null,"63":null,"62":null,"61":null,"60":"120","50":"110","40":"100","30":"90","20":"80","10":"70","0":"60"},"37-41":{"100":"220","99":"210","98":null,"97":"200","96":null,"95":"190","94":null,"93":null,"92":"180","91":null,"90":null,"89":"170","88":null,"87":null,"86":null,"85":"160","84":null,"83":null,"82":null,"81":null,"80":"150","79":null,"78":null,"77":null,"76":null,"75":"140","74":null,"73":null,"72":null,"71":null,"70":null,"69":"130","68":null,"67":null,"66":null,"65":null,"64":null,"63":null,"62":null,"61":null,"60":"120","50":"110","40":"100","30":"90","20":"80","10":"70","0":"60"},"42-46":{"100":"210","99":null,"98":"200","97":null,"96":"190","95":null,"94":null,"93":"180","92":null,"91":null,"90":"170","89":null,"88":null,"87":null,"86":"160","85":null,"84":null,"83":null,"82":"150","81":null,"80":null,"79":null,"78":null,"77":null,"76":"140","75":null,"74":null,"73":null,"72":null,"71":null,"70":"130","69":null,"68":null,"67":null,"66":null,"65":null,"64":null,"63":null,"62":null,"61":null,"60":"120","50":"110","40":"100","30":"90","20":"80","10":"70","0":"60"},"47-51":{"100":"200","99":null,"98":"190","97":null,"96":"180","95":null,"94":null,"93":"170","92":null,"91":null,"90":null,"89":"160","88":null,"87":null,"86":null,"85":null,"84":"150","83":null,"82":null,"81":null,"80":null,"79":"140","78":null,"77":null,"76":null,"75":null,"74":null,"73":"130","72":null,"71":null,"70":null,"69":null,"68":null,"67":null,"66":null,"65":null,"64":null,"63":null,"62":null,"61":null,"60":"120","50":"110","40":"100","30":"90","20":"80","10":"70","0":"60"},"52-56":{"100":"190","99":null,"98":"180","97":null,"96":null,"95":"170","94":null,"93":null,"92":null,"91":"160","90":null,"89":null,"88":null,"87":null,"86":null,"85":"150","84":null,"83":null,"82":null,"81":null,"80":null,"79":"140","78":null,"77":null,"76":null,"75":null,"74":null,"73":null,"72":"130","71":null,"70":null,"69":null,"68":null,"67":null,"66":null,"65":null,"64":null,"63":null,"62":null,"61":null,"60":"120","50":"110","40":"100","30":"90","20":"80","10":"70","0":"60"},"57-61":{"100":"170","99":"160","98":null,"97":null,"96":null,"95":null,"94":null,"93":null,"92":null,"91":null,"90":"150","89":null,"88":null,"87":null,"86":null,"85":null,"84":null,"83":null,"82":null,"81":null,"80":"140","79":null,"78":null,"77":null,"76":null,"75":null,"74":null,"73":null,"72":null,"71":"130","70":null,"69":null,"68":null,"67":null,"66":null,"65":null,"64":null,"63":null,"62":null,"61":null,"60":"120","50":"110","40":"100","30":"90","20":"80","10":"70","0":"60"},"Over 62":{"100":"170","99":"160","98":null,"97":null,"96":null,"95":null,"94":null,"93":null,"92":null,"91":null,"90":"150","89":null,"88":null,"87":null,"86":null,"85":null,"84":null,"83":null,"82":null,"81":null,"80":"140","79":null,"78":null,"77":null,"76":null,"75":null,"74":null,"73":null,"72":"130","71":null,"70":null,"69":null,"68":null,"67":null,"66":null,"65":null,"64":null,"63":null,"62":null,"61":null,"60":"120","50":"110","40":"100","30":"90","20":"80","10":"70","0":"60"}}},"HRP":{"ageGroups":["17-21","22-26","27-31","32-36","37-41","42-46","47-51","52-56","57-61","Over 62"],"male":{"17-21":{"100":"58","99":"57","98":"55","97":"54","96":"53","95":"52","94":"51","93":"49","92":"48","91":"47","90":"46","89":"45","88":"44","87":"43","86":"42","85":"41","84":"40","83":null,"82":"39","81":"38","80":"37","79":"36","78":"35","77":"34","76":"33","75":"32","74":"31","73":"30","72":"29","71":null,"70":"28","69":"26","68":"25","67":"24","66":"23","65":"22","64":"21","63":"19","62":"18","61":"17","60":"15","50":"9","40":"8","30":"7","20":"6","10":"5","0":"4"},"22-26":{"100":"61","99":"59","98":"57","97":"56","96":"55","95":"53","94":"52","93":"51","92":"50","91":"49","90":"48","89":"46","88":"45","87":"44","86":"43","85":"42","84":"41","83":"40","82":"39","81":"38","80":"37","79":"36","78":"35","77":"34","76":"32","75":"31","74":"30","73":"29","72":"28","71":"27","70":"26","69":"25","68":"24","67":"23","66":"22","65":"21","64":"19","63":"18","62":"17","61":"15","60":"14","50":"9","40":"8","30":"7","20":"6","10":"5","0":"4"},"27-31":{"100":"62","99":"60","98":"58","97":"57","96":"55","95":"54","94":"53","93":"52","92":"51","91":"49","90":"48","89":"47","88":"46","87":"45","86":"44","85":"43","84":"42","83":"41","82":"39","81":"38","80":"37","79":"36","78":"35","77":"34","76":"33","75":"32","74":"31","73":"30","72":"29","71":"28","70":"26","69":"25","68":"24","67":"23","66":"22","65":"21","64":"20","63":"18","62":"17","61":"15","60":"14","50":"9","40":"8","30":"7","20":"6","10":"5","0":"4"},"32-36":{"100":"60","99":"58","98":"57","97":"55","96":"54","95":"53","94":"52","93":"51","92":"49","91":"48","90":"47","89":"46","88":"45","87":"44","86":"43","85":"42","84":"41","83":"40","82":"39","81":"37","80":"36","79":"35","78":"34","77":"33","76":"32","75":"31","74":"30","73":"29","72":"28","71":"27","70":"26","69":"25","68":"24","67":"22","66":"21","65":"20","64":"19","63":"18","62":"16","61":"15","60":"13","50":"9","40":"8","30":"7","20":"6","10":"5","0":"4"},"37-41":{"100":"59","99":"57","98":"55","97":"54","96":"53","95":"51","94":"50","93":"49","92":"48","91":"47","90":"46","89":"45","88":"44","87":"42","86":"41","85":"40","84":"39","83":"38","82":"37","81":"36","80":"35","79":"34","78":"33","77":"32","76":"31","75":"30","74":"29","73":"28","72":"27","71":"25","70":"24","69":"23","68":"22","67":"21","66":"20","65":"19","64":"18","63":"17","62":"15","61":"14","60":"12","50":"9","40":"8","30":"7","20":"6","10":"5","0":"4"},"42-46":{"100":"57","99":"55","98":"53","97":"52","96":"51","95":"49","94":"48","93":"47","92":"46","91":"45","90":"44","89":"43","88":"42","87":"41","86":"40","85":"39","84":"38","83":"37","82":"36","81":"35","80":"34","79":"33","78":"32","77":"31","76":"30","75":"29","74":"28","73":"26","72":"25","71":"24","70":"23","69":"22","68":"21","67":"20","66":"19","65":"18","64":"17","63":"16","62":"15","61":"13","60":"11","50":"9","40":"8","30":"7","20":"6","10":"5","0":"4"},"47-51":{"100":"55","99":"53","98":"51","97":"50","96":"49","95":"48","94":"46","93":"45","92":"44","91":"43","90":"42","89":"41","88":"40","87":"39","86":"38","85":"37","84":"36","83":"35","82":"34","81":"33","80":"32","79":"31","78":"30","77":"29","76":"28","75":"27","74":"26","73":"25","72":"24","71":"23","70":"22","69":"21","68":"20","67":"19","66":"18","65":"17","64":"16","63":"15","62":"14","61":"12","60":"11","50":"9","40":"8","30":"7","20":"6","10":"5","0":"4"},"52-56":{"100":"51","99":"50","98":"48","97":"47","96":"46","95":"45","94":"44","93":"43","92":"42","91":"41","90":"40","89":"39","88":"38","87":"37","86":"36","85":"35","84":"34","83":"33","82":"32","81":"31","80":"30","79":"29","78":"28","77":"27","76":"26","75":null,"74":"25","73":"24","72":"23","71":"22","70":"21","69":"20","68":"19","67":"18","66":"17","65":"16","64":"15","63":"14","62":"13","61":"11","60":"10","50":"9","40":"8","30":"7","20":"6","10":"5","0":"4"},"57-61":{"100":"46","99":"43","98":"40","97":"38","96":"37","95":"35","94":"34","93":"33","92":"31","91":"30","90":"29","89":"26","88":"25","87":"24","86":"23","85":null,"84":"22","83":"21","82":"20","81":"19","80":"18","79":null,"78":"17","77":null,"76":"16","75":"15","74":null,"73":"14","72":null,"71":"13","70":null,"69":null,"68":"12","67":null,"66":null,"65":"11","64":null,"63":null,"62":null,"61":null,"60":"10","50":"9","40":"8","30":"7","20":"6","10":"5","0":"4"},"Over 62":{"100":"43","99":"41","98":"39","97":"37","96":"35","95":"34","94":"33","93":"31","92":"30","91":"29","90":"26","89":"24","88":null,"87":"23","86":null,"85":"22","84":"21","83":"20","82":"19","81":"18","80":"17","79":"16","78":null,"77":"15","76":"14","75":null,"74":"13","73":null,"72":null,"71":"12","70":null,"69":null,"68":"11","67":null,"66":null,"65":null,"64":null,"63":null,"62":null,"61":null,"60":"10","50":"9","40":"8","30":"7","20":"6","10":"5","0":"4"}},"female":{"17-21":{"100":"53","99":"48","98":"44","97":"42","96":"40","95":"38","94":"36","93":"35","92":"34","91":"33","90":"32","89":"31","88":"30","87":"29","86":"28","85":"27","84":"26","83":"25","82":null,"81":"24","80":"23","79":"22","78":"21","77":null,"76":"20","75":null,"74":null,"73":"19","72":null,"71":null,"70":"18","69":null,"68":"15","67":null,"66":"14","65":null,"64":"13","63":null,"62":"12","61":null,"60":"11","50":"9","40":"8","30":"7","20":"6","10":"5","0":"4"},"22-26":{"100":"50","99":"45","98":"44","97":"42","96":"40","95":"39","94":"38","93":"36","92":"35","91":"34","90":"33","89":"32","88":"31","87":"30","86":"29","85":"28","84":"27","83":"26","82":"25","81":"24","80":"23","79":null,"78":"22","77":"21","76":"20","75":null,"74":"19","73":"18","72":null,"71":"17","70":"16","69":null,"68":"15","67":null,"66":"14","65":"13","64":null,"63":"12","62":null,"61":null,"60":"11","50":"9","40":"8","30":"7","20":"6","10":"5","0":"4"},"27-31":{"100":"48","99":"45","98":"43","97":"42","96":"40","95":"39","94":"37","93":"36","92":"35","91":"34","90":"33","89":"32","88":"31","87":"30","86":"29","85":"28","84":"27","83":"26","82":"25","81":"24","80":"23","79":null,"78":"22","77":"21","76":"20","75":null,"74":"19","73":"18","72":null,"71":"17","70":"16","69":null,"68":"15","67":null,"66":"14","65":null,"64":"13","63":null,"62":"12","61":null,"60":"11","50":"9","40":"8","30":"7","20":"6","10":"5","0":"4"},"32-36":{"100":"47","99":"44","98":"42","97":"40","96":"39","95":"38","94":"36","93":"35","92":"34","91":"33","90":"32","89":"31","88":"30","87":"29","86":"28","85":"27","84":"26","83":"25","82":"24","81":null,"80":"23","79":"22","78":"21","77":null,"76":"20","75":"19","74":null,"73":"18","72":"17","71":null,"70":"16","69":null,"68":"15","67":"14","66":null,"65":"13","64":null,"63":"12","62":null,"61":null,"60":"11","50":"9","40":"8","30":"7","20":"6","10":"5","0":"4"},"37-41":{"100":"43","99":"41","98":"39","97":"38","96":"37","95":"35","94":"34","93":"33","92":"32","91":"31","90":"30","89":"29","88":"28","87":"27","86":null,"85":"26","84":"25","83":"24","82":"23","81":null,"80":"22","79":"21","78":null,"77":"20","76":"19","75":null,"74":"18","73":"17","72":null,"71":"16","70":null,"69":"15","68":null,"67":"14","66":null,"65":"13","64":null,"63":"12","62":null,"61":"11","60":"10","50":"9","40":"8","30":"7","20":"6","10":"5","0":"4"},"42-46":{"100":"40","99":"38","98":"37","97":"36","96":"35","95":"33","94":"32","93":"31","92":"30","91":null,"90":"29","89":"28","88":"27","87":"26","86":"25","85":null,"84":"24","83":"23","82":"22","81":null,"80":"21","79":"20","78":null,"77":"19","76":null,"75":"18","74":"17","73":null,"72":"16","71":null,"70":"15","69":null,"68":"14","67":null,"66":"13","65":null,"64":"12","63":null,"62":"11","61":null,"60":"10","50":"9","40":"8","30":"7","20":"6","10":"5","0":"4"},"47-51":{"100":"38","99":"37","98":"35","97":"34","96":"33","95":"32","94":"31","93":"30","92":"29","91":"28","90":null,"89":"27","88":"26","87":"25","86":"24","85":null,"84":"23","83":"22","82":null,"81":"21","80":"20","79":null,"78":"19","77":null,"76":"18","75":"17","74":null,"73":"16","72":null,"71":"15","70":null,"69":"14","68":null,"67":null,"66":"13","65":null,"64":"12","63":null,"62":"11","61":null,"60":"10","50":"9","40":"8","30":"7","20":"6","10":"5","0":"4"},"52-56":{"100":"36","99":"34","98":"33","97":"32","96":"31","95":"30","94":"29","93":"28","92":"27","91":null,"90":"26","89":"25","88":"24","87":null,"86":"23","85":"22","84":null,"83":"21","82":"20","81":null,"80":"19","79":null,"78":"18","77":null,"76":"17","75":null,"74":"16","73":null,"72":"15","71":null,"70":"14","69":null,"68":"13","67":null,"66":null,"65":"12","64":null,"63":"11","62":null,"61":null,"60":"10","50":"9","40":"8","30":"7","20":"6","10":"5","0":"4"},"57-61":{"100":"24","99":"23","98":"22","97":"21","96":"20","95":"19","94":"18","93":null,"92":"17","91":"16","90":"15","89":"14","88":null,"87":null,"86":null,"85":null,"84":"13","83":null,"82":null,"81":null,"80":null,"79":null,"78":null,"77":"12","76":null,"75":null,"74":null,"73":null,"72":null,"71":null,"70":null,"69":null,"68":null,"67":"11","66":null,"65":null,"64":null,"63":null,"62":null,"61":null,"60":"10","50":"9","40":"8","30":"7","20":"6","10":"5","0":"4"},"Over 62":{"100":"24","99":"23","98":"22","97":"21","96":"20","95":"19","94":"18","93":null,"92":"17","91":"16","90":"15","89":"14","88":null,"87":null,"86":"13","85":null,"84":null,"83":null,"82":null,"81":null,"80":null,"79":"12","78":null,"77":null,"76":null,"75":null,"74":null,"73":null,"72":null,"71":null,"70":null,"69":"11","68":null,"67":null,"66":null,"65":null,"64":null,"63":null,"62":null,"61":null,"60":"10","50":"9","40":"8","30":"7","20":"6","10":"5","0":"4"}}},"SDC":{"ageGroups":["17-21","22-26","27-31","32-36","37-41","42-46","47-51","52-56","57-61","Over 62"],"male":{"17-21":{"100":"1:29","99":"1:31","98":"1:34","97":"1:35","96":"1:36","95":"1:37","94":"1:39","93":"1:40","92":"1:41","91":"1:42","90":"1:43","89":"1:44","88":"1:45","87":"1:46","86":"1:47","85":"1:48","84":"1:49","83":"1:50","82":"1:51","81":"1:52","80":"1:53","79":"1:54","78":"1:55","77":"1:56","76":"1:57","75":"1:58","74":"1:59","73":"2:00","72":"2:01","71":"2:02","70":"2:03","69":"2:04","68":"2:06","67":"2:07","66":"2:08","65":"2:11","64":"2:13","63":"2:15","62":"2:17","61":"2:22","60":"2:28","59":"2:29","58":"2:30","57":"2:31","56":"2:32","55":"2:33","54":"2:34","53":"2:35","52":"2:36","51":"2:37","50":"2:38","49":"2:39","48":"2:40","47":"2:41","46":"2:42","45":"2:43","44":"2:44","43":"2:45","42":"2:46","41":"2:47","40":"2:48","39":"2:49","38":"2:50","37":"2:51","36":"2:52","35":"2:53","34":"2:54","33":"2:55","32":"2:56","31":"2:57","30":"2:58","29":"2:59","28":"3:00","27":"3:01","26":"3:02","25":"3:03","24":"3:04","23":"3:05","22":"3:06","21":"3:07","20":"3:08","19":"3:09","18":"3:10","17":"3:11","16":"3:12","15":"3:13","14":"3:14","13":"3:15","12":"3:16","11":"3:17","10":"3:18","9":"3:19","8":"3:20","7":"3:21","6":"3:22","5":"3:23","4":"3:24","3":"3:25","2":"3:26","1":"3:27","0":"3:28"},"22-26":{"100":"1:30","99":"1:32","98":"1:33","97":"1:34","96":"1:36","95":"1:37","94":"1:39","93":"1:40","92":"1:41","91":"1:42","90":"1:43","89":"1:44","88":"1:45","87":"1:46","86":"1:47","85":"1:48","84":"1:49","83":"1:50","82":"1:51","81":"1:52","80":"1:53","79":"1:54","78":"1:55","77":"1:56","76":"1:58","75":"1:59","74":"2:00","73":"2:01","72":"2:02","71":"2:03","70":"2:05","69":"2:07","68":"2:08","67":"2:10","66":"2:11","65":"2:14","64":"2:16","63":"2:18","62":"2:21","61":"2:26","60":"2:31","59":"2:32","58":"2:33","57":"2:34","56":"2:35","55":"2:36","54":"2:37","53":"2:38","52":"2:39","51":"2:40","50":"2:41","49":"2:42","48":"2:43","47":"2:44","46":"2:45","45":"2:46","44":"2:47","43":"2:48","42":"2:49","41":"2:50","40":"2:51","39":"2:52","38":"2:53","37":"2:54","36":"2:55","35":"2:56","34":"2:57","33":"2:58","32":"2:59","31":"3:00","30":"3:01","29":"3:02","28":"3:03","27":"3:04","26":"3:05","25":"3:06","24":"3:07","23":"3:08","22":"3:09","21":"3:10","20":"3:11","19":"3:12","18":"3:13","17":"3:14","16":"3:15","15":"3:16","14":"3:17","13":"3:18","12":"3:19","11":"3:20","10":"3:21","9":"3:22","8":"3:23","7":"3:24","6":"3:25","5":"3:26","4":"3:27","3":"3:28","2":"3:29","1":"3:30","0":"3:31"},"27-31":{"100":"1:30","99":"1:31","98":"1:34","97":"1:35","96":"1:37","95":"1:38","94":"1:40","93":"1:41","92":"1:42","91":"1:43","90":"1:45","89":"1:46","88":"1:47","87":"1:48","86":"1:49","85":"1:50","84":"1:51","83":"1:52","82":"1:53","81":"1:54","80":"1:55","79":"1:56","78":"1:57","77":"1:58","76":"1:59","75":"2:00","74":"2:01","73":"2:02","72":"2:04","71":"2:05","70":"2:06","69":"2:08","68":"2:10","67":"2:11","66":"2:13","65":"2:15","64":"2:17","63":"2:20","62":"2:22","61":"2:28","60":"2:32","59":"2:33","58":"2:34","57":"2:35","56":"2:36","55":"2:37","54":"2:38","53":"2:39","52":"2:40","51":"2:41","50":"2:42","49":"2:43","48":"2:44","47":"2:45","46":"2:46","45":"2:47","44":"2:48","43":"2:49","42":"2:50","41":"2:51","40":"2:52","39":"2:53","38":"2:54","37":"2:55","36":"2:56","35":"2:57","34":"2:58","33":"2:59","32":"3:00","31":"3:01","30":"3:02","29":"3:03","28":"3:04","27":"3:05","26":"3:06","25":"3:07","24":"3:08","23":"3:09","22":"3:10","21":"3:11","20":"3:12","19":"3:13","18":"3:14","17":"3:15","16":"3:16","15":"3:17","14":"3:18","13":"3:19","12":"3:20","11":"3:21","10":"3:22","9":"3:23","8":"3:24","7":"3:25","6":"3:26","5":"3:27","4":"3:28","3":"3:29","2":"3:30","1":"3:31","0":"3:32"},"32-36":{"100":"1:33","99":"1:34","98":"1:37","97":"1:38","96":"1:40","95":"1:41","94":"1:43","93":"1:44","92":"1:45","91":"1:46","90":"1:48","89":"1:49","88":"1:50","87":"1:51","86":"1:52","85":"1:53","84":"1:54","83":"1:55","82":"1:56","81":"1:57","80":"1:58","79":"1:59","78":"2:00","77":"2:01","76":"2:02","75":"2:03","74":"2:04","73":"2:05","72":"2:07","71":"2:08","70":"2:10","69":"2:11","68":"2:13","67":"2:15","66":"2:16","65":"2:19","64":"2:21","63":"2:24","62":"2:26","61":"2:31","60":"2:36","59":"2:37","58":"2:38","57":"2:39","56":"2:40","55":"2:41","54":"2:42","53":"2:43","52":"2:44","51":"2:45","50":"2:46","49":"2:47","48":"2:48","47":"2:49","46":"2:50","45":"2:51","44":"2:52","43":"2:53","42":"2:54","41":"2:55","40":"2:56","39":"2:57","38":"2:58","37":"2:59","36":"3:00","35":"3:01","34":"3:02","33":"3:03","32":"3:04","31":"3:05","30":"3:06","29":"3:07","28":"3:08","27":"3:09","26":"3:10","25":"3:11","24":"3:12","23":"3:13","22":"3:14","21":"3:15","20":"3:16","19":"3:17","18":"3:18","17":"3:19","16":"3:20","15":"3:21","14":"3:22","13":"3:23","12":"3:24","11":"3:25","10":"3:26","9":"3:27","8":"3:28","7":"3:29","6":"3:30","5":"3:31","4":"3:32","3":"3:33","2":"3:34","1":"3:35","0":"3:36"},"37-41":{"100":"1:36","99":"1:37","98":"1:40","97":"1:42","96":"1:43","95":"1:45","94":"1:47","93":"1:48","92":"1:49","91":"1:50","90":"1:52","89":"1:53","88":"1:54","87":"1:55","86":"1:56","85":"1:57","84":"1:58","83":"1:59","82":"2:00","81":"2:01","80":"2:02","79":"2:03","78":"2:04","77":"2:05","76":"2:07","75":"2:08","74":"2:09","73":"2:10","72":"2:12","71":"2:13","70":"2:14","69":"2:16","68":"2:18","67":"2:20","66":"2:21","65":"2:24","64":"2:26","63":"2:28","62":"2:31","61":"2:36","60":"2:41","59":"2:42","58":"2:43","57":"2:44","56":"2:45","55":"2:46","54":"2:47","53":"2:48","52":"2:49","51":"2:50","50":"2:51","49":"2:52","48":"2:53","47":"2:54","46":"2:55","45":"2:56","44":"2:57","43":"2:58","42":"2:59","41":"3:00","40":"3:01","39":"3:02","38":"3:03","37":"3:04","36":"3:05","35":"3:06","34":"3:07","33":"3:08","32":"3:09","31":"3:10","30":"3:11","29":"3:12","28":"3:13","27":"3:14","26":"3:15","25":"3:16","24":"3:17","23":"3:18","22":"3:19","21":"3:20","20":"3:21","19":"3:22","18":"3:23","17":"3:24","16":"3:25","15":"3:26","14":"3:27","13":"3:28","12":"3:29","11":"3:30","10":"3:31","9":"3:32","8":"3:33","7":"3:34","6":"3:35","5":"3:36","4":"3:37","3":"3:38","2":"3:39","1":"3:40","0":"3:41"},"42-46":{"100":"1:40","99":"1:42","98":"1:44","97":"1:46","96":"1:48","95":"1:49","94":"1:51","93":"1:52","92":"1:53","91":"1:54","90":"1:56","89":"1:57","88":"1:58","87":"1:59","86":"2:00","85":"2:01","84":"2:02","83":"2:04","82":"2:05","81":"2:06","80":"2:07","79":"2:08","78":"2:09","77":"2:10","76":"2:12","75":"2:13","74":"2:14","73":"2:15","72":"2:17","71":"2:18","70":"2:20","69":"2:22","68":"2:23","67":"2:25","66":"2:26","65":"2:29","64":"2:31","63":"2:33","62":"2:36","61":"2:41","60":"2:45","59":"2:46","58":"2:47","57":"2:48","56":"2:49","55":"2:50","54":"2:51","53":"2:52","52":"2:53","51":"2:54","50":"2:55","49":"2:56","48":"2:57","47":"2:58","46":"2:59","45":"3:00","44":"3:01","43":"3:02","42":"3:03","41":"3:04","40":"3:05","39":"3:06","38":"3:07","37":"3:08","36":"3:09","35":"3:10","34":"3:11","33":"3:12","32":"3:13","31":"3:14","30":"3:15","29":"3:16","28":"3:17","27":"3:18","26":"3:19","25":"3:20","24":"3:21","23":"3:22","22":"3:23","21":"3:24","20":"3:25","19":"3:26","18":"3:27","17":"3:28","16":"3:29","15":"3:30","14":"3:31","13":"3:32","12":"3:33","11":"3:34","10":"3:35","9":"3:36","8":"3:37","7":"3:38","6":"3:39","5":"3:40","4":"3:41","3":"3:42","2":"3:43","1":"3:44","0":"3:45"},"47-51":{"100":"1:45","99":"1:46","98":"1:50","97":"1:52","96":"1:54","95":"1:55","94":"1:57","93":"1:59","92":"2:00","91":"2:01","90":"2:02","89":"2:03","88":"2:05","87":"2:06","86":"2:07","85":"2:08","84":"2:09","83":"2:10","82":"2:12","81":"2:13","80":"2:14","79":"2:15","78":"2:16","77":"2:17","76":"2:19","75":"2:20","74":"2:21","73":"2:23","72":"2:25","71":"2:26","70":"2:27","69":"2:29","68":"2:30","67":"2:32","66":"2:34","65":"2:37","64":"2:39","63":"2:41","62":"2:44","61":"2:48","60":"2:53","59":"2:54","58":"2:55","57":"2:56","56":"2:57","55":"2:58","54":"2:59","53":"3:00","52":"3:01","51":"3:02","50":"3:03","49":"3:04","48":"3:05","47":"3:06","46":"3:07","45":"3:08","44":"3:09","43":"3:10","42":"3:11","41":"3:12","40":"3:13","39":"3:14","38":"3:15","37":"3:16","36":"3:17","35":"3:18","34":"3:19","33":"3:20","32":"3:21","31":"3:22","30":"3:23","29":"3:24","28":"3:25","27":"3:26","26":"3:27","25":"3:28","24":"3:29","23":"3:30","22":"3:31","21":"3:32","20":"3:33","19":"3:34","18":"3:35","17":"3:36","16":"3:37","15":"3:38","14":"3:39","13":"3:40","12":"3:41","11":"3:42","10":"3:43","9":"3:44","8":"3:45","7":"3:46","6":"3:47","5":"3:48","4":"3:49","3":"3:50","2":"3:51","1":"3:52","0":"3:53"},"52-56":{"100":"1:52","99":"1:55","98":"1:57","97":"2:00","96":"2:01","95":"2:03","94":"2:05","93":"2:06","92":"2:07","91":"2:09","90":"2:10","89":"2:11","88":"2:13","87":"2:14","86":"2:15","85":"2:16","84":"2:17","83":"2:19","82":"2:20","81":"2:21","80":"2:23","79":null,"78":"2:25","77":"2:26","76":"2:28","75":"2:29","74":"2:30","73":"2:31","72":"2:32","71":"2:34","70":"2:35","69":"2:37","68":"2:38","67":"2:40","66":"2:41","65":"2:44","64":"2:46","63":"2:48","62":"2:50","61":"2:57","60":"3:00","59":"3:01","58":"3:02","57":"3:03","56":"3:04","55":"3:05","54":"3:06","53":"3:07","52":"3:08","51":"3:09","50":"3:10","49":"3:11","48":"3:12","47":"3:13","46":"3:14","45":"3:15","44":"3:16","43":"3:17","42":"3:18","41":"3:19","40":"3:20","39":"3:21","38":"3:22","37":"3:23","36":"3:24","35":"3:25","34":"3:26","33":"3:27","32":"3:28","31":"3:29","30":"3:30","29":"3:31","28":"3:32","27":"3:33","26":"3:34","25":"3:35","24":"3:36","23":"3:37","22":"3:38","21":"3:39","20":"3:40","19":"3:41","18":"3:42","17":"3:43","16":"3:44","15":"3:45","14":"3:46","13":"3:47","12":"3:48","11":"3:49","10":"3:50","9":"3:51","8":"3:52","7":"3:53","6":"3:54","5":"3:55","4":"3:56","3":"3:57","2":"3:58","1":"3:59","0":"4:00"},"57-61":{"100":"1:58","99":"2:02","98":"2:03","97":"2:06","96":"2:08","95":"2:09","94":"2:11","93":"2:13","92":"2:15","91":"2:16","90":"2:17","89":"2:19","88":"2:20","87":"2:21","86":"2:22","85":"2:23","84":"2:24","83":"2:26","82":"2:27","81":"2:28","80":"2:29","79":"2:30","78":"2:31","77":"2:33","76":"2:35","75":"2:36","74":"2:37","73":"2:38","72":"2:40","71":"2:42","70":"2:43","69":"2:45","68":"2:47","67":"2:48","66":"2:50","65":"2:53","64":"2:55","63":"2:57","62":"2:59","61":"3:04","60":"3:12","59":"3:13","58":"3:14","57":"3:15","56":"3:16","55":"3:17","54":"3:18","53":"3:19","52":"3:20","51":"3:21","50":"3:22","49":"3:23","48":"3:24","47":"3:25","46":"3:26","45":"3:27","44":"3:28","43":"3:29","42":"3:30","41":"3:31","40":"3:32","39":"3:33","38":"3:34","37":"3:35","36":"3:36","35":"3:37","34":"3:38","33":"3:39","32":"3:40","31":"3:41","30":"3:42","29":"3:43","28":"3:44","27":"3:45","26":"3:46","25":"3:47","24":"3:48","23":"3:49","22":"3:50","21":"3:51","20":"3:52","19":"3:53","18":"3:54","17":"3:55","16":"3:56","15":"3:57","14":"3:58","13":"3:59","12":"4:00","11":"4:01","10":"4:02","9":"4:03","8":"4:04","7":"4:05","6":"4:06","5":"4:07","4":"4:08","3":"4:09","2":"4:10","1":"4:11","0":"4:12"},"Over 62":{"100":"2:09","99":"2:12","98":null,"97":"2:13","96":null,"95":"2:14","94":"2:15","93":"2:16","92":null,"91":null,"90":null,"89":"2:17","88":"2:18","87":"2:19","86":"2:20","85":"2:21","84":"2:22","83":"2:23","82":"2:24","81":"2:27","80":"2:32","79":"2:33","78":"2:35","77":"2:36","76":"2:38","75":"2:41","74":"2:43","73":"2:44","72":"2:46","71":"2:47","70":"2:49","69":"2:52","68":"2:56","67":"2:57","66":"3:00","65":"3:03","64":"3:09","63":"3:11","62":"3:12","61":"3:14","60":"3:16","59":"3:17","58":"3:18","57":"3:19","56":"3:20","55":"3:21","54":"3:22","53":"3:23","52":"3:24","51":"3:25","50":"3:26","49":"3:27","48":"3:28","47":"3:29","46":"3:30","45":"3:31","44":"3:32","43":"3:33","42":"3:34","41":"3:35","40":"3:36","39":"3:37","38":"3:38","37":"3:39","36":"3:40","35":"3:41","34":"3:42","33":"3:43","32":"3:44","31":"3:45","30":"3:46","29":"3:47","28":"3:48","27":"3:49","26":"3:50","25":"3:51","24":"3:52","23":"3:53","22":"3:54","21":"3:55","20":"3:56","19":"3:57","18":"3:58","17":"3:59","16":"4:00","15":"4:01","14":"4:02","13":"4:03","12":"4:04","11":"4:05","10":"4:06","9":"4:07","8":"4:08","7":"4:09","6":"4:10","5":"4:11","4":"4:12","3":"4:13","2":"4:14","1":"4:15","0":"4:16"}},"female":{"17-21":{"100":"1:55","99":"1:59","98":"2:02","97":"2:05","96":"2:06","95":"2:08","94":"2:10","93":"2:12","92":"2:13","91":"2:14","90":"2:16","89":"2:17","88":"2:18","87":"2:20","86":"2:21","85":"2:22","84":"2:23","83":"2:24","82":"2:25","81":"2:26","80":"2:28","79":"2:29","78":"2:30","77":"2:31","76":"2:33","75":"2:34","74":"2:35","73":"2:37","72":"2:39","71":"2:40","70":"2:41","69":"2:44","68":"2:45","67":"2:47","66":"2:49","65":"2:53","64":"2:55","63":"2:58","62":"3:00","61":"3:08","60":"3:15","59":"3:16","58":"3:17","57":"3:18","56":"3:19","55":"3:20","54":"3:21","53":"3:22","52":"3:23","51":"3:24","50":"3:25","49":"3:26","48":"3:27","47":"3:28","46":"3:29","45":"3:30","44":"3:31","43":"3:32","42":"3:33","41":"3:34","40":"3:35","39":"3:36","38":"3:37","37":"3:38","36":"3:39","35":"3:40","34":"3:41","33":"3:42","32":"3:43","31":"3:44","30":"3:45","29":"3:46","28":"3:47","27":"3:48","26":"3:49","25":"3:50","24":"3:51","23":"3:52","22":"3:53","21":"3:54","20":"3:55","19":"3:56","18":"3:57","17":"3:58","16":"3:59","15":"4:00","14":"4:01","13":"4:02","12":"4:03","11":"4:04","10":"4:05","9":"4:06","8":"4:07","7":"4:08","6":"4:09","5":"4:10","4":"4:11","3":"4:12","2":"4:13","1":"4:14","0":"4:15"},"22-26":{"100":"1:55","99":"1:56","98":"2:00","97":"2:02","96":"2:05","95":"2:06","94":"2:09","93":"2:10","92":"2:12","91":"2:13","90":"2:15","89":"2:16","88":"2:18","87":"2:20","86":"2:21","85":"2:22","84":"2:23","83":"2:25","82":"2:26","81":"2:27","80":"2:29","79":"2:30","78":"2:31","77":"2:32","76":"2:34","75":"2:35","74":"2:37","73":"2:38","72":"2:40","71":"2:42","70":"2:43","69":"2:45","68":"2:47","67":"2:49","66":"2:51","65":"2:54","64":"2:57","63":"2:59","62":"3:01","61":"3:09","60":"3:15","59":"3:16","58":"3:17","57":"3:18","56":"3:19","55":"3:20","54":"3:21","53":"3:22","52":"3:23","51":"3:24","50":"3:25","49":"3:26","48":"3:27","47":"3:28","46":"3:29","45":"3:30","44":"3:31","43":"3:32","42":"3:33","41":"3:34","40":"3:35","39":"3:36","38":"3:37","37":"3:38","36":"3:39","35":"3:40","34":"3:41","33":"3:42","32":"3:43","31":"3:44","30":"3:45","29":"3:46","28":"3:47","27":"3:48","26":"3:49","25":"3:50","24":"3:51","23":"3:52","22":"3:53","21":"3:54","20":"3:55","19":"3:56","18":"3:57","17":"3:58","16":"3:59","15":"4:00","14":"4:01","13":"4:02","12":"4:03","11":"4:04","10":"4:05","9":"4:06","8":"4:07","7":"4:08","6":"4:09","5":"4:10","4":"4:11","3":"4:12","2":"4:13","1":"4:14","0":"4:15"},"27-31":{"100":"1:55","99":"1:57","98":"2:01","97":"2:04","96":"2:06","95":"2:08","94":"2:10","93":"2:12","92":"2:13","91":"2:15","90":"2:16","89":"2:18","88":"2:19","87":"2:20","86":"2:22","85":"2:23","84":"2:24","83":"2:26","82":"2:27","81":"2:28","80":"2:29","79":"2:30","78":"2:31","77":"2:32","76":"2:34","75":"2:36","74":"2:37","73":"2:38","72":"2:40","71":"2:41","70":"2:43","69":"2:45","68":"2:47","67":"2:49","66":"2:51","65":"2:54","64":"2:56","63":"2:59","62":"3:00","61":"3:07","60":"3:15","59":"3:16","58":"3:17","57":"3:18","56":"3:19","55":"3:20","54":"3:21","53":"3:22","52":"3:23","51":"3:24","50":"3:25","49":"3:26","48":"3:27","47":"3:28","46":"3:29","45":"3:30","44":"3:31","43":"3:32","42":"3:33","41":"3:34","40":"3:35","39":"3:36","38":"3:37","37":"3:38","36":"3:39","35":"3:40","34":"3:41","33":"3:42","32":"3:43","31":"3:44","30":"3:45","29":"3:46","28":"3:47","27":"3:48","26":"3:49","25":"3:50","24":"3:51","23":"3:52","22":"3:53","21":"3:54","20":"3:55","19":"3:56","18":"3:57","17":"3:58","16":"3:59","15":"4:00","14":"4:01","13":"4:02","12":"4:03","11":"4:04","10":"4:05","9":"4:06","8":"4:07","7":"4:08","6":"4:09","5":"4:10","4":"4:11","3":"4:12","2":"4:13","1":"4:14","0":"4:15"},"32-36":{"100":"1:59","99":"2:01","98":"2:05","97":"2:08","96":"2:10","95":"2:11","94":"2:14","93":"2:15","92":"2:17","91":"2:18","90":"2:20","89":"2:21","88":"2:23","87":"2:24","86":"2:26","85":"2:27","84":"2:28","83":"2:30","82":"2:31","81":"2:32","80":"2:34","79":"2:35","78":"2:36","77":"2:37","76":"2:39","75":"2:40","74":"2:41","73":"2:43","72":"2:45","71":"2:46","70":"2:47","69":"2:50","68":"2:51","67":"2:53","66":"2:55","65":"2:58","64":"3:00","63":"3:02","62":"3:06","61":"3:15","60":"3:22","59":"3:23","58":"3:24","57":"3:25","56":"3:26","55":"3:27","54":"3:28","53":"3:29","52":"3:30","51":"3:31","50":"3:32","49":"3:33","48":"3:34","47":"3:35","46":"3:36","45":"3:37","44":"3:38","43":"3:39","42":"3:40","41":"3:41","40":"3:42","39":"3:43","38":"3:44","37":"3:45","36":"3:46","35":"3:47","34":"3:48","33":"3:49","32":"3:50","31":"3:51","30":"3:52","29":"3:53","28":"3:54","27":"3:55","26":"3:56","25":"3:57","24":"3:58","23":"3:59","22":"4:00","21":"4:01","20":"4:02","19":"4:03","18":"4:04","17":"4:05","16":"4:06","15":"4:07","14":"4:08","13":"4:09","12":"4:10","11":"4:11","10":"4:12","9":"4:13","8":"4:14","7":"4:15","6":"4:16","5":"4:17","4":"4:18","3":"4:19","2":"4:20","1":"4:21","0":"4:22"},"37-41":{"100":"2:02","99":"2:04","98":"2:10","97":"2:11","96":"2:14","95":"2:15","94":"2:18","93":"2:20","92":"2:21","91":"2:23","90":"2:25","89":"2:26","88":"2:27","87":"2:29","86":"2:30","85":"2:31","84":"2:32","83":"2:34","82":"2:35","81":"2:36","80":"2:38","79":"2:39","78":"2:40","77":"2:42","76":"2:43","75":"2:45","74":"2:46","73":"2:47","72":"2:49","71":"2:50","70":"2:52","69":"2:55","68":"2:56","67":"2:58","66":"3:00","65":"3:02","64":"3:05","63":"3:09","62":"3:13","61":"3:21","60":"3:27","59":"3:28","58":"3:29","57":"3:30","56":"3:31","55":"3:32","54":"3:33","53":"3:34","52":"3:35","51":"3:36","50":"3:37","49":"3:38","48":"3:39","47":"3:40","46":"3:41","45":"3:42","44":"3:43","43":"3:44","42":"3:45","41":"3:46","40":"3:47","39":"3:48","38":"3:49","37":"3:50","36":"3:51","35":"3:52","34":"3:53","33":"3:54","32":"3:55","31":"3:56","30":"3:57","29":"3:58","28":"3:59","27":"4:00","26":"4:01","25":"4:02","24":"4:03","23":"4:04","22":"4:05","21":"4:06","20":"4:07","19":"4:08","18":"4:09","17":"4:10","16":"4:11","15":"4:12","14":"4:13","13":"4:14","12":"4:15","11":"4:16","10":"4:17","9":"4:18","8":"4:19","7":"4:20","6":"4:21","5":"4:22","4":"4:23","3":"4:24","2":"4:25","1":"4:26","0":"4:27"},"42-46":{"100":"2:09","99":"2:10","98":"2:15","97":"2:17","96":"2:18","95":"2:20","94":"2:23","93":"2:25","92":"2:27","91":"2:28","90":"2:30","89":"2:31","88":"2:33","87":"2:35","86":"2:36","85":"2:37","84":"2:38","83":"2:40","82":"2:41","81":"2:42","80":"2:44","79":"2:45","78":"2:46","77":"2:47","76":"2:49","75":"2:50","74":"2:52","73":"2:53","72":"2:55","71":"2:56","70":"2:58","69":"3:00","68":"3:01","67":"3:02","66":"3:06","65":"3:10","64":"3:12","63":"3:17","62":"3:21","61":"3:31","60":"3:42","59":"3:43","58":"3:44","57":"3:45","56":"3:46","55":"3:47","54":"3:48","53":"3:49","52":"3:50","51":"3:51","50":"3:52","49":"3:53","48":"3:54","47":"3:55","46":"3:56","45":"3:57","44":"3:58","43":"3:59","42":"4:00","41":"4:01","40":"4:02","39":"4:03","38":"4:04","37":"4:05","36":"4:06","35":"4:07","34":"4:08","33":"4:09","32":"4:10","31":"4:11","30":"4:12","29":"4:13","28":"4:14","27":"4:15","26":"4:16","25":"4:17","24":"4:18","23":"4:19","22":"4:20","21":"4:21","20":"4:22","19":"4:23","18":"4:24","17":"4:25","16":"4:26","15":"4:27","14":"4:28","13":"4:29","12":"4:30","11":"4:31","10":"4:32","9":"4:33","8":"4:34","7":"4:35","6":"4:36","5":"4:37","4":"4:38","3":"4:39","2":"4:40","1":"4:41","0":"4:42"},"47-51":{"100":"2:11","99":"2:13","98":"2:22","97":"2:24","96":"2:26","95":"2:28","94":"2:30","93":"2:31","92":"2:33","91":"2:35","90":"2:37","89":"2:38","88":"2:40","87":"2:41","86":"2:42","85":"2:44","84":"2:45","83":"2:46","82":"2:47","81":"2:48","80":"2:50","79":"2:51","78":"2:52","77":"2:54","76":"2:56","75":"2:57","74":"2:58","73":"2:59","72":"3:00","71":"3:02","70":"3:05","69":"3:08","68":"3:10","67":"3:14","66":"3:16","65":"3:21","64":"3:24","63":"3:29","62":"3:32","61":"3:42","60":"3:51","59":"3:52","58":"3:53","57":"3:54","56":"3:55","55":"3:56","54":"3:57","53":"3:58","52":"3:59","51":"4:00","50":"4:01","49":"4:02","48":"4:03","47":"4:04","46":"4:05","45":"4:06","44":"4:07","43":"4:08","42":"4:09","41":"4:10","40":"4:11","39":"4:12","38":"4:13","37":"4:14","36":"4:15","35":"4:16","34":"4:17","33":"4:18","32":"4:19","31":"4:20","30":"4:21","29":"4:22","28":"4:23","27":"4:24","26":"4:25","25":"4:26","24":"4:27","23":"4:28","22":"4:29","21":"4:30","20":"4:31","19":"4:32","18":"4:33","17":"4:34","16":"4:35","15":"4:36","14":"4:37","13":"4:38","12":"4:39","11":"4:40","10":"4:41","9":"4:42","8":"4:43","7":"4:44","6":"4:45","5":"4:46","4":"4:47","3":"4:48","2":"4:49","1":"4:50","0":"4:51"},"52-56":{"100":"2:18","99":"2:21","98":"2:28","97":"2:30","96":"2:32","95":"2:35","94":"2:38","93":"2:40","92":"2:41","91":"2:42","90":"2:44","89":"2:45","88":"2:46","87":"2:48","86":"2:50","85":"2:51","84":"2:52","83":"2:54","82":"2:55","81":"2:57","80":"2:58","79":"2:59","78":"3:00","77":"3:02","76":"3:05","75":"3:07","74":"3:09","73":"3:10","72":"3:13","71":"3:16","70":"3:19","69":"3:25","68":"3:27","67":"3:29","66":"3:33","65":"3:38","64":"3:42","63":"3:45","62":"3:50","61":"3:58","60":"4:03","59":"4:04","58":"4:05","57":"4:06","56":"4:07","55":"4:08","54":"4:09","53":"4:10","52":"4:11","51":"4:12","50":"4:13","49":"4:14","48":"4:15","47":"4:16","46":"4:17","45":"4:18","44":"4:19","43":"4:20","42":"4:21","41":"4:22","40":"4:23","39":"4:24","38":"4:25","37":"4:26","36":"4:27","35":"4:28","34":"4:29","33":"4:30","32":"4:31","31":"4:32","30":"4:33","29":"4:34","28":"4:35","27":"4:36","26":"4:37","25":"4:38","24":"4:39","23":"4:40","22":"4:41","21":"4:42","20":"4:43","19":"4:44","18":"4:45","17":"4:46","16":"4:47","15":"4:48","14":"4:49","13":"4:50","12":"4:51","11":"4:52","10":"4:53","9":"4:54","8":"4:55","7":"4:56","6":"4:57","5":"4:58","4":"4:59","3":"5:00","2":"5:01","1":"5:02","0":"5:03"},"57-61":{"100":"2:26","99":"2:28","98":"2:34","97":"2:39","96":"2:41","95":"2:44","94":"2:45","93":"2:46","92":"2:48","91":"2:52","90":"2:54","89":"2:55","88":"2:57","87":"2:58","86":"2:59","85":"3:00","84":"3:01","83":"3:02","82":"3:03","81":"3:04","80":"3:07","79":"3:08","78":"3:09","77":"3:11","76":"3:17","75":"3:21","74":"3:25","73":"3:32","72":"3:34","71":"3:35","70":"3:36","69":"3:40","68":"3:41","67":"3:43","66":"3:46","65":"3:54","64":"4:00","63":"4:08","62":"4:16","61":"4:21","60":"4:48","59":"4:49","58":"4:50","57":"4:51","56":"4:52","55":"4:53","54":"4:54","53":"4:55","52":"4:56","51":"4:57","50":"4:58","49":"4:59","48":"5:00","47":"5:01","46":"5:02","45":"5:03","44":"5:04","43":"5:05","42":"5:06","41":"5:07","40":"5:08","39":"5:09","38":"5:10","37":"5:11","36":"5:12","35":"5:13","34":"5:14","33":"5:15","32":"5:16","31":"5:17","30":"5:18","29":"5:19","28":"5:20","27":"5:21","26":"5:22","25":"5:23","24":"5:24","23":"5:25","22":"5:26","21":"5:27","20":"5:28","19":"5:29","18":"5:30","17":"5:31","16":"5:32","15":"5:33","14":"5:34","13":"5:35","12":"5:36","11":"5:37","10":"5:38","9":"5:39","8":"5:40","7":"5:41","6":"5:42","5":"5:43","4":"5:44","3":"5:45","2":"5:46","1":"5:47","0":"5:48"},"Over 62":{"100":"2:26","99":"2:28","98":"2:34","97":"2:39","96":"2:41","95":"2:44","94":"2:45","93":"2:46","92":"2:48","91":"2:52","90":"2:54","89":"2:55","88":"2:57","87":"2:58","86":"2:59","85":"3:00","84":"3:01","83":"3:02","82":"3:03","81":"3:04","80":"3:07","79":"3:08","78":"3:09","77":"3:11","76":"3:17","75":"3:21","74":"3:25","73":"3:32","72":"3:34","71":"3:35","70":"3:36","69":"3:40","68":"3:41","67":"3:43","66":"3:46","65":"3:54","64":"4:00","63":"4:08","62":"4:16","61":"4:21","60":"4:48","59":"4:49","58":"4:50","57":"4:51","56":"4:52","55":"4:53","54":"4:54","53":"4:55","52":"4:56","51":"4:57","50":"4:58","49":"4:59","48":"5:00","47":"5:01","46":"5:02","45":"5:03","44":"5:04","43":"5:05","42":"5:06","41":"5:07","40":"5:08","39":"5:09","38":"5:10","37":"5:11","36":"5:12","35":"5:13","34":"5:14","33":"5:15","32":"5:16","31":"5:17","30":"5:18","29":"5:19","28":"5:20","27":"5:21","26":"5:22","25":"5:23","24":"5:24","23":"5:25","22":"5:26","21":"5:27","20":"5:28","19":"5:29","18":"5:30","17":"5:31","16":"5:32","15":"5:33","14":"5:34","13":"5:35","12":"5:36","11":"5:37","10":"5:38","9":"5:39","8":"5:40","7":"5:41","6":"5:42","5":"5:43","4":"5:44","3":"5:45","2":"5:46","1":"5:47","0":"5:48"}}},"PLK":{"ageGroups":["17-21","22-26","27-31","32-36","37-41","42-46","47-51","52-56","57-61","Over 62"],"male":{"17-21":{"100":"3:40","99":"3:37","98":"3:34","97":"3:30","96":"3:27","95":"3:24","94":"3:21","93":"3:17","92":"3:14","91":"3:11","90":"3:08","89":"3:04","88":"3:01","87":"2:58","86":"2:55","85":"2:51","84":"2:48","83":"2:45","82":"2:41","81":"2:38","80":"2:35","79":"2:32","78":"2:29","77":"2:25","76":"2:22","75":"2:19","74":"2:15","73":"2:12","72":"2:09","71":"2:06","70":"2:02","69":"1:59","68":"1:56","67":"1:53","66":"1:49","65":"1:46","64":"1:43","63":"1:40","62":"1:37","61":"1:33","60":"1:30","59":null,"58":"1:29","57":null,"56":"1:28","55":null,"54":"1:27","53":null,"52":"1:26","51":null,"50":"1:25","49":null,"48":"1:24","47":null,"46":"1:23","45":null,"44":"1:22","43":null,"42":"1:21","41":null,"40":"1:20","39":null,"38":"1:19","37":null,"36":"1:18","35":null,"34":"1:17","33":null,"32":"1:16","31":null,"30":"1:15","29":null,"28":"1:14","27":null,"26":"1:13","25":null,"24":"1:12","23":null,"22":"1:11","21":null,"20":"1:10","19":null,"18":"1:09","17":null,"16":"1:08","15":null,"14":"1:07","13":null,"12":"1:06","11":null,"10":"1:05","9":null,"8":"1:04","7":null,"6":"1:03","5":null,"4":"1:02","3":null,"2":"1:01","1":null,"0":"1:00"},"22-26":{"100":"3:35","99":"3:32","98":"3:29","97":"3:25","96":"3:22","95":"3:19","94":"3:16","93":"3:12","92":"3:09","91":"3:06","90":"3:03","89":"2:59","88":"2:56","87":"2:53","86":"2:50","85":"2:46","84":"2:43","83":"2:40","82":"2:37","81":"2:33","80":"2:30","79":"2:27","78":"2:23","77":"2:20","76":"2:17","75":"2:14","74":"2:10","73":"2:07","72":"2:04","71":"2:01","70":"1:58","69":"1:54","68":"1:51","67":"1:48","66":"1:45","65":"1:41","64":"1:38","63":"1:35","62":"1:32","61":"1:28","60":"1:25","59":null,"58":"1:24","57":null,"56":"1:23","55":null,"54":"1:22","53":null,"52":"1:21","51":null,"50":"1:20","49":null,"48":"1:19","47":null,"46":"1:18","45":null,"44":"1:17","43":null,"42":"1:16","41":null,"40":"1:15","39":null,"38":"1:14","37":null,"36":"1:13","35":null,"34":"1:12","33":null,"32":"1:11","31":null,"30":"1:10","29":null,"28":"1:09","27":null,"26":"1:08","25":null,"24":"1:07","23":null,"22":"1:06","21":null,"20":"1:05","19":null,"18":"1:04","17":null,"16":"1:03","15":null,"14":"1:02","13":null,"12":"1:01","11":null,"10":"1:00","9":null,"8":"0:59","7":null,"6":"0:58","5":null,"4":"0:57","3":null,"2":"0:56","1":null,"0":"0:55"},"27-31":{"100":"3:30","99":"3:27","98":"3:24","97":"3:20","96":"3:17","95":"3:14","94":"3:11","93":"3:07","92":"3:04","91":"3:01","90":"2:58","89":"2:54","88":"2:51","87":"2:48","86":"2:45","85":"2:41","84":"2:38","83":"2:35","82":"2:31","81":"2:28","80":"2:25","79":"2:22","78":"2:18","77":"2:15","76":"2:12","75":"2:09","74":"2:06","73":"2:02","72":"1:59","71":"1:56","70":"1:52","69":"1:49","68":"1:46","67":"1:43","66":"1:39","65":"1:36","64":"1:33","63":"1:30","62":"1:26","61":"1:23","60":"1:20","59":null,"58":"1:19","57":null,"56":"1:18","55":null,"54":"1:17","53":null,"52":"1:16","51":null,"50":"1:15","49":null,"48":"1:14","47":null,"46":"1:13","45":null,"44":"1:12","43":null,"42":"1:11","41":null,"40":"1:10","39":null,"38":"1:09","37":null,"36":"1:08","35":null,"34":"1:07","33":null,"32":"1:06","31":null,"30":"1:05","29":null,"28":"1:04","27":null,"26":"1:03","25":null,"24":"1:02","23":null,"22":"1:01","21":null,"20":"1:00","19":null,"18":"0:59","17":null,"16":"0:58","15":null,"14":"0:57","13":null,"12":"0:56","11":null,"10":"0:55","9":null,"8":"0:54","7":null,"6":"0:53","5":null,"4":"0:52","3":null,"2":"0:51","1":null,"0":"0:50"},"32-36":{"100":"3:25","99":"3:22","98":"3:19","97":"3:15","96":"3:12","95":"3:09","94":"3:06","93":"3:02","92":"2:59","91":"2:56","90":"2:53","89":"2:49","88":"2:46","87":"2:43","86":"2:40","85":"2:36","84":"2:33","83":"2:30","82":"2:27","81":"2:23","80":"2:20","79":"2:17","78":"2:13","77":"2:10","76":"2:07","75":"2:04","74":"2:00","73":"1:57","72":"1:54","71":"1:51","70":"1:47","69":"1:44","68":"1:41","67":"1:38","66":"1:35","65":"1:31","64":"1:28","63":"1:25","62":"1:22","61":"1:18","60":"1:15","59":null,"58":"1:14","57":null,"56":"1:13","55":null,"54":"1:12","53":null,"52":"1:11","51":null,"50":"1:10","49":null,"48":"1:09","47":null,"46":"1:08","45":null,"44":"1:07","43":null,"42":"1:06","41":null,"40":"1:05","39":null,"38":"1:04","37":null,"36":"1:03","35":null,"34":"1:02","33":null,"32":"1:01","31":null,"30":"1:00","29":null,"28":"0:59","27":null,"26":"0:58","25":null,"24":"0:57","23":null,"22":"0:56","21":null,"20":"0:55","19":null,"18":"0:54","17":null,"16":"0:53","15":null,"14":"0:52","13":null,"12":"0:51","11":null,"10":"0:50","9":null,"8":"0:49","7":null,"6":"0:48","5":null,"4":"0:47","3":null,"2":"0:46","1":null,"0":"0:45"},"37-41":{"100":"3:20","99":"3:17","98":"3:14","97":"3:10","96":"3:07","95":"3:04","94":"3:01","93":"2:57","92":"2:54","91":"2:51","90":"2:47","89":"2:44","88":"2:41","87":"2:38","86":"2:35","85":"2:31","84":"2:28","83":"2:25","82":"2:22","81":"2:18","80":"2:15","79":"2:12","78":"2:08","77":"2:05","76":"2:02","75":"1:59","74":"1:56","73":"1:52","72":"1:49","71":"1:46","70":"1:42","69":"1:39","68":"1:36","67":"1:33","66":"1:30","65":"1:26","64":"1:23","63":"1:20","62":"1:16","61":"1:13","60":"1:10","59":null,"58":"1:09","57":null,"56":"1:08","55":null,"54":"1:07","53":null,"52":"1:06","51":null,"50":"1:05","49":null,"48":"1:04","47":null,"46":"1:03","45":null,"44":"1:02","43":null,"42":"1:01","41":null,"40":"1:00","39":null,"38":"0:59","37":null,"36":"0:58","35":null,"34":"0:57","33":null,"32":"0:56","31":null,"30":"0:55","29":null,"28":"0:54","27":null,"26":"0:53","25":null,"24":"0:52","23":null,"22":"0:51","21":null,"20":"0:50","19":null,"18":"0:49","17":null,"16":"0:48","15":null,"14":"0:47","13":null,"12":"0:46","11":null,"10":"0:45","9":null,"8":"0:44","7":null,"6":"0:43","5":null,"4":"0:42","3":null,"2":"0:41","1":null,"0":"0:40"},"42-46":{"100":"3:20","99":"3:17","98":"3:14","97":"3:10","96":"3:07","95":"3:04","94":"3:01","93":"2:57","92":"2:54","91":"2:51","90":"2:47","89":"2:44","88":"2:41","87":"2:38","86":"2:35","85":"2:31","84":"2:28","83":"2:25","82":"2:22","81":"2:18","80":"2:15","79":"2:12","78":"2:08","77":"2:05","76":"2:02","75":"1:59","74":"1:56","73":"1:52","72":"1:49","71":"1:46","70":"1:42","69":"1:39","68":"1:36","67":"1:33","66":"1:30","65":"1:26","64":"1:23","63":"1:20","62":"1:16","61":"1:13","60":"1:10","59":null,"58":"1:09","57":null,"56":"1:08","55":null,"54":"1:07","53":null,"52":"1:06","51":null,"50":"1:05","49":null,"48":"1:04","47":null,"46":"1:03","45":null,"44":"1:02","43":null,"42":"1:01","41":null,"40":"1:00","39":null,"38":"0:59","37":null,"36":"0:58","35":null,"34":"0:57","33":null,"32":"0:56","31":null,"30":"0:55","29":null,"28":"0:54","27":null,"26":"0:53","25":null,"24":"0:52","23":null,"22":"0:51","21":null,"20":"0:50","19":null,"18":"0:49","17":null,"16":"0:48","15":null,"14":"0:47","13":null,"12":"0:46","11":null,"10":"0:45","9":null,"8":"0:44","7":null,"6":"0:43","5":null,"4":"0:42","3":null,"2":"0:41","1":null,"0":"0:40"},"47-51":{"100":"3:20","99":"3:17","98":"3:14","97":"3:10","96":"3:07","95":"3:04","94":"3:01","93":"2:57","92":"2:54","91":"2:51","90":"2:47","89":"2:44","88":"2:41","87":"2:38","86":"2:35","85":"2:31","84":"2:28","83":"2:25","82":"2:22","81":"2:18","80":"2:15","79":"2:12","78":"2:08","77":"2:05","76":"2:02","75":"1:59","74":"1:56","73":"1:52","72":"1:49","71":"1:46","70":"1:42","69":"1:39","68":"1:36","67":"1:33","66":"1:30","65":"1:26","64":"1:23","63":"1:20","62":"1:16","61":"1:13","60":"1:10","59":null,"58":"1:09","57":null,"56":"1:08","55":null,"54":"1:07","53":null,"52":"1:06","51":null,"50":"1:05","49":null,"48":"1:04","47":null,"46":"1:03","45":null,"44":"1:02","43":null,"42":"1:01","41":null,"40":"1:00","39":null,"38":"0:59","37":null,"36":"0:58","35":null,"34":"0:57","33":null,"32":"0:56","31":null,"30":"0:55","29":null,"28":"0:54","27":null,"26":"0:53","25":null,"24":"0:52","23":null,"22":"0:51","21":null,"20":"0:50","19":null,"18":"0:49","17":null,"16":"0:48","15":null,"14":"0:47","13":null,"12":"0:46","11":null,"10":"0:45","9":null,"8":"0:44","7":null,"6":"0:43","5":null,"4":"0:42","3":null,"2":"0:41","1":null,"0":"0:40"},"52-56":{"100":"3:20","99":"3:17","98":"3:14","97":"3:10","96":"3:07","95":"3:04","94":"3:01","93":"2:57","92":"2:54","91":"2:51","90":"2:47","89":"2:44","88":"2:41","87":"2:38","86":"2:35","85":"2:31","84":"2:28","83":"2:25","82":"2:22","81":"2:18","80":"2:15","79":"2:12","78":"2:08","77":"2:05","76":"2:02","75":"1:59","74":"1:56","73":"1:52","72":"1:49","71":"1:46","70":"1:42","69":"1:39","68":"1:36","67":"1:33","66":"1:30","65":"1:26","64":"1:23","63":"1:20","62":"1:16","61":"1:13","60":"1:10","59":null,"58":"1:09","57":null,"56":"1:08","55":null,"54":"1:07","53":null,"52":"1:06","51":null,"50":"1:05","49":null,"48":"1:04","47":null,"46":"1:03","45":null,"44":"1:02","43":null,"42":"1:01","41":null,"40":"1:00","39":null,"38":"0:59","37":null,"36":"0:58","35":null,"34":"0:57","33":null,"32":"0:56","31":null,"30":"0:55","29":null,"28":"0:54","27":null,"26":"0:53","25":null,"24":"0:52","23":null,"22":"0:51","21":null,"20":"0:50","19":null,"18":"0:49","17":null,"16":"0:48","15":null,"14":"0:47","13":null,"12":"0:46","11":null,"10":"0:45","9":null,"8":"0:44","7":null,"6":"0:43","5":null,"4":"0:42","3":null,"2":"0:41","1":null,"0":"0:40"},"57-61":{"100":"3:20","99":"3:17","98":"3:14","97":"3:10","96":"3:07","95":"3:04","94":"3:01","93":"2:57","92":"2:54","91":"2:51","90":"2:47","89":"2:44","88":"2:41","87":"2:38","86":"2:35","85":"2:31","84":"2:28","83":"2:25","82":"2:22","81":"2:18","80":"2:15","79":"2:12","78":"2:08","77":"2:05","76":"2:02","75":"1:59","74":"1:56","73":"1:52","72":"1:49","71":"1:46","70":"1:42","69":"1:39","68":"1:36","67":"1:33","66":"1:30","65":"1:26","64":"1:23","63":"1:20","62":"1:16","61":"1:13","60":"1:10","59":null,"58":"1:09","57":null,"56":"1:08","55":null,"54":"1:07","53":null,"52":"1:06","51":null,"50":"1:05","49":null,"48":"1:04","47":null,"46":"1:03","45":null,"44":"1:02","43":null,"42":"1:01","41":null,"40":"1:00","39":null,"38":"0:59","37":null,"36":"0:58","35":null,"34":"0:57","33":null,"32":"0:56","31":null,"30":"0:55","29":null,"28":"0:54","27":null,"26":"0:53","25":null,"24":"0:52","23":null,"22":"0:51","21":null,"20":"0:50","19":null,"18":"0:49","17":null,"16":"0:48","15":null,"14":"0:47","13":null,"12":"0:46","11":null,"10":"0:45","9":null,"8":"0:44","7":null,"6":"0:43","5":null,"4":"0:42","3":null,"2":"0:41","1":null,"0":"0:40"},"Over 62":{"100":"3:20","99":"3:17","98":"3:14","97":"3:10","96":"3:07","95":"3:04","94":"3:01","93":"2:57","92":"2:54","91":"2:51","90":"2:47","89":"2:44","88":"2:41","87":"2:38","86":"2:35","85":"2:31","84":"2:28","83":"2:25","82":"2:22","81":"2:18","80":"2:15","79":"2:12","78":"2:08","77":"2:05","76":"2:02","75":"1:59","74":"1:56","73":"1:52","72":"1:49","71":"1:46","70":"1:42","69":"1:39","68":"1:36","67":"1:33","66":"1:30","65":"1:26","64":"1:23","63":"1:20","62":"1:16","61":"1:13","60":"1:10","59":null,"58":"1:09","57":null,"56":"1:08","55":null,"54":"1:07","53":null,"52":"1:06","51":null,"50":"1:05","49":null,"48":"1:04","47":null,"46":"1:03","45":null,"44":"1:02","43":null,"42":"1:01","41":null,"40":"1:00","39":null,"38":"0:59","37":null,"36":"0:58","35":null,"34":"0:57","33":null,"32":"0:56","31":null,"30":"0:55","29":null,"28":"0:54","27":null,"26":"0:53","25":null,"24":"0:52","23":null,"22":"0:51","21":null,"20":"0:50","19":null,"18":"0:49","17":null,"16":"0:48","15":null,"14":"0:47","13":null,"12":"0:46","11":null,"10":"0:45","9":null,"8":"0:44","7":null,"6":"0:43","5":null,"4":"0:42","3":null,"2":"0:41","1":null,"0":"0:40"}},"female":{"17-21":{"100":"3:40","99":"3:37","98":"3:34","97":"3:30","96":"3:27","95":"3:24","94":"3:21","93":"3:17","92":"3:14","91":"3:11","90":"3:08","89":"3:04","88":"3:01","87":"2:58","86":"2:55","85":"2:51","84":"2:48","83":"2:45","82":"2:41","81":"2:38","80":"2:35","79":"2:32","78":"2:29","77":"2:25","76":"2:22","75":"2:19","74":"2:15","73":"2:12","72":"2:09","71":"2:06","70":"2:02","69":"1:59","68":"1:56","67":"1:53","66":"1:49","65":"1:46","64":"1:43","63":"1:40","62":"1:37","61":"1:33","60":"1:30","59":null,"58":"1:29","57":null,"56":"1:28","55":null,"54":"1:27","53":null,"52":"1:26","51":null,"50":"1:25","49":null,"48":"1:24","47":null,"46":"1:23","45":null,"44":"1:22","43":null,"42":"1:21","41":null,"40":"1:20","39":null,"38":"1:19","37":null,"36":"1:18","35":null,"34":"1:17","33":null,"32":"1:16","31":null,"30":"1:15","29":null,"28":"1:14","27":null,"26":"1:13","25":null,"24":"1:12","23":null,"22":"1:11","21":null,"20":"1:10","19":null,"18":"1:09","17":null,"16":"1:08","15":null,"14":"1:07","13":null,"12":"1:06","11":null,"10":"1:05","9":null,"8":"1:04","7":null,"6":"1:03","5":null,"4":"1:02","3":null,"2":"1:01","1":null,"0":"1:00"},"22-26":{"100":"3:35","99":"3:32","98":"3:29","97":"3:25","96":"3:22","95":"3:19","94":"3:16","93":"3:12","92":"3:09","91":"3:06","90":"3:03","89":"2:59","88":"2:56","87":"2:53","86":"2:50","85":"2:46","84":"2:43","83":"2:40","82":"2:37","81":"2:33","80":"2:30","79":"2:27","78":"2:23","77":"2:20","76":"2:17","75":"2:14","74":"2:10","73":"2:07","72":"2:04","71":"2:01","70":"1:58","69":"1:54","68":"1:51","67":"1:48","66":"1:45","65":"1:41","64":"1:38","63":"1:35","62":"1:32","61":"1:28","60":"1:25","59":null,"58":"1:24","57":null,"56":"1:23","55":null,"54":"1:22","53":null,"52":"1:21","51":null,"50":"1:20","49":null,"48":"1:19","47":null,"46":"1:18","45":null,"44":"1:17","43":null,"42":"1:16","41":null,"40":"1:15","39":null,"38":"1:14","37":null,"36":"1:13","35":null,"34":"1:12","33":null,"32":"1:11","31":null,"30":"1:10","29":null,"28":"1:09","27":null,"26":"1:08","25":null,"24":"1:07","23":null,"22":"1:06","21":null,"20":"1:05","19":null,"18":"1:04","17":null,"16":"1:03","15":null,"14":"1:02","13":null,"12":"1:01","11":null,"10":"1:00","9":null,"8":"0:59","7":null,"6":"0:58","5":null,"4":"0:57","3":null,"2":"0:56","1":null,"0":"0:55"},"27-31":{"100":"3:30","99":"3:27","98":"3:24","97":"3:20","96":"3:17","95":"3:14","94":"3:11","93":"3:07","92":"3:04","91":"3:01","90":"2:58","89":"2:54","88":"2:51","87":"2:48","86":"2:45","85":"2:41","84":"2:38","83":"2:35","82":"2:31","81":"2:28","80":"2:25","79":"2:22","78":"2:18","77":"2:15","76":"2:12","75":"2:09","74":"2:06","73":"2:02","72":"1:59","71":"1:56","70":"1:52","69":"1:49","68":"1:46","67":"1:43","66":"1:39","65":"1:36","64":"1:33","63":"1:30","62":"1:26","61":"1:23","60":"1:20","59":null,"58":"1:19","57":null,"56":"1:18","55":null,"54":"1:17","53":null,"52":"1:16","51":null,"50":"1:15","49":null,"48":"1:14","47":null,"46":"1:13","45":null,"44":"1:12","43":null,"42":"1:11","41":null,"40":"1:10","39":null,"38":"1:09","37":null,"36":"1:08","35":null,"34":"1:07","33":null,"32":"1:06","31":null,"30":"1:05","29":null,"28":"1:04","27":null,"26":"1:03","25":null,"24":"1:02","23":null,"22":"1:01","21":null,"20":"1:00","19":null,"18":"0:59","17":null,"16":"0:58","15":null,"14":"0:57","13":null,"12":"0:56","11":null,"10":"0:55","9":null,"8":"0:54","7":null,"6":"0:53","5":null,"4":"0:52","3":null,"2":"0:51","1":null,"0":"0:50"},"32-36":{"100":"3:25","99":"3:22","98":"3:19","97":"3:15","96":"3:12","95":"3:09","94":"3:06","93":"3:02","92":"2:59","91":"2:56","90":"2:53","89":"2:49","88":"2:46","87":"2:43","86":"2:40","85":"2:36","84":"2:33","83":"2:30","82":"2:27","81":"2:23","80":"2:20","79":"2:17","78":"2:13","77":"2:10","76":"2:07","75":"2:04","74":"2:00","73":"1:57","72":"1:54","71":"1:51","70":"1:47","69":"1:44","68":"1:41","67":"1:38","66":"1:35","65":"1:31","64":"1:28","63":"1:25","62":"1:22","61":"1:18","60":"1:15","59":null,"58":"1:14","57":null,"56":"1:13","55":null,"54":"1:12","53":null,"52":"1:11","51":null,"50":"1:10","49":null,"48":"1:09","47":null,"46":"1:08","45":null,"44":"1:07","43":null,"42":"1:06","41":null,"40":"1:05","39":null,"38":"1:04","37":null,"36":"1:03","35":null,"34":"1:02","33":null,"32":"1:01","31":null,"30":"1:00","29":null,"28":"0:59","27":null,"26":"0:58","25":null,"24":"0:57","23":null,"22":"0:56","21":null,"20":"0:55","19":null,"18":"0:54","17":null,"16":"0:53","15":null,"14":"0:52","13":null,"12":"0:51","11":null,"10":"0:50","9":null,"8":"0:49","7":null,"6":"0:48","5":null,"4":"0:47","3":null,"2":"0:46","1":null,"0":"0:45"},"37-41":{"100":"3:20","99":"3:17","98":"3:14","97":"3:10","96":"3:07","95":"3:04","94":"3:01","93":"2:57","92":"2:54","91":"2:51","90":"2:47","89":"2:44","88":"2:41","87":"2:38","86":"2:35","85":"2:31","84":"2:28","83":"2:25","82":"2:22","81":"2:18","80":"2:15","79":"2:12","78":"2:08","77":"2:05","76":"2:02","75":"1:59","74":"1:56","73":"1:52","72":"1:49","71":"1:46","70":"1:42","69":"1:39","68":"1:36","67":"1:33","66":"1:30","65":"1:26","64":"1:23","63":"1:20","62":"1:16","61":"1:13","60":"1:10","59":null,"58":"1:09","57":null,"56":"1:08","55":null,"54":"1:07","53":null,"52":"1:06","51":null,"50":"1:05","49":null,"48":"1:04","47":null,"46":"1:03","45":null,"44":"1:02","43":null,"42":"1:01","41":null,"40":"1:00","39":null,"38":"0:59","37":null,"36":"0:58","35":null,"34":"0:57","33":null,"32":"0:56","31":null,"30":"0:55","29":null,"28":"0:54","27":null,"26":"0:53","25":null,"24":"0:52","23":null,"22":"0:51","21":null,"20":"0:50","19":null,"18":"0:49","17":null,"16":"0:48","15":null,"14":"0:47","13":null,"12":"0:46","11":null,"10":"0:45","9":null,"8":"0:44","7":null,"6":"0:43","5":null,"4":"0:42","3":null,"2":"0:41","1":null,"0":"0:40"},"42-46":{"100":"3:20","99":"3:17","98":"3:14","97":"3:10","96":"3:07","95":"3:04","94":"3:01","93":"2:57","92":"2:54","91":"2:51","90":"2:47","89":"2:44","88":"2:41","87":"2:38","86":"2:35","85":"2:31","84":"2:28","83":"2:25","82":"2:22","81":"2:18","80":"2:15","79":"2:12","78":"2:08","77":"2:05","76":"2:02","75":"1:59","74":"1:56","73":"1:52","72":"1:49","71":"1:46","70":"1:42","69":"1:39","68":"1:36","67":"1:33","66":"1:30","65":"1:26","64":"1:23","63":"1:20","62":"1:16","61":"1:13","60":"1:10","59":null,"58":"1:09","57":null,"56":"1:08","55":null,"54":"1:07","53":null,"52":"1:06","51":null,"50":"1:05","49":null,"48":"1:04","47":null,"46":"1:03","45":null,"44":"1:02","43":null,"42":"1:01","41":null,"40":"1:00","39":null,"38":"0:59","37":null,"36":"0:58","35":null,"34":"0:57","33":null,"32":"0:56","31":null,"30":"0:55","29":null,"28":"0:54","27":null,"26":"0:53","25":null,"24":"0:52","23":null,"22":"0:51","21":null,"20":"0:50","19":null,"18":"0:49","17":null,"16":"0:48","15":null,"14":"0:47","13":null,"12":"0:46","11":null,"10":"0:45","9":null,"8":"0:44","7":null,"6":"0:43","5":null,"4":"0:42","3":null,"2":"0:41","1":null,"0":"0:40"},"47-51":{"100":"3:20","99":"3:17","98":"3:14","97":"3:10","96":"3:07","95":"3:04","94":"3:01","93":"2:57","92":"2:54","91":"2:51","90":"2:47","89":"2:44","88":"2:41","87":"2:38","86":"2:35","85":"2:31","84":"2:28","83":"2:25","82":"2:22","81":"2:18","80":"2:15","79":"2:12","78":"2:08","77":"2:05","76":"2:02","75":"1:59","74":"1:56","73":"1:52","72":"1:49","71":"1:46","70":"1:42","69":"1:39","68":"1:36","67":"1:33","66":"1:30","65":"1:26","64":"1:23","63":"1:20","62":"1:16","61":"1:13","60":"1:10","59":null,"58":"1:09","57":null,"56":"1:08","55":null,"54":"1:07","53":null,"52":"1:06","51":null,"50":"1:05","49":null,"48":"1:04","47":null,"46":"1:03","45":null,"44":"1:02","43":null,"42":"1:01","41":null,"40":"1:00","39":null,"38":"0:59","37":null,"36":"0:58","35":null,"34":"0:57","33":null,"32":"0:56","31":null,"30":"0:55","29":null,"28":"0:54","27":null,"26":"0:53","25":null,"24":"0:52","23":null,"22":"0:51","21":null,"20":"0:50","19":null,"18":"0:49","17":null,"16":"0:48","15":null,"14":"0:47","13":null,"12":"0:46","11":null,"10":"0:45","9":null,"8":"0:44","7":null,"6":"0:43","5":null,"4":"0:42","3":null,"2":"0:41","1":null,"0":"0:40"},"52-56":{"100":"3:20","99":"3:17","98":"3:14","97":"3:10","96":"3:07","95":"3:04","94":"3:01","93":"2:57","92":"2:54","91":"2:51","90":"2:47","89":"2:44","88":"2:41","87":"2:38","86":"2:35","85":"2:31","84":"2:28","83":"2:25","82":"2:22","81":"2:18","80":"2:15","79":"2:12","78":"2:08","77":"2:05","76":"2:02","75":"1:59","74":"1:56","73":"1:52","72":"1:49","71":"1:46","70":"1:42","69":"1:39","68":"1:36","67":"1:33","66":"1:30","65":"1:26","64":"1:23","63":"1:20","62":"1:16","61":"1:13","60":"1:10","59":null,"58":"1:09","57":null,"56":"1:08","55":null,"54":"1:07","53":null,"52":"1:06","51":null,"50":"1:05","49":null,"48":"1:04","47":null,"46":"1:03","45":null,"44":"1:02","43":null,"42":"1:01","41":null,"40":"1:00","39":null,"38":"0:59","37":null,"36":"0:58","35":null,"34":"0:57","33":null,"32":"0:56","31":null,"30":"0:55","29":null,"28":"0:54","27":null,"26":"0:53","25":null,"24":"0:52","23":null,"22":"0:51","21":null,"20":"0:50","19":null,"18":"0:49","17":null,"16":"0:48","15":null,"14":"0:47","13":null,"12":"0:46","11":null,"10":"0:45","9":null,"8":"0:44","7":null,"6":"0:43","5":null,"4":"0:42","3":null,"2":"0:41","1":null,"0":"0:40"},"57-61":{"100":"3:20","99":"3:17","98":"3:14","97":"3:10","96":"3:07","95":"3:04","94":"3:01","93":"2:57","92":"2:54","91":"2:51","90":"2:47","89":"2:44","88":"2:41","87":"2:38","86":"2:35","85":"2:31","84":"2:28","83":"2:25","82":"2:22","81":"2:18","80":"2:15","79":"2:12","78":"2:08","77":"2:05","76":"2:02","75":"1:59","74":"1:56","73":"1:52","72":"1:49","71":"1:46","70":"1:42","69":"1:39","68":"1:36","67":"1:33","66":"1:30","65":"1:26","64":"1:23","63":"1:20","62":"1:16","61":"1:13","60":"1:10","59":null,"58":"1:09","57":null,"56":"1:08","55":null,"54":"1:07","53":null,"52":"1:06","51":null,"50":"1:05","49":null,"48":"1:04","47":null,"46":"1:03","45":null,"44":"1:02","43":null,"42":"1:01","41":null,"40":"1:00","39":null,"38":"0:59","37":null,"36":"0:58","35":null,"34":"0:57","33":null,"32":"0:56","31":null,"30":"0:55","29":null,"28":"0:54","27":null,"26":"0:53","25":null,"24":"0:52","23":null,"22":"0:51","21":null,"20":"0:50","19":null,"18":"0:49","17":null,"16":"0:48","15":null,"14":"0:47","13":null,"12":"0:46","11":null,"10":"0:45","9":null,"8":"0:44","7":null,"6":"0:43","5":null,"4":"0:42","3":null,"2":"0:41","1":null,"0":"0:40"},"Over 62":{"100":"3:20","99":"3:17","98":"3:14","97":"3:10","96":"3:07","95":"3:04","94":"3:01","93":"2:57","92":"2:54","91":"2:51","90":"2:47","89":"2:44","88":"2:41","87":"2:38","86":"2:35","85":"2:31","84":"2:28","83":"2:25","82":"2:22","81":"2:18","80":"2:15","79":"2:12","78":"2:08","77":"2:05","76":"2:02","75":"1:59","74":"1:56","73":"1:52","72":"1:49","71":"1:46","70":"1:42","69":"1:39","68":"1:36","67":"1:33","66":"1:30","65":"1:26","64":"1:23","63":"1:20","62":"1:16","61":"1:13","60":"1:10","59":null,"58":"1:09","57":null,"56":"1:08","55":null,"54":"1:07","53":null,"52":"1:06","51":null,"50":"1:05","49":null,"48":"1:04","47":null,"46":"1:03","45":null,"44":"1:02","43":null,"42":"1:01","41":null,"40":"1:00","39":null,"38":"0:59","37":null,"36":"0:58","35":null,"34":"0:57","33":null,"32":"0:56","31":null,"30":"0:55","29":null,"28":"0:54","27":null,"26":"0:53","25":null,"24":"0:52","23":null,"22":"0:51","21":null,"20":"0:50","19":null,"18":"0:49","17":null,"16":"0:48","15":null,"14":"0:47","13":null,"12":"0:46","11":null,"10":"0:45","9":null,"8":"0:44","7":null,"6":"0:43","5":null,"4":"0:42","3":null,"2":"0:41","1":null,"0":"0:40"}}},"2MR":{"ageGroups":["17-21","22-26","27-31","32-36","37-41","42-46","47-51","52-56","57-61","Over 62"],"male":{"17-21":{"100":"13:22","99":"13:47","98":"14:04","97":"14:19","96":"14:32","95":"14:45","94":"14:56","93":"15:07","92":"15:18","91":"15:29","90":"15:39","89":"15:49","88":"15:59","87":"16:09","86":"16:19","85":"16:28","84":"16:38","83":"16:48","82":"16:57","81":"17:07","80":"17:13","79":"17:17","78":"17:25","77":"17:34","76":"17:43","75":"17:52","74":"18:00","73":"18:09","72":"18:18","71":"18:27","70":"18:35","69":"18:45","68":"18:54","67":"19:03","66":"19:13","65":"19:23","64":"19:33","63":"19:43","62":null,"61":"19:54","60":"19:57","59":"20:00","58":"20:03","57":"20:05","56":"20:08","55":"20:11","54":"20:14","53":"20:17","52":"20:19","51":"20:22","50":"20:25","49":"20:28","48":"20:31","47":"20:33","46":"20:36","45":"20:39","44":"20:42","43":"20:44","42":"20:47","41":"20:50","40":"20:53","39":"20:56","38":"20:58","37":"21:01","36":"21:04","35":"21:07","34":"21:10","33":"21:12","32":"21:15","31":"21:18","30":"21:21","29":"21:24","28":"21:26","27":"21:29","26":"21:32","25":"21:35","24":"21:38","23":"21:40","22":"21:43","21":"21:46","20":"21:49","19":"21:52","18":"21:54","17":"21:57","16":"22:00","15":"22:03","14":"22:06","13":"22:08","12":"22:11","11":"22:14","10":"22:17","9":"22:19","8":"22:22","7":"22:25","6":"22:28","5":"22:31","4":"22:33","3":"22:36","2":"22:39","1":"22:42","0":"22:45"},"22-26":{"100":"13:25","99":"13:47","98":"13:55","97":"14:12","96":"14:27","95":"14:41","94":"14:54","93":"15:05","92":"15:17","91":"15:28","90":"15:38","89":"15:49","88":"15:59","87":"16:09","86":"16:19","85":"16:29","84":"16:39","83":"16:49","82":"16:59","81":"17:08","80":null,"79":"17:18","78":"17:28","77":"17:37","76":"17:46","75":"17:55","74":"18:03","73":"18:12","72":"18:21","71":null,"70":"18:23","69":"18:30","68":"18:39","67":"18:48","66":"18:57","65":"19:07","64":"19:16","63":"19:26","62":"19:36","61":null,"60":"19:45","59":"19:48","58":"19:51","57":"19:53","56":"19:56","55":"19:59","54":"20:02","53":"20:05","52":"20:07","51":"20:10","50":"20:13","49":"20:16","48":"20:19","47":"20:21","46":"20:24","45":"20:27","44":"20:30","43":"20:32","42":"20:35","41":"20:38","40":"20:41","39":"20:44","38":"20:46","37":"20:49","36":"20:52","35":"20:55","34":"20:58","33":"21:00","32":"21:03","31":"21:06","30":"21:09","29":"21:12","28":"21:14","27":"21:17","26":"21:20","25":"21:23","24":"21:26","23":"21:28","22":"21:31","21":"21:34","20":"21:37","19":"21:40","18":"21:42","17":"21:45","16":"21:48","15":"21:51","14":"21:54","13":"21:56","12":"21:59","11":"22:02","10":"22:05","9":"22:07","8":"22:10","7":"22:13","6":"22:16","5":"22:19","4":"22:21","3":"22:24","2":"22:27","1":"22:30","0":"22:33"},"27-31":{"100":"13:25","99":"13:47","98":"13:55","97":"14:12","96":"14:27","95":"14:41","94":"14:54","93":"15:05","92":"15:17","91":"15:28","90":"15:38","89":"15:55","88":"16:05","87":"16:14","86":"16:24","85":"16:33","84":"16:43","83":"16:52","82":"17:02","81":"17:12","80":"17:21","79":"17:30","78":"17:38","77":"17:47","76":"17:55","75":"18:04","74":"18:13","73":"18:21","72":null,"71":null,"70":"18:23","69":"18:30","68":"18:39","67":"18:57","66":"19:06","65":"19:15","64":"19:25","63":"19:35","62":null,"61":null,"60":"19:45","59":"19:48","58":"19:51","57":"19:53","56":"19:56","55":"19:59","54":"20:02","53":"20:05","52":"20:07","51":"20:10","50":"20:13","49":"20:16","48":"20:19","47":"20:21","46":"20:24","45":"20:27","44":"20:30","43":"20:32","42":"20:35","41":"20:38","40":"20:41","39":"20:44","38":"20:46","37":"20:49","36":"20:52","35":"20:55","34":"20:58","33":"21:00","32":"21:03","31":"21:06","30":"21:09","29":"21:12","28":"21:14","27":"21:17","26":"21:20","25":"21:23","24":"21:26","23":"21:28","22":"21:31","21":"21:34","20":"21:37","19":"21:40","18":"21:42","17":"21:45","16":"21:48","15":"21:51","14":"21:54","13":"21:56","12":"21:59","11":"22:02","10":"22:05","9":"22:07","8":"22:10","7":"22:13","6":"22:16","5":"22:19","4":"22:21","3":"22:24","2":"22:27","1":"22:30","0":"22:33"},"32-36":{"100":"13:42","99":"14:06","98":"14:23","97":"14:37","96":"14:49","95":"15:01","94":"15:12","93":"15:23","92":"15:33","91":"15:43","90":"15:50","89":"15:53","88":"16:02","87":"16:12","86":"16:21","85":"16:30","84":"16:40","83":"16:49","82":"16:58","81":"17:07","80":"17:16","79":"17:26","78":"17:34","77":"17:42","76":"17:50","75":"17:58","74":"18:07","73":"18:15","72":"18:23","71":null,"70":"18:30","69":"18:58","68":"19:06","67":"19:16","66":"19:25","65":"19:34","64":"19:44","63":"19:55","62":"20:06","61":"20:18","60":"20:44","59":"20:47","58":"20:50","57":"20:52","56":"20:55","55":"20:58","54":"21:01","53":"21:04","52":"21:06","51":"21:09","50":"21:12","49":"21:15","48":"21:18","47":"21:20","46":"21:23","45":"21:26","44":"21:29","43":"21:31","42":"21:34","41":"21:37","40":"21:40","39":"21:43","38":"21:45","37":"21:48","36":"21:51","35":"21:54","34":"21:57","33":"21:59","32":"22:02","31":"22:05","30":"22:08","29":"22:11","28":"22:13","27":"22:16","26":"22:19","25":"22:22","24":"22:25","23":"22:27","22":"22:30","21":"22:33","20":"22:36","19":"22:39","18":"22:41","17":"22:44","16":"22:47","15":"22:50","14":"22:53","13":"22:55","12":"22:58","11":"23:01","10":"23:04","9":"23:06","8":"23:09","7":"23:12","6":"23:15","5":"23:18","4":"23:20","3":"23:23","2":"23:26","1":"23:29","0":"23:32"},"37-41":{"100":"13:42","99":"14:16","98":"14:32","97":"14:46","96":"14:59","95":"15:10","94":"15:21","93":"15:32","92":"15:42","91":"15:52","90":"16:01","89":"16:11","88":"16:20","87":"16:29","86":"16:39","85":"16:48","84":"16:57","83":"17:06","82":"17:15","81":"17:24","80":"17:33","79":"17:41","78":"17:50","77":"17:58","76":"18:06","75":"18:14","74":"18:22","73":"18:31","72":null,"71":null,"70":"18:35","69":"18:47","68":"19:04","67":"19:13","66":"19:22","65":"19:31","64":"19:41","63":"19:51","62":"20:12","61":"20:24","60":"20:44","59":"20:47","58":"20:50","57":"20:52","56":"20:55","55":"20:58","54":"21:01","53":"21:04","52":"21:06","51":"21:09","50":"21:12","49":"21:15","48":"21:18","47":"21:20","46":"21:23","45":"21:26","44":"21:29","43":"21:31","42":"21:34","41":"21:37","40":"21:40","39":"21:43","38":"21:45","37":"21:48","36":"21:51","35":"21:54","34":"21:57","33":"21:59","32":"22:02","31":"22:05","30":"22:08","29":"22:11","28":"22:13","27":"22:16","26":"22:19","25":"22:22","24":"22:25","23":"22:27","22":"22:30","21":"22:33","20":"22:36","19":"22:39","18":"22:41","17":"22:44","16":"22:47","15":"22:50","14":"22:53","13":"22:55","12":"22:58","11":"23:01","10":"23:04","9":"23:06","8":"23:09","7":"23:12","6":"23:15","5":"23:18","4":"23:20","3":"23:23","2":"23:26","1":"23:29","0":"23:32"},"42-46":{"100":"14:05","99":"14:29","98":"14:45","97":"14:59","96":"15:12","95":"15:24","94":"15:35","93":"15:45","92":"15:55","91":"16:05","90":"16:15","89":"16:24","88":"16:33","87":"16:43","86":"16:52","85":"17:01","84":"17:10","83":"17:19","82":"17:28","81":"17:37","80":"17:47","79":"17:56","78":"18:06","77":"18:15","76":"18:25","75":"18:35","74":"18:45","73":"18:54","72":null,"71":null,"70":"18:55","69":"19:15","68":"19:36","67":"19:47","66":"19:58","65":"20:10","64":"20:37","63":"20:52","62":"21:09","61":"21:31","60":"22:04","59":"22:07","58":"22:10","57":"22:12","56":"22:15","55":"22:18","54":"22:21","53":"22:24","52":"22:26","51":"22:29","50":"22:32","49":"22:35","48":"22:38","47":"22:40","46":"22:43","45":"22:46","44":"22:49","43":"22:51","42":"22:54","41":"22:57","40":"23:00","39":"23:03","38":"23:05","37":"23:08","36":"23:11","35":"23:14","34":"23:17","33":"23:19","32":"23:22","31":"23:25","30":"23:28","29":"23:31","28":"23:33","27":"23:36","26":"23:39","25":"23:42","24":"23:45","23":"23:47","22":"23:50","21":"23:53","20":"23:56","19":"23:59","18":"24:01","17":"24:04","16":"24:07","15":"24:10","14":"24:13","13":"24:15","12":"24:18","11":"24:21","10":"24:24","9":"24:26","8":"24:29","7":"24:32","6":"24:35","5":"24:38","4":"24:40","3":"24:43","2":"24:46","1":"24:49","0":"24:52"},"47-51":{"100":"14:30","99":"14:52","98":"15:08","97":"15:22","96":"15:35","95":"15:47","94":"15:58","93":"16:09","92":"16:19","91":"16:29","90":"16:39","89":"16:48","88":"16:58","87":"17:07","86":"17:16","85":"17:25","84":"17:35","83":"17:44","82":"17:53","81":"18:02","80":"18:12","79":"18:21","78":"18:31","77":"18:41","76":"18:51","75":"19:00","74":"19:10","73":"19:20","72":null,"71":null,"70":"19:30","69":"19:41","68":"20:02","67":"20:13","66":"20:37","65":"20:50","64":"21:04","63":"21:19","62":"21:37","61":"21:59","60":"22:04","59":"22:07","58":"22:10","57":"22:12","56":"22:15","55":"22:18","54":"22:21","53":"22:24","52":"22:26","51":"22:29","50":"22:32","49":"22:35","48":"22:38","47":"22:40","46":"22:43","45":"22:46","44":"22:49","43":"22:51","42":"22:54","41":"22:57","40":"23:00","39":"23:03","38":"23:05","37":"23:08","36":"23:11","35":"23:14","34":"23:17","33":"23:19","32":"23:22","31":"23:25","30":"23:28","29":"23:31","28":"23:33","27":"23:36","26":"23:39","25":"23:42","24":"23:45","23":"23:47","22":"23:50","21":"23:53","20":"23:56","19":"23:59","18":"24:01","17":"24:04","16":"24:07","15":"24:10","14":"24:13","13":"24:15","12":"24:18","11":"24:21","10":"24:24","9":"24:26","8":"24:29","7":"24:32","6":"24:35","5":"24:38","4":"24:40","3":"24:43","2":"24:46","1":"24:49","0":"24:52"},"52-56":{"100":"15:09","99":"15:38","98":"15:54","97":"16:08","96":"16:21","95":"16:33","94":"16:44","93":"16:55","92":"17:06","91":"17:16","90":"17:26","89":"17:35","88":"17:45","87":"17:54","86":"18:04","85":"18:13","84":"18:22","83":"18:32","82":"18:41","81":"18:51","80":"19:00","79":"19:10","78":"19:20","77":"19:30","76":"19:39","75":"19:49","74":"19:59","73":"20:10","72":null,"71":null,"70":"20:20","69":"20:52","68":"21:03","67":"21:15","66":"21:27","65":"21:40","64":"21:54","63":"22:10","62":"22:28","61":null,"60":"22:50","59":"22:53","58":"22:56","57":"22:58","56":"23:01","55":"23:04","54":"23:07","53":"23:10","52":"23:12","51":"23:15","50":"23:18","49":"23:21","48":"23:24","47":"23:26","46":"23:29","45":"23:32","44":"23:35","43":"23:37","42":"23:40","41":"23:43","40":"23:46","39":"23:49","38":"23:51","37":"23:54","36":"23:57","35":"24:00","34":"24:03","33":"24:05","32":"24:08","31":"24:11","30":"24:14","29":"24:17","28":"24:19","27":"24:22","26":"24:25","25":"24:28","24":"24:31","23":"24:33","22":"24:36","21":"24:39","20":"24:42","19":"24:45","18":"24:47","17":"24:50","16":"24:53","15":"24:56","14":"24:59","13":"25:01","12":"25:04","11":"25:07","10":"25:10","9":"25:12","8":"25:15","7":"25:18","6":"25:21","5":"25:24","4":"25:26","3":"25:29","2":"25:32","1":"25:35","0":"25:38"},"57-61":{"100":"15:28","99":"15:55","98":"16:22","97":"16:44","96":"16:58","95":"17:14","94":"17:27","93":"17:45","92":"17:57","91":"18:07","90":"18:17","89":"18:25","88":"18:36","87":"18:45","86":"18:53","85":"19:00","84":"19:07","83":"19:17","82":"19:27","81":"19:36","80":"19:45","79":"19:51","78":"19:59","77":"20:07","76":"20:14","75":"20:22","74":"20:31","73":"20:41","72":"20:46","71":"20:54","70":"21:00","69":"21:01","68":"21:19","67":"21:35","66":"21:47","65":"22:03","64":"22:21","63":"22:39","62":"22:58","61":"23:12","60":"23:36","59":"23:39","58":"23:42","57":"23:44","56":"23:47","55":"23:50","54":"23:53","53":"23:56","52":"23:58","51":"24:01","50":"24:04","49":"24:07","48":"24:10","47":"24:12","46":"24:15","45":"24:18","44":"24:21","43":"24:23","42":"24:26","41":"24:29","40":"24:32","39":"24:35","38":"24:37","37":"24:40","36":"24:43","35":"24:46","34":"24:49","33":"24:51","32":"24:54","31":"24:57","30":"25:00","29":"25:03","28":"25:05","27":"25:08","26":"25:11","25":"25:14","24":"25:17","23":"25:19","22":"25:22","21":"25:25","20":"25:28","19":"25:31","18":"25:33","17":"25:36","16":"25:39","15":"25:42","14":"25:45","13":"25:47","12":"25:50","11":"25:53","10":"25:56","9":"25:58","8":"26:01","7":"26:04","6":"26:07","5":"26:10","4":"26:12","3":"26:15","2":"26:18","1":"26:21","0":"26:24"},"Over 62":{"100":"15:28","99":"15:55","98":"16:22","97":"16:44","96":"16:58","95":"17:14","94":"17:27","93":"17:45","92":"17:57","91":"18:07","90":"18:17","89":"18:25","88":"18:36","87":"18:45","86":"18:53","85":"19:00","84":"19:07","83":"19:17","82":"19:27","81":"19:36","80":"19:45","79":"19:51","78":"19:59","77":"20:07","76":"20:14","75":"20:22","74":"20:31","73":"20:41","72":"20:46","71":"20:54","70":"21:00","69":"21:01","68":"21:19","67":"21:35","66":"21:47","65":"22:03","64":"22:21","63":"22:39","62":"22:58","61":"23:12","60":"23:36","59":"23:39","58":"23:42","57":"23:44","56":"23:47","55":"23:50","54":"23:53","53":"23:56","52":"23:58","51":"24:01","50":"24:04","49":"24:07","48":"24:10","47":"24:12","46":"24:15","45":"24:18","44":"24:21","43":"24:23","42":"24:26","41":"24:29","40":"24:32","39":"24:35","38":"24:37","37":"24:40","36":"24:43","35":"24:46","34":"24:49","33":"24:51","32":"24:54","31":"24:57","30":"25:00","29":"25:03","28":"25:05","27":"25:08","26":"25:11","25":"25:14","24":"25:17","23":"25:19","22":"25:22","21":"25:25","20":"25:28","19":"25:31","18":"25:33","17":"25:36","16":"25:39","15":"25:42","14":"25:45","13":"25:47","12":"25:50","11":"25:53","10":"25:56","9":"25:58","8":"26:01","7":"26:04","6":"26:07","5":"26:10","4":"26:12","3":"26:15","2":"26:18","1":"26:21","0":"26:24"}},"female":{"17-21":{"100":"16:00","99":"16:28","98":"16:49","97":"17:07","96":"17:14","95":"17:23","94":"17:31","93":"17:37","92":"17:44","91":"17:50","90":"17:55","89":"18:07","88":"18:13","87":"18:24","86":"18:34","85":"18:44","84":"18:54","83":"19:03","82":"19:12","81":"19:21","80":"19:30","79":"19:39","78":"19:47","77":"19:56","76":"20:05","75":"20:13","74":"20:24","73":"20:35","72":"20:45","71":"20:56","70":"21:06","69":"21:17","68":"21:28","67":"21:49","66":"22:01","65":"22:12","64":"22:25","63":"22:38","62":"22:53","61":null,"60":"22:55","59":"22:58","58":"23:01","57":"23:04","56":"23:07","55":"23:10","54":"23:12","53":"23:15","52":"23:18","51":"23:21","50":"23:24","49":"23:27","48":"23:30","47":"23:33","46":"23:36","45":"23:39","44":"23:42","43":"23:44","42":"23:47","41":"23:50","40":"23:53","39":"23:56","38":"23:59","37":"24:02","36":"24:05","35":"24:08","34":"24:11","33":"24:14","32":"24:16","31":"24:19","30":"24:22","29":"24:25","28":"24:28","27":"24:31","26":"24:34","25":"24:37","24":"24:40","23":"24:43","22":"24:46","21":"24:48","20":"24:51","19":"24:54","18":"24:57","17":"25:00","16":"25:03","15":"25:06","14":"25:09","13":"25:12","12":"25:15","11":"25:18","10":"25:20","9":"25:23","8":"25:26","7":"25:29","6":"25:32","5":"25:35","4":"25:38","3":"25:41","2":"25:44","1":"25:47","0":"25:50"},"22-26":{"100":"15:30","99":"15:44","98":"15:55","97":"16:00","96":"16:04","95":"16:27","94":"16:46","93":"17:03","92":"17:17","91":"17:31","90":"17:44","89":"17:55","88":"18:07","87":"18:18","86":"18:28","85":"18:38","84":"18:48","83":"18:58","82":"19:07","81":"19:16","80":"19:25","79":"19:34","78":"19:43","77":"19:52","76":"20:01","75":"20:12","74":"20:24","73":"20:35","72":"20:46","71":"20:57","70":"21:00","69":"21:32","68":"21:40","67":"21:49","66":"21:58","65":"22:07","64":"22:16","63":"22:26","62":"22:37","61":null,"60":"22:45","59":"22:48","58":"22:51","57":"22:54","56":"22:57","55":"23:00","54":"23:02","53":"23:05","52":"23:08","51":"23:11","50":"23:14","49":"23:17","48":"23:20","47":"23:23","46":"23:26","45":"23:29","44":"23:32","43":"23:34","42":"23:37","41":"23:40","40":"23:43","39":"23:46","38":"23:49","37":"23:52","36":"23:55","35":"23:58","34":"24:01","33":"24:04","32":"24:06","31":"24:09","30":"24:12","29":"24:15","28":"24:18","27":"24:21","26":"24:24","25":"24:27","24":"24:30","23":"24:33","22":"24:36","21":"24:38","20":"24:41","19":"24:44","18":"24:47","17":"24:50","16":"24:53","15":"24:56","14":"24:59","13":"25:02","12":"25:05","11":"25:08","10":"25:10","9":"25:13","8":"25:16","7":"25:19","6":"25:22","5":"25:25","4":"25:28","3":"25:31","2":"25:34","1":"25:37","0":"25:40"},"27-31":{"100":"15:30","99":"15:44","98":"15:55","97":"16:00","96":"16:04","95":"16:27","94":"16:46","93":"17:03","92":"17:17","91":"17:31","90":"17:44","89":"18:20","88":"18:30","87":"18:40","86":"18:50","85":"18:59","84":"19:08","83":"19:18","82":"19:27","81":"19:36","80":"19:45","79":"19:53","78":"20:01","77":"20:10","76":"20:18","75":"20:26","74":"20:34","73":"20:42","72":"20:50","71":"20:58","70":"21:00","69":"21:15","68":"21:23","67":"21:32","66":"21:40","65":"21:49","64":"21:59","63":"22:09","62":"22:19","61":"22:31","60":"22:45","59":"22:48","58":"22:51","57":"22:54","56":"22:57","55":"23:00","54":"23:02","53":"23:05","52":"23:08","51":"23:11","50":"23:14","49":"23:17","48":"23:20","47":"23:23","46":"23:26","45":"23:29","44":"23:32","43":"23:34","42":"23:37","41":"23:40","40":"23:43","39":"23:46","38":"23:49","37":"23:52","36":"23:55","35":"23:58","34":"24:01","33":"24:04","32":"24:06","31":"24:09","30":"24:12","29":"24:15","28":"24:18","27":"24:21","26":"24:24","25":"24:27","24":"24:30","23":"24:33","22":"24:36","21":"24:38","20":"24:41","19":"24:44","18":"24:47","17":"24:50","16":"24:53","15":"24:56","14":"24:59","13":"25:02","12":"25:05","11":"25:08","10":"25:10","9":"25:13","8":"25:16","7":"25:19","6":"25:22","5":"25:25","4":"25:28","3":"25:31","2":"25:34","1":"25:37","0":"25:40"},"32-36":{"100":"15:48","99":"16:15","98":"16:36","97":"16:54","96":"17:09","95":"17:23","94":"17:36","93":"17:48","92":"17:59","91":"18:10","90":"18:21","89":"18:31","88":"18:41","87":"18:50","86":"19:00","85":"19:09","84":"19:18","83":"19:27","82":"19:36","81":"19:45","80":"19:53","79":"20:01","78":"20:09","77":"20:17","76":"20:25","75":"20:33","74":"20:41","73":"20:49","72":"20:57","71":"21:05","70":"21:13","69":"21:21","68":"21:29","67":"21:37","66":"21:46","65":"21:55","64":"22:04","63":"22:14","62":"22:24","61":"22:35","60":"22:50","59":"22:53","58":"22:56","57":"22:59","56":"23:02","55":"23:05","54":"23:07","53":"23:10","52":"23:13","51":"23:16","50":"23:19","49":"23:22","48":"23:25","47":"23:28","46":"23:31","45":"23:34","44":"23:37","43":"23:39","42":"23:42","41":"23:45","40":"23:48","39":"23:51","38":"23:54","37":"23:57","36":"24:00","35":"24:03","34":"24:06","33":"24:09","32":"24:11","31":"24:14","30":"24:17","29":"24:20","28":"24:23","27":"24:26","26":"24:29","25":"24:32","24":"24:35","23":"24:38","22":"24:41","21":"24:43","20":"24:46","19":"24:49","18":"24:52","17":"24:55","16":"24:58","15":"25:01","14":"25:04","13":"25:07","12":"25:10","11":"25:13","10":"25:15","9":"25:18","8":"25:21","7":"25:24","6":"25:27","5":"25:30","4":"25:33","3":"25:36","2":"25:39","1":"25:42","0":"25:45"},"37-41":{"100":"15:51","99":"16:21","98":"16:42","97":"16:59","96":"17:14","95":"17:28","94":"17:41","93":"17:53","92":"18:04","91":"18:15","90":"18:25","89":"18:35","88":"18:45","87":"18:54","86":"19:04","85":"19:13","84":"19:22","83":"19:31","82":"19:40","81":"19:49","80":"19:57","79":"20:05","78":"20:13","77":"20:21","76":"20:29","75":"20:37","74":"20:45","73":"20:53","72":"21:00","71":"21:08","70":"21:16","69":"21:24","68":"21:32","67":"21:41","66":"21:49","65":"21:58","64":"22:07","63":"22:17","62":"22:27","61":"22:38","60":"22:59","59":"23:02","58":"23:05","57":"23:08","56":"23:11","55":"23:14","54":"23:16","53":"23:19","52":"23:22","51":"23:25","50":"23:28","49":"23:31","48":"23:34","47":"23:37","46":"23:40","45":"23:43","44":"23:46","43":"23:48","42":"23:51","41":"23:54","40":"23:57","39":"24:00","38":"24:03","37":"24:06","36":"24:09","35":"24:12","34":"24:15","33":"24:18","32":"24:20","31":"24:23","30":"24:26","29":"24:29","28":"24:32","27":"24:35","26":"24:38","25":"24:41","24":"24:44","23":"24:47","22":"24:50","21":"24:52","20":"24:55","19":"24:58","18":"25:01","17":"25:04","16":"25:07","15":"25:10","14":"25:13","13":"25:16","12":"25:19","11":"25:22","10":"25:24","9":"25:27","8":"25:30","7":"25:33","6":"25:36","5":"25:39","4":"25:42","3":"25:45","2":"25:48","1":"25:51","0":"25:54"},"42-46":{"100":"16:00","99":"16:31","98":"16:52","97":"17:10","96":"17:25","95":"17:39","94":"17:52","93":"18:04","92":"18:16","91":"18:26","90":"18:37","89":"18:47","88":"18:57","87":"19:07","86":"19:16","85":"19:25","84":"19:35","83":"19:44","82":"19:53","81":"20:01","80":"20:10","79":"20:18","78":"20:26","77":"20:34","76":"20:42","75":"20:50","74":"20:58","73":"21:06","72":"21:14","71":"21:22","70":"21:30","69":"21:38","68":"21:46","67":"21:55","66":"22:03","65":"22:12","64":"22:22","63":"22:31","62":"22:42","61":"22:53","60":"23:15","59":"23:18","58":"23:21","57":"23:24","56":"23:27","55":"23:30","54":"23:32","53":"23:35","52":"23:38","51":"23:41","50":"23:44","49":"23:47","48":"23:50","47":"23:53","46":"23:56","45":"23:59","44":"24:02","43":"24:04","42":"24:07","41":"24:10","40":"24:13","39":"24:16","38":"24:19","37":"24:22","36":"24:25","35":"24:28","34":"24:31","33":"24:34","32":"24:36","31":"24:39","30":"24:42","29":"24:45","28":"24:48","27":"24:51","26":"24:54","25":"24:57","24":"25:00","23":"25:03","22":"25:06","21":"25:08","20":"25:11","19":"25:14","18":"25:17","17":"25:20","16":"25:23","15":"25:26","14":"25:29","13":"25:32","12":"25:35","11":"25:38","10":"25:40","9":"25:43","8":"25:46","7":"25:49","6":"25:52","5":"25:55","4":"25:58","3":"26:01","2":"26:04","1":"26:07","0":"26:10"},"47-51":{"100":"16:30","99":"17:00","98":"17:20","97":"17:37","96":"17:52","95":"18:06","94":"18:19","93":"18:31","92":"18:42","91":"18:52","90":"19:03","89":"19:13","88":"19:22","87":"19:32","86":"19:41","85":"19:50","84":"19:59","83":"20:08","82":"20:17","81":"20:26","80":"20:34","79":"20:42","78":"20:50","77":"20:58","76":"21:06","75":"21:14","74":"21:22","73":"21:29","72":"21:37","71":"21:45","70":"21:40","69":"22:01","68":"22:09","67":"22:17","66":"22:26","65":"22:35","64":"22:44","63":"22:54","62":"23:04","61":"23:15","60":"23:30","59":"23:33","58":"23:36","57":"23:39","56":"23:42","55":"23:45","54":"23:47","53":"23:50","52":"23:53","51":"23:56","50":"23:59","49":"24:02","48":"24:05","47":"24:08","46":"24:11","45":"24:14","44":"24:17","43":"24:19","42":"24:22","41":"24:25","40":"24:28","39":"24:31","38":"24:34","37":"24:37","36":"24:40","35":"24:43","34":"24:46","33":"24:49","32":"24:51","31":"24:54","30":"24:57","29":"25:00","28":"25:03","27":"25:06","26":"25:09","25":"25:12","24":"25:15","23":"25:18","22":"25:21","21":"25:23","20":"25:26","19":"25:29","18":"25:32","17":"25:35","16":"25:38","15":"25:41","14":"25:44","13":"25:47","12":"25:50","11":"25:53","10":"25:55","9":"25:58","8":"26:01","7":"26:04","6":"26:07","5":"26:10","4":"26:13","3":"26:16","2":"26:19","1":"26:22","0":"26:25"},"52-56":{"100":"16:59","99":"17:44","98":"18:05","97":"18:22","96":"18:37","95":"18:50","94":"19:03","93":"19:15","92":"19:26","91":"19:37","90":"19:47","89":"19:57","88":"20:07","87":"20:16","86":"20:26","85":"20:35","84":"20:44","83":"20:53","82":"21:02","81":"21:10","80":"21:19","79":"21:27","78":"21:35","77":"21:43","76":"21:51","75":"21:59","74":"22:07","73":"22:14","72":"22:22","71":"22:30","70":"22:38","69":"22:46","68":"22:54","67":"23:03","66":"23:11","65":"23:20","64":"23:29","63":"23:39","62":"23:49","61":"24:01","60":"24:00","59":"24:03","58":"24:06","57":"24:09","56":"24:12","55":"24:15","54":"24:17","53":"24:20","52":"24:23","51":"24:26","50":"24:29","49":"24:32","48":"24:35","47":"24:38","46":"24:41","45":"24:44","44":"24:47","43":"24:49","42":"24:52","41":"24:55","40":"24:58","39":"25:01","38":"25:04","37":"25:07","36":"25:10","35":"25:13","34":"25:16","33":"25:19","32":"25:21","31":"25:24","30":"25:27","29":"25:30","28":"25:33","27":"25:36","26":"25:39","25":"25:42","24":"25:45","23":"25:48","22":"25:51","21":"25:53","20":"25:56","19":"25:59","18":"26:02","17":"26:05","16":"26:08","15":"26:11","14":"26:14","13":"26:17","12":"26:20","11":"26:23","10":"26:25","9":"26:28","8":"26:31","7":"26:34","6":"26:37","5":"26:40","4":"26:43","3":"26:46","2":"26:49","1":"26:52","0":"26:55"},"57-61":{"100":"17:18","99":"17:47","98":"17:56","97":"18:00","96":"18:25","95":"18:31","94":"18:36","93":"18:46","92":"18:48","91":"18:56","90":"18:59","89":"19:04","88":"19:14","87":"19:29","86":"19:41","85":"19:45","84":"19:58","83":"20:02","82":"20:07","81":"20:17","80":"20:22","79":"20:31","78":"20:38","77":"20:43","76":"20:44","75":"20:44","74":"20:50","73":"21:03","72":"21:15","71":"21:32","70":"21:40","69":"21:43","68":"21:59","67":"22:09","66":"22:23","65":"22:33","64":"22:43","63":"23:01","62":"23:22","61":"24:05","60":"24:48","59":"24:51","58":"24:54","57":"24:57","56":"25:00","55":"25:03","54":"25:05","53":"25:08","52":"25:11","51":"25:14","50":"25:17","49":"25:20","48":"25:23","47":"25:26","46":"25:29","45":"25:32","44":"25:35","43":"25:37","42":"25:40","41":"25:43","40":"25:46","39":"25:49","38":"25:52","37":"25:55","36":"25:58","35":"26:01","34":"26:04","33":"26:07","32":"26:09","31":"26:12","30":"26:15","29":"26:18","28":"26:21","27":"26:24","26":"26:27","25":"26:30","24":"26:33","23":"26:36","22":"26:39","21":"26:41","20":"26:44","19":"26:47","18":"26:50","17":"26:53","16":"26:56","15":"26:59","14":"27:02","13":"27:05","12":"27:08","11":"27:11","10":"27:13","9":"27:16","8":"27:19","7":"27:22","6":"27:25","5":"27:28","4":"27:31","3":"27:34","2":"27:37","1":"27:40","0":"27:43"},"Over 62":{"100":"17:18","99":"17:47","98":"17:56","97":"18:00","96":"18:25","95":"18:31","94":"18:36","93":"18:46","92":"18:48","91":"18:56","90":"18:59","89":"19:04","88":"19:14","87":"19:29","86":"19:41","85":"19:45","84":"19:58","83":"20:02","82":"20:07","81":"20:17","80":"20:22","79":"20:31","78":"20:38","77":"20:43","76":"20:44","75":"20:44","74":"20:50","73":"21:03","72":"21:15","71":"21:32","70":"21:40","69":"21:43","68":"22:02","67":"22:15","66":"22:31","65":"22:44","64":"22:50","63":"23:04","62":"23:22","61":"24:11","60":"25:00","59":"25:03","58":"25:06","57":"25:09","56":"25:12","55":"25:15","54":"25:17","53":"25:20","52":"25:23","51":"25:26","50":"25:29","49":"25:32","48":"25:35","47":"25:38","46":"25:41","45":"25:44","44":"25:47","43":"25:49","42":"25:52","41":"25:55","40":"25:58","39":"26:01","38":"26:04","37":"26:07","36":"26:10","35":"26:13","34":"26:16","33":"26:19","32":"26:21","31":"26:24","30":"26:27","29":"26:30","28":"26:33","27":"26:36","26":"26:39","25":"26:42","24":"26:45","23":"26:48","22":"26:51","21":"26:53","20":"26:56","19":"26:59","18":"27:02","17":"27:05","16":"27:08","15":"27:11","14":"27:14","13":"27:17","12":"27:20","11":"27:23","10":"27:25","9":"27:28","8":"27:31","7":"27:34","6":"27:37","5":"27:40","4":"27:43","3":"27:46","2":"27:49","1":"27:52","0":"27:55"}}}};
-
-const AFTScoring = (() => {
-  const AGE_GROUPS = ["17-21", "22-26", "27-31", "32-36", "37-41", "42-46", "47-51", "52-56", "57-61", "Over 62"];
-
-  const EVENT_META = {
-    MDL: { type: "number", better: "higher" },   // 3 Rep Max Deadlift (weight)
-    HRP: { type: "number", better: "higher" },   // Hand-Release Push-up (reps)
-    SDC: { type: "time", better: "lower" },      // Sprint-Drag-Carry (time)
-    PLK: { type: "time", better: "higher" },     // Plank (time)
-    "2MR": { type: "time", better: "lower" },    // 2-Mile Run (time)
-  };
-
-  function normalizeSex(raw) {
-    const s = (raw || "").toString().trim().toUpperCase();
-    if (s.startsWith("F")) return "F";
-    if (s.startsWith("M")) return "M";
-    return "";
-  }
-
-  function ageToGroup(ageRaw) {
-    const age = parseInt(ageRaw, 10);
-    if (!Number.isFinite(age)) return "";
-    if (age <= 21) return "17-21";
-    if (age <= 26) return "22-26";
-    if (age <= 31) return "27-31";
-    if (age <= 36) return "32-36";
-    if (age <= 41) return "37-41";
-    if (age <= 46) return "42-46";
-    if (age <= 51) return "47-51";
-    if (age <= 56) return "52-56";
-    if (age <= 61) return "57-61";
-    return "Over 62";
-  }
-
-  function parseTimeToSeconds(raw) {
-    if (raw === null || raw === undefined) return null;
-    const s = raw.toString().trim();
-    if (!s) return null;
-
-    // Accept formats: "m:ss", "mm:ss", "h:mm:ss"
-    const parts = s.split(":").map((p) => p.trim());
-    if (parts.length === 1) {
-      const num = Number(parts[0]);
-      return Number.isFinite(num) ? num : null;
-    }
-    if (parts.length === 2) {
-      const m = Number(parts[0]);
-      const sec = Number(parts[1]);
-      if (!Number.isFinite(m) || !Number.isFinite(sec)) return null;
-      return m * 60 + sec;
-    }
-    if (parts.length === 3) {
-      const h = Number(parts[0]);
-      const m = Number(parts[1]);
-      const sec = Number(parts[2]);
-      if (!Number.isFinite(h) || !Number.isFinite(m) || !Number.isFinite(sec)) return null;
-      return h * 3600 + m * 60 + sec;
-    }
-    return null;
-  }
-
-  function toNumber(raw) {
-    if (raw === null || raw === undefined) return null;
-    const n = Number(raw);
-    if (!Number.isFinite(n)) return null;
-    return n;
-  }
-
-  function getThresholdObj(eventKey, sex, ageGroup) {
-    const evt = AFT_RAW_TABLES[eventKey];
-    if (!evt) return null;
-    const bySex = sex === "F" ? evt.female : evt.male;
-    return bySex && bySex[ageGroup] ? bySex[ageGroup] : null;
-  }
-
-  // Returns integer score 0–100, or null if cannot compute yet (missing inputs)
-  function computeScore(eventKey, sexRaw, ageRaw, primaryRaw, unitRaw) {
-    const meta = EVENT_META[eventKey];
-    if (!meta) return null;
-
-    const sex = normalizeSex(sexRaw);
-    const ageGroup = ageToGroup(ageRaw);
-
-    if (!sex || !ageGroup) return null;
-
-    const thresholdObj = getThresholdObj(eventKey, sex, ageGroup);
-    if (!thresholdObj) return null;
-
-    // Parse performance input
-    let perf = null;
-
-    if (meta.type === "time") {
-      perf = parseTimeToSeconds(primaryRaw);
-      if (perf === null) return null;
-    } else {
-      perf = toNumber(primaryRaw);
-      if (perf === null) return null;
-
-      // MDL table is in pounds; convert if user is on kg
-      if (eventKey === "MDL") {
-        const unit = (unitRaw || "").toString().trim().toLowerCase();
-        if (unit === "kg") {
-          perf = perf * 2.2046226218;
-        }
-      }
+    .saved-name {
+      flex: 1;
+      margin-right: 10px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      min-width: 0;
     }
 
-    // Build a sorted list of defined thresholds
-    const pairs = Object.entries(thresholdObj)
-      .map(([ptStr, val]) => {
-        if (val === null || val === undefined || val === "") return null;
-        const pt = Number(ptStr);
-        if (!Number.isFinite(pt)) return null;
+    .saved-buttons { display: flex; gap: 6px; }
 
-        let th = null;
-        if (meta.type === "time") {
-          th = parseTimeToSeconds(val);
-        } else {
-          th = toNumber(val);
-        }
-        if (th === null) return null;
-        return [pt, th];
-      })
-      .filter(Boolean)
-      .sort((a, b) => b[0] - a[0]); // points high → low
-
-    if (!pairs.length) return null;
-
-    const better = meta.better;
-
-    function meets(perfVal, thresholdVal) {
-      if (better === "higher") return perfVal >= thresholdVal;
-      if (better === "lower") return perfVal <= thresholdVal;
-      return false;
+    .small-btn {
+      -webkit-appearance: none;
+      appearance: none;
+      -webkit-tap-highlight-color: transparent;
+      border-radius: 12px;
+      border: 1px solid var(--copper);
+      padding: 6px 12px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #ffffff;
+      background-color: #000;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
     }
 
-    // Find best achieved bracket
-    let idxLow = -1;
-    for (let i = 0; i < pairs.length; i++) {
-      const [pt, th] = pairs[i];
-      if (meets(perf, th)) {
-        idxLow = i;
-        break;
-      }
+    .small-btn:active {
+      transform: translateY(1px);
+      opacity: 0.9;
+      background-color: #111;
+      outline: 1px solid var(--copper);
     }
 
-    if (idxLow === -1) {
-      // Didn't meet even the lowest defined threshold
-      return 0;
+    .open-panel {
+      margin-top: 8px;
+      padding: 10px 10px 14px;
+      border-radius: 18px;
+      background-color: #101010;
+      border: 1px solid #262626;
+      display: none;
     }
 
-    const [ptLow, thLow] = pairs[idxLow];
+    .open-panel.open { display: block; }
 
-    // If there's a higher point row above us, we can interpolate within the gap
-    const higher = pairs[idxLow - 1];
-    if (!higher) return Math.max(0, Math.min(100, Math.round(ptLow)));
-
-    const [ptHigh, thHigh] = higher;
-
-    // Compute position between thLow..thHigh (clamped)
-    let frac = 0;
-
-    if (better === "higher") {
-      const denom = thHigh - thLow;
-      if (denom > 0) frac = (perf - thLow) / denom;
-    } else if (better === "lower") {
-      const denom = thLow - thHigh;
-      if (denom > 0) frac = (thLow - perf) / denom;
+    .set-header {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 6px;
     }
 
-    frac = Math.max(0, Math.min(1, frac));
-
-    const est = ptLow + frac * (ptHigh - ptLow);
-
-    // Conservative rounding so we don't give credit above the nearest bracket
-    const score = Math.floor(est + 1e-9);
-    return Math.max(0, Math.min(100, score));
-  }
-
-  return {
-    computeScore,
-    ageToGroup,
-    parseTimeToSeconds,
-  };
-})();
-
-
-
-// ======================================================
-// Logger module (home screen workout cards & sets)
-// ======================================================
-const Logger = (() => {
-  let workoutsContainer = null;
-
-  // NEW: track current mode ("standard" | "complex" | "aft")
-  let mode = "standard";
-  let modeToggleBtn = null;
-  let complexModeBtn = null;
-  let aftModeBtn = null;
-
-  // NEW: sticky footer buttons for complex mode
-  let complexAddCardBtn = null;
-  let complexRemoveCardBtn = null;
-  let complexAddRowBtn = null;
-  let complexRemoveRowBtn = null;
-
-  function updateFooterVisibility() {
-    const show = mode === "complex";
-    const display = show ? "" : "none";
-
-    if (complexAddCardBtn) complexAddCardBtn.style.display = display;
-    if (complexRemoveCardBtn) complexRemoveCardBtn.style.display = display;
-    if (complexAddRowBtn) complexAddRowBtn.style.display = display;
-    if (complexRemoveRowBtn) complexRemoveRowBtn.style.display = display;
-  }
-
-  function getComplexCards() {
-    if (!workoutsContainer) return [];
-    return Array.from(workoutsContainer.querySelectorAll(".workout-card"));
-  }
-
-  function getLastComplexCard() {
-    const cards = getComplexCards();
-    return cards.length ? cards[cards.length - 1] : null;
-  }
-
-  function init({ containerSelector, saveButtonSelector, onSave }) {
-    workoutsContainer = $(containerSelector);
-
-    if (!workoutsContainer) {
-      console.warn("Logger: workouts container not found:", containerSelector);
-      return;
+    .progress-detail-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+      margin-bottom: 4px;
     }
 
-    // Sticky footer buttons (complex mode only)
-    complexAddCardBtn = $("#complexAddCardBtn");
-    complexRemoveCardBtn = $("#complexRemoveCardBtn");
-    complexAddRowBtn = $("#complexAddRowBtn");
-    complexRemoveRowBtn = $("#complexRemoveRowBtn");
+    .progress-detail-row span:first-child { color: #bbbbbb; }
+    .progress-detail-row span:last-child { color: #ffffff; font-weight: 600; }
 
-    if (complexAddCardBtn) {
-      complexAddCardBtn.addEventListener("click", () => {
-        if (mode !== "complex" || !workoutsContainer) return;
-        createComplexCard(workoutsContainer);
-      });
+    .progress-detail-meta { font-size: 13px; color: #bbbbbb; }
+    .progress-detail-title { margin-bottom: 8px; }
+    .progress-detail-pr { font-size: 13px; color: #bbbbbb; margin-bottom: 8px; }
+    .progress-detail-empty { font-size: 13px; color: #bbbbbb; }
+
+    .progress-letter-grid {
+      margin-top: 12px;
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
     }
 
-    if (complexRemoveCardBtn) {
-      complexRemoveCardBtn.addEventListener("click", () => {
-        if (mode !== "complex" || !workoutsContainer) return;
-
-        const cards = getComplexCards();
-        if (!cards.length) return;
-
-        if (cards.length === 1) {
-          // Reset the single remaining card instead of deleting it
-          const card = cards[0];
-          const label = card.querySelector(".complex-set-label");
-          if (label) {
-            label.textContent = "Set 1";
-            label.setAttribute("aria-label", "Set 1");
-          }
-
-          const setsWrapper = card.querySelector(".sets-wrapper");
-          if (setsWrapper) {
-            setsWrapper.innerHTML = "";
-            setsWrapper.appendChild(createComplexRow(card));
-          }
-        } else {
-          cards[cards.length - 1].remove();
-          renumberComplexCards(workoutsContainer);
-        }
-      });
+    .progress-letter-btn {
+      -webkit-appearance: none;
+      appearance: none;
+      height: 34px;
+      border-radius: 12px;
+      border: 1px solid var(--copper);
+      background-color: #000;
+      color: #fff;
+      font-size: 15px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow:
+        0 0 0 1px #754d27,
+        0 3px 0 #000;
     }
 
-    if (complexAddRowBtn) {
-      complexAddRowBtn.addEventListener("click", () => {
-        if (mode !== "complex" || !workoutsContainer) return;
-        const card = getLastComplexCard();
-        if (!card) return;
-
-        const setsWrapper = card.querySelector(".sets-wrapper");
-        if (!setsWrapper) return;
-
-        setsWrapper.appendChild(createComplexRow(card));
-      });
+    .progress-letter-btn:active {
+      transform: translateY(1px);
+      outline: 1px solid var(--copper);
+      box-shadow: none;
     }
 
-    if (complexRemoveRowBtn) {
-      complexRemoveRowBtn.addEventListener("click", () => {
-        if (mode !== "complex" || !workoutsContainer) return;
-        const card = getLastComplexCard();
-        if (!card) return;
+    .progress-letter-btn.disabled { opacity: 0.25; pointer-events: none; }
 
-        const rows = card.querySelectorAll(".set-box");
-        if (!rows.length) return;
+    .progress-letter-btn.active {
+      background-color: #1A1E2C;
+      box-shadow:
+        0 0 0 1px var(--accent),
+        0 3px 0 #000;
+    }
 
-        if (rows.length === 1) {
-          // Just clear the last row instead of removing it
-          rows[0].querySelectorAll("input").forEach((input) => {
-            input.value = "";
+    /* --------------------------
+       LINKS / MISC
+    --------------------------- */
+
+    .link-back {
+      margin-top: 18px;
+      font-size: 15px;
+      color: var(--text-muted);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .link-back span { font-size: 18px; line-height: 1; }
+    .link-back:active { color: #ffffff; }
+
+    /* --------------------------
+       TUTORIAL OVERLAY
+    --------------------------- */
+
+    .tutorial-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.85);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      z-index: 100;
+    }
+
+    .tutorial-overlay.visible { display: flex; }
+
+    .tutorial-card {
+      width: 100%;
+      max-width: 420px;
+      background-color: #121212;
+      border-radius: 24px;
+      padding: 20px 18px 16px;
+      border: 1px solid #333;
+      box-shadow: var(--shadow-soft);
+    }
+
+    .tutorial-title { font-size: 20px; font-weight: 700; margin-bottom: 6px; }
+
+    .tutorial-body {
+      font-size: 14px;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    .tutorial-bullets {
+      margin-top: 8px;
+      padding-left: 18px;
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+
+    .tutorial-bullets li { margin-bottom: 4px; }
+
+    .tutorial-actions {
+      margin-top: 16px;
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+
+    .tutorial-primary-btn,
+    .tutorial-secondary-btn {
+      -webkit-appearance: none;
+      appearance: none;
+      border-radius: 999px;
+      padding: 8px 14px;
+      border: 1px solid #333;
+      font-size: 14px;
+      font-weight: 600;
+      color: #fff;
+      background-color: #000;
+    }
+
+    .tutorial-primary-btn {
+      background-color: var(--accent-soft);
+      border-color: var(--accent-soft);
+    }
+
+    .tutorial-primary-btn:active,
+    .tutorial-secondary-btn:active {
+      transform: translateY(1px);
+      opacity: 0.9;
+    }
+
+    .tutorial-screen { display: none; }
+    .tutorial-screen.active { display: block; }
+
+    /* --------------------------
+       FOOTER / LEGAL
+    --------------------------- */
+
+    .legal-footer {
+      font-size: 0.75rem;
+      padding: 0.75rem 1rem 1.25rem;
+      opacity: 0.75;
+      text-align: center;
+    }
+
+    .legal-link {
+      background: none;
+      border: none;
+      padding: 0;
+      margin-bottom: 0.25rem;
+      font-size: 0.8rem;
+      text-decoration: underline;
+      cursor: pointer;
+      color: var(--text-muted);
+    }
+
+    .legal-panel {
+      max-width: 500px;
+      margin: 0.25rem auto 0;
+      line-height: 1.3;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .hidden { display: none; }
+
+    @media (min-width: 500px) {
+      .app-wrapper { align-items: center; }
+      .card { width: 430px; }
+    }
+
+    /* Logger card: scrollable content + room for sticky footer */
+    .card.card--logger {
+      position: relative;
+      max-height: calc(100vh - 140px);
+      overflow-y: auto;
+      padding-bottom: 72px;
+    }
+
+    /* Sticky footer inside the card */
+    .card-sticky-footer {
+      position: sticky;
+      bottom: 0;
+      margin-top: 16px;
+      padding-top: 12px;
+      background: transparent;
+    }
+
+    /* AFT mode only: no inner scroll + tighter bottom space */
+    body.mode-aft .card.card--logger {
+      max-height: none;
+      overflow-y: visible;
+      padding-bottom: 32px;
+    }
+
+    body.mode-aft .card.card--logger .card-sticky-footer {
+      margin-top: 12px;
+    }
+
+    .card-sticky-footer .footer-btn { margin-top: 0; }
+
+    /* NEW: Mode row inside sticky footer */
+    .mode-footer-row {
+      margin-top: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .mode-footer-label { font-size: 14px; color: var(--text-muted); }
+
+    .mode-footer-buttons { display: flex; gap: 8px; }
+
+    .mode-btn {
+      width: auto;
+      height: 36px;
+      font-size: 14px;
+      padding: 0 14px;
+      margin-top: 0;
+      flex: 0 0 auto;
+    }
+
+    /* Reuse this list style for volume/charts selection */
+    .settings-volume-list {
+      margin-top: 6px;
+      max-height: 220px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    .settings-volume-list .settings-row { font-size: 13px; padding: 2px 0; }
+
+    /* --------------------------
+       CHARTS
+    --------------------------- */
+
+    .charts-container {
+      margin-top: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .chart-card {
+      padding: 10px 12px 14px;
+      border-radius: 18px;
+      background-color: #101010;
+      border: 1px solid #262626;
+    }
+
+    .chart-card-title { font-size: 15px; font-weight: 600; margin-bottom: 2px; }
+    .chart-card-sub { font-size: 12px; color: var(--text-muted); margin-bottom: 6px; }
+
+    /* --------------------------
+       SETTINGS
+    --------------------------- */
+
+    .settings-group { margin-top: 10px; margin-bottom: 14px; }
+
+    .settings-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 4px 0;
+      font-size: 14px;
+    }
+
+    .settings-row span { color: var(--text-main); }
+
+    .settings-note {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin: 4px 4px 0;
+      line-height: 1.4;
+    }
+
+    .settings-checkbox { width: 18px; height: 18px; }
+
+    /* --------------------------
+       HIGH CONTRAST THEME
+    --------------------------- */
+
+    body.theme-high-contrast {
+      --card: #05070b;
+      --card-inner: #020308;
+      --text-muted: #f0f0f0;
+      --border-soft: #3a3a3a;
+      --copper: #ffb366;
+    }
+
+    body.theme-high-contrast .card {
+      border-color: var(--accent);
+      box-shadow:
+        0 0 0 1px var(--accent),
+        0 4px 0 #000;
+    }
+
+    body.theme-high-contrast .saved-item { border-color: var(--accent); }
+
+    /* --------------------------
+       TOAST / SNACKBAR
+    --------------------------- */
+
+    #toast {
+      position: fixed;
+      left: 50%;
+      bottom: 14px;
+      transform: translateX(-50%) translateY(100%);
+      padding: 10px 16px;
+      border-radius: 999px;
+      background-color: #000000;
+      border: 1px solid var(--copper);
+      box-shadow:
+        0 0 0 1px #754d27,
+        0 6px 18px rgba(0, 0, 0, 0.8);
+      font-size: 14px;
+      color: #ffffff;
+      opacity: 0;
+      pointer-events: none;
+      transition: transform 0.18s ease-out, opacity 0.18s ease-out;
+      z-index: 999;
+      max-width: min(360px, 90vw);
+      text-align: center;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      overflow: hidden;
+    }
+
+    #toast.visible {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app-wrapper">
+    <header class="app-header">
+      <div style="display: flex; align-items: baseline; gap: 8px;">
+        <h1>Code and Iron Test</h1>
+      </div>
+
+      <button
+        class="menu-button"
+        id="menuButton"
+        type="button"
+        aria-label="Open navigation menu"
+        aria-haspopup="true"
+        aria-expanded="false"
+      >
+        <div class="menu-icon">
+          <span></span><span></span><span></span>
+        </div>
+      </button>
+    </header>
+
+    <!-- Tutorial Overlay (one-time walkthrough) -->
+    <!-- (unchanged, omitted for brevity – keep your existing content here) -->
+    <!-- ... all the tutorial screens exactly as you had them ... -->
+
+    <!-- Menu -->
+    <div class="menu-dropdown" id="menuDropdown">
+      <div class="menu-item" data-nav="workouts">Routines</div>
+      <div class="menu-item" data-nav="progress">Progress</div>
+      <div class="menu-item" data-nav="charts">Charts</div>
+      <div class="menu-item" data-nav="settings">Settings</div>
+      <div class="menu-item" id="menuTutorial">Tutorial</div>
+    </div>
+
+    <!-- HOME / LOGGER SCREEN -->
+    <main id="homeScreen" class="screen active">
+      <section class="card card--logger">
+        <div id="workoutsContainer" class="workouts-container"></div>
+
+        <div class="card-sticky-footer">
+          <button
+            id="saveProgressBtn"
+            class="primary-btn footer-btn"
+            type="button"
+          >
+            Save progress
+          </button>
+
+          <div class="mode-footer-row">
+            <span class="mode-footer-label">Mode</span>
+            <div class="mode-footer-buttons">
+              <button
+                id="loggerModeToggle"
+                class="primary-btn mode-btn"
+                type="button"
+              >
+                Standard
+              </button>
+              <button
+                id="complexModeButton"
+                class="primary-btn mode-btn"
+                type="button"
+              >
+                Complex
+              </button>
+              <button
+                id="aftModeButton"
+                class="primary-btn mode-btn"
+                type="button"
+              >
+                AFT
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- ROUTINES SCREEN -->
+    <main id="workoutsScreen" class="screen">
+      <section class="card">
+        <h2 class="card-title">Workouts</h2>
+        <p class="card-subtitle">
+          Create and save exercise routines you can load later on the main page.
+        </p>
+
+        <div class="input-group">
+          <label class="input-label" for="templateNameInput">New routine name</label>
+          <input
+            id="templateNameInput"
+            class="text-input"
+            placeholder="e.g. Chest, Legs, Shoulders, Back"
+          />
+        </div>
+
+        <button id="saveTemplateBtn" class="primary-btn" type="button">
+          Create
+        </button>
+
+        <h3 class="card-subtitle" style="margin-top:18px;margin-bottom:4px;">
+          Saved workouts
+        </h3>
+        <div id="savedTemplatesList" class="saved-list"></div>
+
+        <div class="back-nav-wrap">
+          <button
+            id="backToLogger"
+            class="primary-btn back-nav-btn"
+            type="button"
+          >
+            ← Back to workout logger
+          </button>
+        </div>
+      </section>
+    </main>
+
+    <!-- PROGRESS SCREEN -->
+    <main id="progressScreen" class="screen">
+      <section class="card">
+        <h2 class="card-title">Progress</h2>
+        <p class="card-subtitle">
+          Your best sets for each exercise based on saved workouts.
+        </p>
+
+        <div id="progressLetterGrid" class="progress-letter-grid"></div>
+        <div id="progressList" class="saved-list"></div>
+        <div id="progressDetail" class="open-panel"></div>
+
+        <div class="back-nav-wrap">
+          <button
+            id="backToLoggerFromProgress"
+            class="primary-btn back-nav-btn"
+            type="button"
+          >
+            ← Back to workout logger
+          </button>
+        </div>
+      </section>
+    </main>
+
+    <!-- Charts Screen -->
+    <main id="chartsScreen" class="screen">
+      <section class="card main-card">
+        <h2 class="card-title">Charts</h2>
+        <p class="card-subtitle">
+          Pick exercises and see how their sessions trend over time.
+        </p>
+
+        <h3 class="card-subtitle" style="margin-top: 1.25rem;">
+          Choose exercises to chart
+        </h3>
+
+        <div id="chartsExerciseList" class="settings-list"></div>
+        <div id="chartsContainer" class="charts-container" style="margin-top: 1.5rem;"></div>
+
+        <div class="back-nav-wrap">
+          <button
+            id="backToLoggerFromCharts"
+            class="primary-btn back-nav-btn"
+            type="button"
+          >
+            ← Back to workout logger
+          </button>
+        </div>
+      </section>
+    </main>
+
+    <!-- SETTINGS SCREEN -->
+    <main id="settingsScreen" class="screen">
+      <section class="card">
+        <h2 class="card-title">Settings</h2>
+        <p class="card-subtitle">
+          Adjust units, theme, and how your data is handled.
+        </p>
+
+        <!-- Units -->
+        <div class="settings-group">
+          <h3 class="card-subtitle" style="margin-top:0;margin-bottom:4px;">
+            Units
+          </h3>
+          <div class="settings-row">
+            <span>Weight units</span>
+            <select
+              id="settingsUnitSelect"
+              class="text-input"
+              style="max-width:160px;height:36px;padding:0 10px;text-align:left;"
+            >
+              <option value="lb">Pounds (lb)</option>
+              <option value="kg">Kilograms (kg)</option>
+            </select>
+          </div>
+          <p class="settings-note">
+            Internally everything is stored consistently. This only changes how
+            weights are shown in the logger.
+          </p>
+        </div>
+
+        <!-- Theme -->
+        <div class="settings-group">
+          <h3 class="card-subtitle" style="margin-top:8px;margin-bottom:4px;">
+            Theme
+          </h3>
+          <div class="settings-row">
+            <span>High contrast mode</span>
+            <label style="display:flex;align-items:center;gap:6px;">
+              <input
+                id="settingsHighContrast"
+                type="checkbox"
+                class="settings-checkbox"
+              />
+              <span style="font-size:13px;">Boost contrast</span>
+            </label>
+          </div>
+          <p class="settings-note">
+            Useful if the copper text feels too dim or low contrast.
+          </p>
+        </div>
+
+        <!-- Data / backup -->
+        <div class="settings-group">
+          <h3 class="card-subtitle" style="margin-top:8px;margin-bottom:4px;">
+            Data
+          </h3>
+
+          <h4 class="card-subtitle" style="margin-top:4px;margin-bottom:4px;">
+            Backup &amp; Restore
+          </h4>
+          <p class="settings-note">
+            Generate a backup code and save it somewhere (Notes, email, etc.).
+            If your browser data ever gets cleared, paste it here to restore
+            your routines and progress.
+          </p>
+
+          <textarea
+            id="backupText"
+            class="text-input"
+            rows="3"
+            placeholder="Your backup code will appear here. Copy it and save it. To restore, paste a code and tap Restore."
+          ></textarea>
+
+          <button id="exportBackupBtn" class="primary-btn footer-btn" type="button">
+            Generate Code
+          </button>
+
+          <button id="importBackupBtn" class="primary-btn footer-btn" type="button">
+            Restore from backup
+          </button>
+
+          <p class="settings-note" style="margin-top:10px;">
+            Resetting clears routines, progress, tutorial status, and settings
+            from this browser. This cannot be undone.
+          </p>
+
+          <button id="resetAllDataBtn" class="danger-btn" type="button">
+            Reset all data
+          </button>
+        </div>
+
+        <div class="back-nav-wrap">
+          <button
+            id="backToLoggerFromSettings"
+            class="primary-btn back-nav-btn"
+            type="button"
+          >
+            ← Back to workout logger
+          </button>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <footer class="legal-footer">
+    <button id="toggle-privacy" class="legal-link" type="button">
+      Privacy &amp; Data
+    </button>
+
+    <div id="privacy-panel" class="legal-panel hidden">
+      <p>
+        This app does not collect, store, or transmit any personal data.
+        All workout entries and progress logs are saved locally on your device
+        using your browser's localStorage.
+      </p>
+      <p>
+        No data is sent to the developer, and the developer cannot access your
+        information in any way. Clearing your browser data may erase your saved
+        progress.
+      </p>
+      <p>
+        If you have ideas, run into bugs, or want to suggest features,
+        please email me at
+        <a href="mailto:aangel.ssilva28@gmail.com">
+          aangel.ssilva28@gmail.com
+        </a>.
+        Please subject the email "Code and Iron" I read every message and use your feedback to make this app better.
+      </p>
+      <p style="margin-top: 12px; opacity: .7;">
+        <strong>Version:</strong> v0.9.1 Beta<br>
+        <strong>Last updated:</strong> November 30, 2025
+      </p>
+    </div>
+  </footer>
+
+  <div
+    id="toast"
+    role="status"
+    aria-live="polite"
+    aria-atomic="true"
+  ></div>
+
+  <script src="app.js"></script>
+
+  <script>
+    // Register service worker for PWA / offline support
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker
+          .register("./sw.js")
+          .catch((err) => {
+            console.error("Service worker registration failed:", err);
           });
-        } else {
-          rows[rows.length - 1].remove();
-        }
       });
     }
-
-    // Mode toggle button (Standard / Complex)
-    // Mode buttons: Standard, Complex, AFT
-    modeToggleBtn = $("#loggerModeToggle");     // Standard
-    complexModeBtn = $("#complexModeButton");  // Complex
-    aftModeBtn = $("#aftModeButton");          // AFT
-
-function setMode(newMode) {
-  mode = newMode;
-
-  // Update body class so CSS can style each mode differently
-  document.body.classList.remove("mode-standard", "mode-complex", "mode-aft");
-  document.body.classList.add(`mode-${mode}`);
-
-  resetForMode();
-
-  if (typeof showToast === "function") {
-    if (mode === "standard") {
-      showToast("Standard mode: one exercise per card.");
-    } else if (mode === "complex") {
-      showToast("Complex mode: exercise per row.");
-    } else if (mode === "aft") {
-      showToast("AFT mode: Army Fitness Test template.");
-    }
-  }
-}
-
-    if (modeToggleBtn) {
-      modeToggleBtn.addEventListener("click", () => setMode("standard"));
-    }
-    if (complexModeBtn) {
-      complexModeBtn.addEventListener("click", () => setMode("complex"));
-    }
-    if (aftModeBtn) {
-      aftModeBtn.addEventListener("click", () => setMode("aft"));
-    }
-
-// Start in Standard mode (also sets the body class)
-setMode("standard");
-    const saveBtn = $(saveButtonSelector);
-    if (saveBtn && typeof onSave === "function") {
-      saveBtn.addEventListener("click", () => {
-        onSave(getCurrentWorkoutLayout());
-      });
-    }
-  }
-
-  // NEW: reset container when mode changes
-  function resetForMode() {
-    if (!workoutsContainer) return;
-    workoutsContainer.innerHTML = "";
-
-    if (mode === "standard") {
-      createWorkoutCard(workoutsContainer);
-    } else if (mode === "complex") {
-      createComplexCard(workoutsContainer);
-    } else if (mode === "aft") {
-      createAftCard(workoutsContainer);
-    }
-
-    updateFooterVisibility();
-  }
-
-  // ---------- Set rows (Weight / Reps) for STANDARD mode ----------
-  function createSetBox(card, setData, indexOverride) {
-    const box = document.createElement("div");
-    box.className = "set-box";
-
-    const setLabel = document.createElement("div");
-    setLabel.className = "set-label";
-    const existingCount = card.querySelectorAll(".set-box").length;
-    const setNumber = indexOverride || existingCount + 1;
-    setLabel.textContent = `Set ${setNumber}`;
-
-    const weightInput = document.createElement("input");
-    weightInput.className = "set-input";
-    weightInput.placeholder =
-      typeof Settings !== "undefined" && Settings.getWeightPlaceholder
-        ? Settings.getWeightPlaceholder()
-        : "Weight";
-    weightInput.type = "number";
-    weightInput.inputMode = "decimal";
-    weightInput.min = "0";
-    weightInput.value = setData?.weight ?? "";
-    weightInput.dataset.field = "weight";
-
-    const weightGroup = document.createElement("div");
-    weightGroup.className = "set-weight-group";
-    weightGroup.appendChild(weightInput);
-
-    const repsInput = document.createElement("input");
-    repsInput.className = "set-input";
-    repsInput.placeholder = "Reps";
-    repsInput.type = "number";
-    repsInput.inputMode = "numeric";
-    repsInput.min = "0";
-    repsInput.value = setData?.reps ?? "";
-    repsInput.dataset.field = "reps";
-
-    const minusBtn = document.createElement("button");
-    minusBtn.className = "round-btn";
-    minusBtn.type = "button";
-    minusBtn.setAttribute("aria-label", "Remove set");
-    minusBtn.textContent = "–";
-    minusBtn.addEventListener("click", () => {
-      const boxes = card.querySelectorAll(".set-box");
-      if (boxes.length > 1) {
-        box.remove();
-        renumberSets(card);
-      }
-    });
-
-    const plusBtn = document.createElement("button");
-    plusBtn.className = "round-btn";
-    plusBtn.type = "button";
-    plusBtn.setAttribute("aria-label", "Add set");
-    plusBtn.textContent = "+";
-    plusBtn.addEventListener("click", () => {
-      const wrapper = card.querySelector(".sets-wrapper") || card;
-      wrapper.appendChild(createSetBox(card));
-      renumberSets(card);
-    });
-
-    const rightGroup = document.createElement("div");
-    rightGroup.className = "set-right-group";
-    rightGroup.appendChild(repsInput);
-    rightGroup.appendChild(minusBtn);
-    rightGroup.appendChild(plusBtn);
-
-    box.appendChild(setLabel);
-    box.appendChild(weightGroup);
-    box.appendChild(rightGroup);
-
-    return box;
-  }
-
-  function renumberSets(card) {
-    const boxes = card.querySelectorAll(".set-box");
-    boxes.forEach((box, index) => {
-      const label = box.querySelector(".set-label");
-      if (label) {
-        label.textContent = `Set ${index + 1}`;
-      }
-    });
-  }
-
-function renumberComplexCards(parent) {
-  const cards = parent.querySelectorAll(".workout-card");
-  cards.forEach((card, index) => {
-    const nameEl = card.querySelector(".complex-set-label");
-    if (nameEl) {
-      const labelText = `Set ${index + 1}`;
-      nameEl.textContent = labelText;
-      nameEl.setAttribute("aria-label", labelText);
-    }
-  });
-}
-
-  
-  // ---------- COMPLEX mode rows (exercise per row) ----------
-  function createComplexRow(card, rowData) {
-    const box = document.createElement("div");
-    box.className = "set-box complex-row";
-
-    const exerciseInput = document.createElement("input");
-    exerciseInput.className = "text-input complex-exercise-name";
-    exerciseInput.placeholder = "Exercise name";
-    exerciseInput.value = rowData?.name || "";
-    exerciseInput.style.width = "100%";
-
-    // Spacer takes the place of the old weight box column so layout stays aligned
-    const spacer = document.createElement("div");
-    spacer.className = "complex-row-spacer";
-
-    const repsInput = document.createElement("input");
-    repsInput.className = "set-input";
-    repsInput.placeholder = "Reps";
-    repsInput.type = "number";
-    repsInput.inputMode = "numeric";
-    repsInput.min = "0";
-    repsInput.value = rowData?.reps ?? "";
-    repsInput.dataset.field = "reps";
-
-    const weightInput = document.createElement("input");
-    weightInput.className = "set-input";
-    weightInput.placeholder =
-      typeof Settings !== "undefined" && Settings.getWeightPlaceholder
-        ? Settings.getWeightPlaceholder()
-        : "Weight";
-    weightInput.type = "number";
-    weightInput.inputMode = "decimal";
-    weightInput.min = "0";
-    weightInput.value = rowData?.weight ?? "";
-    weightInput.dataset.field = "weight";
-
-    const rightGroup = document.createElement("div");
-    rightGroup.className = "set-right-group";
-
-    // Order: Reps where the "-" button was, Weight where the "+" button was
-    rightGroup.appendChild(repsInput);
-    rightGroup.appendChild(weightInput);
-
-    box.appendChild(exerciseInput);
-    box.appendChild(spacer);
-    box.appendChild(rightGroup);
-
-    return box;
-  }
-
-  // ---------- Workout cards (exercises) ----------
-
-  function setCardCollapsed(card, collapsed) {
-    const setsWrapper = card.querySelector(".sets-wrapper");
-    const headerActions = card.querySelector(".workout-header-actions");
-    const nameInput = card.querySelector(".workout-name");
-
-    if (collapsed) {
-      card.classList.add("collapsed");
-      if (setsWrapper) setsWrapper.style.display = "none";
-      if (headerActions) headerActions.style.display = "none";
-
-      if (nameInput) {
-        nameInput.readOnly = true;
-        nameInput.blur();
-      }
-    } else {
-      card.classList.remove("collapsed");
-      if (setsWrapper) setsWrapper.style.display = "";
-      if (headerActions) headerActions.style.display = "flex";
-
-      if (nameInput) {
-        nameInput.readOnly = false;
-      }
-    }
-  }
-
-  // helper so standard + complex share the same quick-add chips
-  function attachQuickAddRow(card) {
-    const quickAddRow = document.createElement("div");
-    quickAddRow.className = "quick-add-row";
-
-    const quickLabel = document.createElement("span");
-    quickLabel.className = "quick-add-label";
-    quickLabel.textContent = "Quick add:";
-    quickAddRow.appendChild(quickLabel);
-
-    [5, 10, 25, 35, 45].forEach((val) => {
-      const chip = document.createElement("button");
-      chip.className = "quick-add-chip";
-      chip.type = "button";
-      chip.dataset.quick = String(val);
-      chip.textContent = `+${val}`;
-      chip.setAttribute("aria-label", `Add ${val} to weight`);
-      quickAddRow.appendChild(chip);
-    });
-
-    card.appendChild(quickAddRow);
-  }
-
-  function createWorkoutCard(parent, workoutData) {
-  const card = document.createElement("div");
-  card.className = "workout-card";
-
-  const setsWrapper = document.createElement("div");
-  setsWrapper.className = "sets-wrapper";
-
-  const header = document.createElement("div");
-  header.className = "workout-header";
-
-  // STANDARD MODE: editable exercise name input
-  const nameInput = document.createElement("input");
-  nameInput.className = "text-input workout-name";
-  nameInput.placeholder = "Enter exercise name";
-  nameInput.value = (workoutData && workoutData.name) || "";
-
-  // If the card is collapsed, tapping the name expands it
-  nameInput.addEventListener("click", () => {
-    if (card.classList.contains("collapsed")) {
-      setCardCollapsed(card, false);
-    }
-  });
-
-  const headerActions = document.createElement("div");
-  headerActions.className = "workout-header-actions";
-
-  const removeWorkoutBtn = document.createElement("button");
-  removeWorkoutBtn.className = "round-btn minus";
-  removeWorkoutBtn.type = "button";
-  removeWorkoutBtn.setAttribute("aria-label", "Remove exercise card");
-  removeWorkoutBtn.textContent = "–";
-  removeWorkoutBtn.addEventListener("click", () => {
-    const allCards = parent.querySelectorAll(".workout-card");
-
-    if (allCards.length <= 1) {
-      // Reset last card instead of deleting
-      nameInput.value = "";
-      const setsWrapper = card.querySelector(".sets-wrapper");
-      if (setsWrapper) {
-        setsWrapper.innerHTML = "";
-        const setBox = createSetBox(card, { weight: "", reps: "" }, 1);
-        setsWrapper.appendChild(setBox);
-      }
-    } else {
-      card.remove();
-    }
-  });
-
-  const collapseBtn = document.createElement("button");
-  collapseBtn.className = "round-btn collapse-btn";
-  collapseBtn.type = "button";
-  collapseBtn.setAttribute("aria-label", "Collapse or expand exercise");
-  collapseBtn.textContent = "▼";
-  collapseBtn.addEventListener("click", () => {
-    const isCollapsed = card.classList.contains("collapsed");
-    setCardCollapsed(card, !isCollapsed);
-  });
-
-  const addExerciseBtn = document.createElement("button");
-  addExerciseBtn.className = "round-btn plus";
-  addExerciseBtn.type = "button";
-  addExerciseBtn.setAttribute("aria-label", "Add new exercise card");
-  addExerciseBtn.textContent = "+";
-  addExerciseBtn.addEventListener("click", () => {
-    if (mode === "standard") {
-      createWorkoutCard(parent);
-    } else {
-      createComplexCard(parent);
-    }
-  });
-
-  headerActions.appendChild(removeWorkoutBtn);
-  headerActions.appendChild(collapseBtn);
-  headerActions.appendChild(addExerciseBtn);
-
-  header.appendChild(nameInput);
-  header.appendChild(headerActions);
-
-  card.appendChild(header);
-  card.appendChild(setsWrapper);
-
-  const setsFromData =
-    workoutData && Array.isArray(workoutData.sets)
-      ? workoutData.sets
-      : [{ weight: "", reps: "" }];
-
-  setsFromData.forEach((set, idx) => {
-    const setBox = createSetBox(card, set, idx + 1);
-    setsWrapper.appendChild(setBox);
-  });
-
-  attachQuickAddRow(card);
-
-  parent.appendChild(card);
-
-  if (workoutData && workoutData.collapsed) {
-    setCardCollapsed(card, true);
-  }
-
-  return card;
-}
-
-  // NEW: complex card (multiple exercises inside one card)
-// NEW: complex card (multiple exercises inside one card)
-function createComplexCard(parent, complexData) {
-  const card = document.createElement("div");
-  card.className = "workout-card";
-
-  const setsWrapper = document.createElement("div");
-  setsWrapper.className = "sets-wrapper";
-
-  const header = document.createElement("div");
-  header.className = "workout-header";
-
-  // COMPLEX MODE: static "Set #" label
-  const nameLabel = document.createElement("div");
-  nameLabel.className = "complex-set-label set-label";
-
-  const existingCards = parent.querySelectorAll(".workout-card").length;
-  const setNumber = existingCards + 1;
-  const labelText = `Set ${setNumber}`;
-  nameLabel.textContent = labelText;
-  nameLabel.setAttribute("aria-label", labelText);
-
-  // Controls row: +C, -C, +S, -S (same style/size as weight box)
-  const controls = document.createElement("div");
-  controls.className = "complex-header-controls";
-
-  function makeCtl(label, action, aria) {
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = "round-btn complex-ctl-btn";
-    btn.textContent = label;
-    if (aria) btn.setAttribute("aria-label", aria);
-    btn.dataset.action = action;
-    return btn;
-  }
-
-  const addCardBtn    = makeCtl("+C", "add-card",    "Add complex card");
-  const removeCardBtn = makeCtl("-C", "remove-card", "Remove complex card");
-  const addRowBtn     = makeCtl("+S", "add-row",     "Add set");
-  const removeRowBtn  = makeCtl("-S", "remove-row",  "Remove set");
-
-  controls.append(addCardBtn, removeCardBtn, addRowBtn, removeRowBtn);
-
-  header.appendChild(nameLabel);
-  header.appendChild(controls);
-
-  // Click on header background/label toggles collapse, NOT the control buttons
-  header.addEventListener("click", (e) => {
-    if (e.target.closest(".complex-ctl-btn")) return;
-    const isCollapsed = card.classList.contains("collapsed");
-    setCardCollapsed(card, !isCollapsed);
-  });
-
-  card.appendChild(header);
-  card.appendChild(setsWrapper);
-
-  const rows =
-    complexData && Array.isArray(complexData.rows) ? complexData.rows : [{}];
-
-  rows.forEach((row) => {
-    setsWrapper.appendChild(createComplexRow(card, row));
-  });
-
-  attachQuickAddRow(card);
-  parent.appendChild(card);
-
-  if (complexData && complexData.collapsed) {
-    setCardCollapsed(card, true);
-  }
-
-  // ---- Control behaviour ----
-
-  // +C → add another complex card at the bottom
-  addCardBtn.addEventListener("click", (e) => {
-    e.stopPropagation();
-    createComplexCard(parent);
-    renumberComplexCards(parent);
-  });
-
-  // -C → remove THIS card (or reset if it's the last one)
-  removeCardBtn.addEventListener("click", (e) => {
-    e.stopPropagation();
-    const cards = parent.querySelectorAll(".workout-card");
-    if (cards.length <= 1) {
-      const labelEl = card.querySelector(".complex-set-label");
-      if (labelEl) {
-        labelEl.textContent = "Set 1";
-        labelEl.setAttribute("aria-label", "Set 1");
-      }
-      const wrapper = card.querySelector(".sets-wrapper");
-      if (wrapper) {
-        wrapper.innerHTML = "";
-        wrapper.appendChild(createComplexRow(card));
-      }
-      return;
-    }
-    card.remove();
-    renumberComplexCards(parent);
-  });
-
-  // +S → add a row inside THIS card
-  addRowBtn.addEventListener("click", (e) => {
-    e.stopPropagation();
-    setsWrapper.appendChild(createComplexRow(card));
-  });
-
-  // -S → remove a row from THIS card
-  removeRowBtn.addEventListener("click", (e) => {
-    e.stopPropagation();
-    const rows = setsWrapper.querySelectorAll(".set-box");
-    if (!rows.length) return;
-    if (rows.length === 1) {
-      rows[0].querySelectorAll("input").forEach((input) => {
-        input.value = "";
-      });
-    } else {
-      rows[rows.length - 1].remove();
-    }
-  });
-
-  return card;
-}
-
-// NEW: AFT card (Army Fitness Test, fixed exercises)
-// NEW: AFT card (Army Fitness Test, fixed exercises)
-function createAftCard(parent) {
-  const card = document.createElement("div");
-  card.className = "workout-card aft-card";
-
-  const setsWrapper = document.createElement("div");
-  setsWrapper.className = "sets-wrapper";
-  card.appendChild(setsWrapper);
-
-  // -----------------------------
-  // Top row: [AFT title]  [M/F] [Age]
-  // -----------------------------
-  const topRow = document.createElement("div");
-  topRow.className = "set-box complex-row aft-top-row";
-
-  const titleLabel = document.createElement("div");
-  titleLabel.className = "text-input complex-exercise-name aft-exercise-label";
-  titleLabel.textContent = "Army Fitness Test";
-
-  const topSpacer = document.createElement("div");
-  topSpacer.className = "complex-row-spacer";
-
-  const metaGroup = document.createElement("div");
-  metaGroup.className = "set-right-group";
-
-  const genderInput = document.createElement("input");
-  genderInput.className = "set-input aft-meta-input";
-  genderInput.placeholder = "M / F";
-  genderInput.type = "text";
-  genderInput.maxLength = 1;
-  genderInput.autocomplete = "off";
-
-  const ageInput = document.createElement("input");
-  ageInput.className = "set-input aft-meta-input";
-  ageInput.placeholder = "Age";
-  ageInput.type = "number";
-  ageInput.inputMode = "numeric";
-  ageInput.min = "0";
-
-  metaGroup.appendChild(genderInput);
-  metaGroup.appendChild(ageInput);
-
-  topRow.appendChild(titleLabel);
-  topRow.appendChild(topSpacer);
-  topRow.appendChild(metaGroup);
-  setsWrapper.appendChild(topRow);
-
-  // -----------------------------
-  // AFT events rows
-  // -----------------------------
-  const events = [
-    { label: "3 MDL", key: "MDL" },
-    { label: "HRP", key: "HRP" },
-    { label: "SDC", key: "SDC" },
-    { label: "PLK", key: "PLK" },
-    { label: "2MR", key: "2MR" },
-  ];
-
-  const eventConfig = {
-    MDL: {
-      primaryPlaceholder:
-        typeof Settings !== "undefined" && Settings.getWeightPlaceholder
-          ? Settings.getWeightPlaceholder()
-          : "Weight",
-      primaryType: "number",
-      primaryInputMode: "decimal",
-      primaryMin: "0",
-    },
-    HRP: {
-      primaryPlaceholder: "Reps",
-      primaryType: "number",
-      primaryInputMode: "numeric",
-      primaryMin: "0",
-    },
-    SDC: {
-      primaryPlaceholder: "Time (m:ss)",
-      primaryType: "text",
-      primaryInputMode: "text",
-    },
-    PLK: {
-      primaryPlaceholder: "Time (m:ss)",
-      primaryType: "text",
-      primaryInputMode: "text",
-    },
-    "2MR": {
-      primaryPlaceholder: "Time (m:ss)",
-      primaryType: "text",
-      primaryInputMode: "text",
-    },
-  };
-
-  // Keep references so we can auto-score + total
-  const eventInputs = {}; // key -> { primaryInput, scoreInput }
-
-  events.forEach(({ label, key }) => {
-    const row = document.createElement("div");
-    row.className = "set-box complex-row";
-
-    const exerciseLabel = document.createElement("div");
-    exerciseLabel.className =
-      "text-input complex-exercise-name aft-exercise-label";
-    exerciseLabel.textContent = label;
-
-    const spacer = document.createElement("div");
-    spacer.className = "complex-row-spacer";
-
-    const cfg = eventConfig[key];
-
-    const primaryInput = document.createElement("input");
-    primaryInput.className = "set-input aft-primary-input";
-    primaryInput.placeholder = cfg.primaryPlaceholder;
-    primaryInput.type = cfg.primaryType;
-    if (cfg.primaryInputMode) primaryInput.inputMode = cfg.primaryInputMode;
-    if (cfg.primaryMin) primaryInput.min = cfg.primaryMin;
-
-    // Mark so we can find it later if needed
-    primaryInput.dataset.aftEvent = key;
-    primaryInput.dataset.aftRole = "primary";
-
-    const scoreInput = document.createElement("input");
-    scoreInput.className = "set-input aft-score-input";
-    scoreInput.placeholder = "Score";
-    scoreInput.type = "number";
-    scoreInput.inputMode = "numeric";
-    scoreInput.min = "0";
-    scoreInput.max = "100";
-    scoreInput.readOnly = true;
-
-    scoreInput.dataset.aftEvent = key;
-    scoreInput.dataset.aftRole = "score";
-
-    const rightGroup = document.createElement("div");
-    rightGroup.className = "set-right-group";
-    rightGroup.appendChild(primaryInput);
-    rightGroup.appendChild(scoreInput);
-
-    row.appendChild(exerciseLabel);
-    row.appendChild(spacer);
-    row.appendChild(rightGroup);
-
-    setsWrapper.appendChild(row);
-
-    eventInputs[key] = { primaryInput, scoreInput };
-  });
-
-  // -----------------------------
-  // Bottom row: Pass/Fail + Total (SAME ROW)
-  // Pass/Fail = underneath the 2MR label
-  // Total     = directly to the right, under the 2MR inputs
-  // -----------------------------
-  const bottomRow = document.createElement("div");
-  bottomRow.className = "set-box complex-row aft-bottom-row";
-
-  const passFailBox = document.createElement("div");
-  passFailBox.className =
-    "text-input complex-exercise-name aft-exercise-label aft-passfail-box";
-  passFailBox.textContent = "Pass/Fail";
-
-  const bottomGroup = document.createElement("div");
-  bottomGroup.className = "set-right-group";
-
-  const totalInput = document.createElement("input");
-  totalInput.className = "set-input aft-total-input";
-  totalInput.placeholder = "Total";
-  totalInput.type = "number";
-  totalInput.inputMode = "numeric";
-  totalInput.min = "0";
-  totalInput.max = "500";
-  totalInput.readOnly = true;
-
-  // EXACT width of (66 + 8 + 66) so it lines up with both ends
-  totalInput.style.width = "calc((2 * 66px) + 8px)";
-
-  bottomGroup.appendChild(totalInput);
-
-  bottomRow.appendChild(passFailBox);
-  bottomRow.appendChild(bottomGroup);
-
-  setsWrapper.appendChild(bottomRow);
-  // -----------------------------
-  // Auto-scoring wiring
-  // -----------------------------
-  function normalizeGender() {
-    const v = (genderInput.value || "").trim().toUpperCase();
-    const c = v.startsWith("M") ? "M" : v.startsWith("F") ? "F" : "";
-    if (genderInput.value !== c) genderInput.value = c;
-    return c;
-  }
-
-  function recomputeAll() {
-    const sex = normalizeGender();
-    const age = ageInput.value;
-
-    let total = 0;
-    let anyScore = false;
-
-    Object.entries(eventInputs).forEach(([eventKey, refs]) => {
-      const primaryVal = refs.primaryInput.value;
-
-      let score = null;
-
-      if (sex && age && typeof AFTScoring !== "undefined" && AFTScoring.computeScore) {
-        score = AFTScoring.computeScore(
-          eventKey,
-          sex,
-          age,
-          primaryVal,
-          typeof Settings !== "undefined" && Settings.getUnit ? Settings.getUnit() : "lb"
-        );
-      }
-
-      if (typeof score === "number" && Number.isFinite(score)) {
-        refs.scoreInput.value = String(score);
-        total += score;
-        anyScore = true;
-      } else {
-        refs.scoreInput.value = "";
-      }
-    });
-
-    totalInput.value = anyScore ? String(total) : "";
-
-    // -----------------------------
-    // Pass/Fail logic (AFT)
-    // Pass = all 5 events >= 60 AND total >= 300
-    // -----------------------------
-    passFailBox.classList.remove("pass", "fail");
-    passFailBox.textContent = "Pass/Fail";
-
-    const allScoresReady =
-      !!sex &&
-      !!age &&
-      Object.values(eventInputs).every(({ scoreInput }) => scoreInput.value !== "");
-
-    if (allScoresReady) {
-      const scores = Object.values(eventInputs).map(({ scoreInput }) => {
-        const n = parseInt(scoreInput.value, 10);
-        return Number.isFinite(n) ? n : 0;
-      });
-
-      const totalNum = scores.reduce((a, b) => a + b, 0);
-      const perEventPass = scores.every((s) => s >= 60);
-      const totalPass = totalNum >= 300;
-
-      if (perEventPass && totalPass) {
-        passFailBox.classList.add("pass");
-        passFailBox.textContent = "Pass";
-      } else {
-        passFailBox.classList.add("fail");
-        passFailBox.textContent = "Fail";
-      }
-    }
-  }
-
-  // Recompute when metadata changes
-  genderInput.addEventListener("input", recomputeAll);
-  ageInput.addEventListener("input", recomputeAll);
-
-  // Recompute when any event input changes
-  Object.values(eventInputs).forEach(({ primaryInput }) => {
-    primaryInput.addEventListener("input", recomputeAll);
-  });
-
-  // Initial compute
-  recomputeAll();
-
-  // No quick-add chips on the AFT card
-  parent.appendChild(card);
-  return card;
-}
-
-
-  // ---------- Helpers ----------
-
-  function getWorkoutLayoutFrom(container) {
-    const cards = container.querySelectorAll(".workout-card");
-    const workouts = [];
-
-    cards.forEach((card) => {
-      const nameInput = card.querySelector(".workout-name");
-      const sets = [];
-      card.querySelectorAll(".set-box").forEach((box) => {
-        const inputs = box.querySelectorAll(".set-input");
-        sets.push({
-          weight: inputs[0] ? inputs[0].value : "",
-          reps: inputs[1] ? inputs[1].value : "",
-        });
-      });
-      workouts.push({
-        name: nameInput ? nameInput.value : "",
-        sets,
-      });
-    });
-
-    return workouts;
-  }
-
-  // NEW: read layout in complex mode (exercise per row)
-  function getComplexLayoutFromContainer(container) {
-    const cards = container.querySelectorAll(".workout-card");
-    const byName = {};
-
-    cards.forEach((card) => {
-      card.querySelectorAll(".set-box").forEach((box) => {
-        const exInput = box.querySelector(".complex-exercise-name");
-        const weightInput = box.querySelector('.set-input[data-field="weight"]');
-        const repsInput = box.querySelector('.set-input[data-field="reps"]');
-
-        const rawName =
-          exInput && typeof exInput.value === "string"
-            ? exInput.value
-            : (exInput && exInput.textContent) || "";
-        const name = rawName.trim();
-        const weight = weightInput ? weightInput.value : "";
-        const reps = repsInput ? repsInput.value : "";
-
-        // Skip completely empty rows
-        if (!name && !weight && !reps) return;
-        if (!name) return; // require a name to track progress
-
-        if (!byName[name]) {
-          byName[name] = { name, sets: [] };
-        }
-        byName[name].sets.push({ weight, reps });
-      });
-    });
-
-    return Object.values(byName);
-  }
-
-  function getCurrentWorkoutLayout() {
-    if (!workoutsContainer) return [];
-    if (mode === "complex" || mode === "aft") {
-      return getComplexLayoutFromContainer(workoutsContainer);
-    }
-    return getWorkoutLayoutFrom(workoutsContainer);
-  }
-
-  function applyTemplateToHome(workoutDataArray) {
-    if (!workoutsContainer) return;
-
-    // When loading a routine, always go back to Standard mode
-    mode = "standard";
-    if (modeToggleBtn) {
-      modeToggleBtn.textContent = "Standard";
-    }
-
-    workoutsContainer.innerHTML = "";
-    if (!workoutDataArray || workoutDataArray.length === 0) {
-      createWorkoutCard(workoutsContainer);
-      return;
-    }
-    workoutDataArray.forEach((w) => {
-      createWorkoutCard(workoutsContainer, w);
-    });
-  }
-
-  return {
-    init,
-    getCurrentWorkoutLayout,
-    applyTemplateToHome,
-    // expose helpers so Templates can use the same card UI in its editor panels
-    createCard: createWorkoutCard,
-    getLayoutFromContainer: getWorkoutLayoutFrom,
-  };
-})();
-
-// ======================================================
-// Progress module (A–Z grid + detail + saving progress)
-// ======================================================
-const Progress = (() => {
-  // migrate old keys to normalized keys once
-  let progressData = migrateProgressKeys(Storage.loadProgress() || {});
-
-  let progressLetterGrid = null;
-  let progressListEl = null;
-  let progressDetailEl = null;
-
-  let progressByLetter = {};
-  let activeProgressLetter = null;
-
-  function init({ gridSelector, listSelector, detailSelector }) {
-    progressLetterGrid = $(gridSelector);
-    progressListEl = $(listSelector);
-    progressDetailEl = $(detailSelector);
-
-    renderProgressList();
-  }
-
-  function getData() {
-    return progressData;
-  }
-
-  // NEW: allow other modules (backup restore) to replace progress data in memory
-  function setData(newData) {
-    progressData = migrateProgressKeys(newData || {});
-  }
-
-  // ---------- Save current workout into progress ----------
-  function saveFromWorkouts(workouts) {
-    if (!workouts || !workouts.length) return;
-
-    const now = new Date().toISOString();
-    const today = now.split("T")[0];
-
-    // Copy current data so we don't mutate in-place mid-loop
-    const updated = { ...progressData };
-
-    // For this save operation:
-    // - keyMapping tracks "rawName → final key" (handles merge choice)
-    // - sessionData accumulates all sets per exercise for today
-    const keyMapping = {};
-    const sessionData = {}; // key -> { rawName, maxReps, bestWeight, bestWeightReps, sets: [] }
-
-    workouts.forEach((w) => {
-      const rawName = (w.name || "").trim();
-      if (!rawName) return;
-
-      const baseKey = normalizeExerciseKey(rawName);
-      if (!baseKey) return;
-
-      // Map normalized key → final key (might be merged with an existing one)
-      let finalKey = keyMapping[baseKey];
-      if (!finalKey) {
-        finalKey = baseKey;
-
-        // If no existing entry, see if there's a similar exercise to merge into
-        if (!updated[finalKey]) {
-          const similar = findSimilarExistingExercise(baseKey, rawName, updated);
-          if (similar && typeof window !== "undefined" && window.confirm) {
-            const merge = window.confirm(
-              `You logged "${rawName}".\n\n` +
-                `There is already progress for "${similar.name}".\n\n` +
-                `Press OK to merge them (treat as the same exercise),\n` +
-                `or Cancel to keep them separate as a new exercise.`
-            );
-            if (merge) {
-              finalKey = similar.key;
-            }
-          }
-        }
-
-        keyMapping[baseKey] = finalKey;
-      }
-
-      if (!sessionData[finalKey]) {
-        sessionData[finalKey] = {
-          rawName,
-          maxReps: 0,
-          bestWeight: null,
-          bestWeightReps: 0,
-          sets: [],
-        };
-      }
-
-      const acc = sessionData[finalKey];
-
-      (w.sets || []).forEach((set) => {
-        const repsNum = parseInt(set.reps, 10);
-        const weightStr = (set.weight || "").toString().trim();
-        const weightNum = weightStr === "" ? NaN : parseFloat(weightStr);
-
-        const hasReps = !isNaN(repsNum) && repsNum > 0;
-        const hasWeight = !isNaN(weightNum) && weightNum > 0;
-
-        // Ignore completely empty sets (both fields blank / zero)
-        if (!hasReps && !hasWeight) return;
-
-        if (hasReps && repsNum > acc.maxReps) {
-          acc.maxReps = repsNum;
-        }
-
-        if (hasWeight) {
-          if (
-            acc.bestWeight === null ||
-            weightNum > acc.bestWeight ||
-            (weightNum === acc.bestWeight &&
-              hasReps &&
-              repsNum > acc.bestWeightReps)
-          ) {
-            acc.bestWeight = weightNum;
-            acc.bestWeightReps = hasReps ? repsNum : acc.bestWeightReps;
-          }
-        }
-
-        acc.sets.push({
-          weight: hasWeight ? weightNum : null,
-          reps: hasReps ? repsNum : null,
-        });
-      });
-    });
-
-    // Now fold per-exercise sessionData into overall progress
-    Object.entries(sessionData).forEach(([key, acc]) => {
-      // If nothing meaningful logged for this exercise, skip it
-      if (acc.maxReps === 0 && acc.bestWeight === null) return;
-
-      const existing =
-        updated[key] || {
-          name: acc.rawName,
-          bestReps: 0,
-          bestRepsDate: null,
-          bestWeight: null,
-          bestWeightReps: 0,
-          bestWeightDate: null,
-          lastUpdated: null,
-          history: [],
-        };
-
-      // Update PRs
-      if (acc.maxReps > (existing.bestReps || 0)) {
-        existing.bestReps = acc.maxReps;
-        existing.bestRepsDate = now;
-      }
-
-      if (acc.bestWeight !== null) {
-        if (
-          existing.bestWeight === null ||
-          acc.bestWeight > existing.bestWeight ||
-          (acc.bestWeight === existing.bestWeight &&
-            acc.bestWeightReps > (existing.bestWeightReps || 0))
-        ) {
-          existing.bestWeight = acc.bestWeight;
-          existing.bestWeightReps = acc.bestWeightReps;
-          existing.bestWeightDate = now;
-        }
-      }
-
-      // New: per-set snapshot for this day
-      const snapshot = {
-        date: today,
-        bestReps: acc.maxReps,
-        bestWeight: acc.bestWeight,
-        bestWeightReps: acc.bestWeightReps,
-      };
-
-      if (acc.sets && acc.sets.length) {
-        snapshot.sets = acc.sets.map((s) => ({
-          weight: s.weight,
-          reps: s.reps,
-        }));
-
-        let volume = 0;
-        acc.sets.forEach((s) => {
-          if (
-            typeof s.weight === "number" &&
-            typeof s.reps === "number" &&
-            s.weight > 0 &&
-            s.reps > 0
-          ) {
-            volume += s.weight * s.reps;
-          }
-        });
-        snapshot.totalVolume = volume;
-      }
-
-      existing.history = Array.isArray(existing.history)
-        ? existing.history
-        : [];
-      // Ensure only one entry per date
-      existing.history = existing.history.filter((h) => h.date !== today);
-      existing.history.push(snapshot);
-      existing.history.sort((a, b) => b.date.localeCompare(a.date));
-
-      // Trim history length if needed
-      if (existing.history.length > 30) {
-        existing.history = existing.history.slice(0, 30);
-      }
-
-      existing.lastUpdated = now;
-      existing.name = acc.rawName;
-
-      updated[key] = existing;
-    });
-
-    // Save back
-    progressData = updated;
-    Storage.saveProgress(progressData);
-    renderProgressList();
-
-  // ---------- Progress list (A–Z grid + per-letter list) ----------
-  function renderProgressList() {
-    const grid = progressLetterGrid;
-    const list = progressListEl;
-
-    if (!grid || !list) return;
-
-    grid.innerHTML = "";
-    list.innerHTML = "";
-
-    const entries = Object.values(progressData || {});
-    if (!entries.length) {
-      "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").forEach((letter) => {
-        const btn = document.createElement("button");
-        btn.className = "progress-letter-btn disabled";
-        btn.type = "button";
-        btn.textContent = letter;
-        grid.appendChild(btn);
-      });
-
-      const empty = document.createElement("div");
-      empty.className = "card-subtitle";
-      empty.textContent =
-        "No progress saved yet. Log a workout on the home screen and tap 'Save progress'.";
-      list.appendChild(empty);
-
-      if (progressDetailEl) {
-        progressDetailEl.classList.remove("open");
-        progressDetailEl.innerHTML = "";
-      }
-      return;
-    }
-
-    progressByLetter = {};
-    entries.forEach((ex) => {
-      if (!ex.name) return;
-      let letter = ex.name.trim().charAt(0).toUpperCase();
-      if (letter < "A" || letter > "Z") return;
-      if (!progressByLetter[letter]) progressByLetter[letter] = [];
-      progressByLetter[letter].push(ex);
-    });
-
-    const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
-
-    letters.forEach((letter) => {
-      const hasAny = !!(
-        progressByLetter[letter] && progressByLetter[letter].length
-      );
-      const btn = document.createElement("button");
-      btn.className = "progress-letter-btn";
-      btn.type = "button";
-      if (!hasAny) btn.classList.add("disabled");
-      btn.textContent = letter;
-
-      btn.addEventListener("click", () => {
-        if (!hasAny) return;
-        activeProgressLetter = letter;
-
-        grid.querySelectorAll(".progress-letter-btn").forEach((b) => {
-          b.classList.toggle("active", b === btn);
-        });
-
-        updateProgressExerciseList();
-      });
-
-      grid.appendChild(btn);
-    });
-
-    if (!activeProgressLetter || !progressByLetter[activeProgressLetter]) {
-      activeProgressLetter =
-        letters.find(
-          (l) => progressByLetter[l] && progressByLetter[l].length
-        ) || null;
-    }
-
-    if (activeProgressLetter) {
-      const idx = letters.indexOf(activeProgressLetter);
-      if (idx !== -1 && grid.children[idx]) {
-        grid.children[idx].classList.add("active");
-      }
-    }
-
-    updateProgressExerciseList();
-  }
-
-  function updateProgressExerciseList() {
-    const list = progressListEl;
-    if (!list) return;
-
-    list.innerHTML = "";
-
-    if (!activeProgressLetter || !progressByLetter[activeProgressLetter]) {
-      const empty = document.createElement("div");
-      empty.className = "card-subtitle";
-      empty.textContent = "Select a letter above to see exercises.";
-      list.appendChild(empty);
-
-      if (progressDetailEl) {
-        progressDetailEl.classList.remove("open");
-        progressDetailEl.innerHTML = "";
-      }
-      return;
-    }
-
-    const exList = [...progressByLetter[activeProgressLetter]];
-    exList.sort((a, b) => a.name.localeCompare(b.name));
-
-    exList.forEach((ex) => {
-      const row = document.createElement("div");
-      row.className = "saved-item";
-
-      const nameDiv = document.createElement("div");
-      nameDiv.className = "saved-name";
-      nameDiv.textContent = ex.name;
-      row.appendChild(nameDiv);
-
-      row.addEventListener("click", () => {
-        openProgressDetail(ex);
-      });
-
-      list.appendChild(row);
-    });
-  }
-
-  // ---------- Progress detail panel (last 5 logs) ----------
-  function formatDateLabel(isoDate) {
-    if (!isoDate) return "";
-    const d = new Date(isoDate);
-    return d.toLocaleDateString(undefined, {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
-  }
-
-  function openProgressDetail(ex) {
-    if (!progressDetailEl) return;
-
-    progressDetailEl.classList.add("open");
-    progressDetailEl.innerHTML = "";
-
-    const title = document.createElement("div");
-    title.className = "card-subtitle progress-detail-title";
-    title.textContent = ex.name + " — last sessions";
-    progressDetailEl.appendChild(title);
-
-    // ✅ Chart goes inside this same open-panel (above PR + sessions)
-    const chartWrap = document.createElement("div");
-    chartWrap.style.marginTop = "10px";
-    chartWrap.style.marginBottom = "10px";
-
-    const canvas = document.createElement("canvas");
-    canvas.width = 320;
-    canvas.height = 140;
-    canvas.style.width = "100%";
-    canvas.style.height = "110px";
-    chartWrap.appendChild(canvas);
-
-    progressDetailEl.appendChild(chartWrap);
-
-    if (typeof Charts !== "undefined" && Charts.drawChart) {
-      Charts.drawChart(canvas, ex);
-    }
-
-    if (ex.bestRepsDate || ex.bestWeightDate) {
-      const prInfo = document.createElement("div");
-      prInfo.className = "progress-detail-pr";
-
-      const parts = [];
-      if (ex.bestRepsDate) {
-        parts.push(
-          `Rep PR: ${ex.bestReps} reps on ${formatDateLabel(
-            ex.bestRepsDate.split("T")[0]
-          )}`
-        );
-      }
-      if (ex.bestWeightDate && ex.bestWeight !== null) {
-        parts.push(
-          `Weight PR: ${ex.bestWeight} x ${ex.bestWeightReps} on ${formatDateLabel(
-            ex.bestWeightDate.split("T")[0]
-          )}`
-        );
-      }
-
-      prInfo.textContent = parts.join(" • ");
-      progressDetailEl.appendChild(prInfo);
-    }
-
-    const history = (ex.history || []).slice(0, 5);
-    if (!history.length) {
-      const empty = document.createElement("div");
-      empty.className = "progress-detail-empty";
-      empty.textContent =
-        "No detailed history yet. Save progress a few times for this exercise.";
-      progressDetailEl.appendChild(empty);
-      return;
-    }
-
-    history.forEach((entry) => {
-      const row = document.createElement("div");
-      row.className = "progress-detail-row";
-
-      const left = document.createElement("span");
-      left.textContent = formatDateLabel(entry.date);
-
-      const right = document.createElement("span");
-
-      const hasWeight =
-        typeof entry.bestWeight === "number" && entry.bestWeight !== null;
-      const bestReps = entry.bestReps || 0;
-
-      // NEW: if we have per-set info, show volume + a small sets preview
-      const hasSets = Array.isArray(entry.sets) && entry.sets.length > 0;
-      const hasVolume =
-        typeof entry.totalVolume === "number" && entry.totalVolume > 0;
-
-      if (hasSets) {
-        const preview = entry.sets
-          .filter(
-            (s) =>
-              typeof s.weight === "number" &&
-              typeof s.reps === "number" &&
-              s.weight > 0 &&
-              s.reps > 0
-          )
-          .slice(0, 3)
-          .map((s) => `${s.weight}x${s.reps}`)
-          .join(", ");
-
-        const more =
-          entry.sets.length > 3 ? `, … (+${entry.sets.length - 3} more)` : "";
-
-        const base =
-          hasWeight && bestReps
-            ? `${entry.bestWeight} x ${entry.bestWeightReps} • Max reps: ${bestReps}`
-            : hasWeight
-            ? `${entry.bestWeight} x ${entry.bestWeightReps}`
-            : `Best: ${bestReps} reps`;
-
-        const volText = hasVolume ? ` • Volume: ${entry.totalVolume}` : "";
-        const setsText = preview ? ` • Sets: ${preview}${more}` : "";
-
-        right.textContent = base + volText + setsText;
-      } else {
-        // Backwards compatible: old entries without per-set data
-        if (hasWeight) {
-          right.textContent = `${entry.bestWeight} x ${entry.bestWeightReps} • Max reps: ${bestReps}`;
-        } else {
-          right.textContent = `Best: ${bestReps} reps`;
-        }
-      }
-
-      row.appendChild(left);
-      row.appendChild(right);
-      progressDetailEl.appendChild(row);
-    });
-  }
-
-  function closeDetail() {
-    if (!progressDetailEl) return;
-    progressDetailEl.classList.remove("open");
-    progressDetailEl.innerHTML = "";
-  }
-
-  function refreshUI() {
-    renderProgressList();
-  }
-
-  return {
-    init,
-    saveFromWorkouts,
-    getData,
-    setData, // NEW
-    refreshUI,
-    closeDetail,
-  };
-})();
-
-// ======================================================
-// Charts module (renderer-only; used inside Progress detail)
-// ======================================================
-const Charts = (() => {
-  // Keep these so any old calls won't crash (no charts screen anymore)
-  function init() {}
-  function refresh() {}
-
-  function getCssVar(name, fallback) {
-    try {
-      const v = getComputedStyle(document.documentElement)
-        .getPropertyValue(name)
-        .trim();
-      return v || fallback;
-    } catch {
-      return fallback;
-    }
-  }
-
-  // Style B:
-  // - Copper line
-  // - Green under-fill
-  // - Green last dot only
-  // - Callout boxes show ONLY best weight×reps (no date, no "Start", no "PR")
-  function drawExerciseChart(canvas, ex) {
-    const ctx = canvas.getContext("2d");
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    const history = Array.isArray(ex?.history) ? ex.history.slice() : [];
-    if (!history.length) {
-      ctx.fillStyle = "#bbbbbb";
-      ctx.font = "11px system-ui, -apple-system, BlinkMacSystemFont, sans-serif";
-      ctx.fillText("No history yet.", 10, 20);
-      return;
-    }
-
-    // Oldest → newest
-    const ordered = history.slice().reverse();
-
-    const toNum = (v) => (typeof v === "number" ? v : Number(v) || 0);
-
-    function pickBestWR(entry) {
-      // Prefer stored bestWeight/bestWeightReps
-      const w = toNum(entry?.bestWeight);
-      const r = toNum(entry?.bestWeightReps || entry?.bestReps || entry?.reps);
-
-      // If we have per-set details, find the best (heaviest) set as a fallback
-      if ((!w || !r) && Array.isArray(entry?.sets) && entry.sets.length) {
-        let bestW = 0;
-        let bestR = 0;
-        entry.sets.forEach((s) => {
-          const sw = toNum(s?.weight);
-          const sr = toNum(s?.reps);
-          if (sw > bestW || (sw === bestW && sr > bestR)) {
-            bestW = sw;
-            bestR = sr;
-          }
-        });
-        return { w: bestW, r: bestR };
-      }
-
-      return { w, r };
-    }
-
-    function metric(entry) {
-      const { w, r } = pickBestWR(entry);
-      const wr = w * r;
-      if (wr > 0) return wr;
-
-      const bw = toNum(entry?.bestWeight);
-      if (bw > 0) return bw;
-
-      const br = toNum(entry?.bestReps);
-      if (br > 0) return br;
-
-      const tv = toNum(entry?.totalVolume);
-      if (tv > 0) return tv;
-
-      return 0;
-    }
-
-    function bubbleText(entry) {
-      const { w, r } = pickBestWR(entry);
-      // ✅ ONLY weight×reps
-      if (w > 0 && r > 0) return `${w}×${r}`;
-      if (w > 0) return `${w}`;
-      if (r > 0) return `${r}`;
-      return "--";
-    }
-
-    // FIRST entry + LAST 5 entries (6 points total)
-    let entriesToPlot;
-    if (ordered.length <= 6) entriesToPlot = ordered.slice();
-    else entriesToPlot = [ordered[0], ...ordered.slice(-5)];
-
-    const points = entriesToPlot.map((entry) => ({
-      entry,
-      value: metric(entry),
-    }));
-
-    const maxVal = points.reduce((m, p) => Math.max(m, p.value), 0);
-    const minVal = points.reduce((m, p) => Math.min(m, p.value), points[0].value);
-
-    if (!maxVal) {
-      ctx.fillStyle = "#bbbbbb";
-      ctx.font = "11px system-ui, -apple-system, BlinkMacSystemFont, sans-serif";
-      ctx.fillText("No numeric data yet.", 10, 20);
-      return;
-    }
-
-    const paddingLeft = 26;
-    const paddingRight = 10;
-    const paddingTop = 18;
-    const paddingBottom = 22;
-
-    const chartW = canvas.width - paddingLeft - paddingRight;
-    const chartH = canvas.height - paddingTop - paddingBottom;
-
-    const n = points.length;
-    const bottomY = canvas.height - paddingBottom;
-
-    // Frame + subtle grid
-    ctx.strokeStyle = "rgba(255,255,255,0.10)";
-    ctx.lineWidth = 1;
-    ctx.strokeRect(paddingLeft, paddingTop, chartW, chartH);
-
-    ctx.strokeStyle = "rgba(255,255,255,0.06)";
-    for (let i = 1; i <= 3; i++) {
-      const y = paddingTop + (chartH * i) / 4;
-      ctx.beginPath();
-      ctx.moveTo(paddingLeft, y);
-      ctx.lineTo(paddingLeft + chartW, y);
-      ctx.stroke();
-    }
-
-    // coords
-    const range = Math.max(1, maxVal - minVal);
-    const coords = points.map((p, i) => {
-      const norm = (p.value - minVal) / range;
-      const y = bottomY - norm * chartH;
-
-      const x =
-        n === 1 ? paddingLeft + chartW / 2 : paddingLeft + (chartW * i) / (n - 1);
-
-      return { x, y, entry: p.entry };
-    });
-
-    const copper = getCssVar("--copper", "#b87333");
-    const gunmetal = getCssVar("--gunmetal", "#1A1E2C");
-
-    // Fill under line (green)
-    const grad = ctx.createLinearGradient(0, paddingTop, 0, bottomY);
-    grad.addColorStop(0, "rgba(57,255,20,0.22)");
-    grad.addColorStop(1, "rgba(57,255,20,0.02)");
-
-    ctx.beginPath();
-    coords.forEach((pt, i) => {
-      if (i === 0) ctx.moveTo(pt.x, pt.y);
-      else ctx.lineTo(pt.x, pt.y);
-    });
-    ctx.lineTo(coords[coords.length - 1].x, bottomY);
-    ctx.lineTo(coords[0].x, bottomY);
-    ctx.closePath();
-    ctx.fillStyle = grad;
-    ctx.fill();
-
-    // Copper line
-    ctx.beginPath();
-    coords.forEach((pt, i) => {
-      if (i === 0) ctx.moveTo(pt.x, pt.y);
-      else ctx.lineTo(pt.x, pt.y);
-    });
-    ctx.strokeStyle = copper;
-    ctx.lineWidth = 3;
-    ctx.lineCap = "round";
-    ctx.lineJoin = "round";
-    ctx.stroke();
-
-    // Last dot only (green)
-    const last = coords[coords.length - 1];
-    ctx.save();
-    ctx.shadowColor = "rgba(57,255,20,0.60)";
-    ctx.shadowBlur = 10;
-
-    ctx.fillStyle = "rgba(57,255,20,0.22)";
-    ctx.beginPath();
-    ctx.arc(last.x, last.y, 7, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.shadowBlur = 0;
-    ctx.fillStyle = "#39ff14";
-    ctx.beginPath();
-    ctx.arc(last.x, last.y, 3.5, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
-
-    // Callout boxes: FIRST + LAST only (weight×reps only)
-    function roundRect(x, y, w, h, r) {
-      const rr = Math.min(r, w / 2, h / 2);
-      ctx.beginPath();
-      ctx.moveTo(x + rr, y);
-      ctx.arcTo(x + w, y, x + w, y + h, rr);
-      ctx.arcTo(x + w, y + h, x, y + h, rr);
-      ctx.arcTo(x, y + h, x, y, rr);
-      ctx.arcTo(x, y, x + w, y, rr);
-      ctx.closePath();
-    }
-
-    function drawCallout(text, anchorX, anchorY, side /* "left"|"right" */) {
-      if (!text) return;
-
-      ctx.save();
-
-      const padX = 12;
-      const padY = 8;
-
-      ctx.font = '18px "Germania One", system-ui, -apple-system, BlinkMacSystemFont, sans-serif';
-      const textW = Math.ceil(ctx.measureText(text).width);
-      const boxW = textW + padX * 2;
-      const boxH = 34;
-
-      let x = side === "right" ? anchorX - boxW : anchorX;
-      let y = anchorY - boxH - 12;
-
-      // clamp into chart area
-      const minX = 6;
-      const maxX = canvas.width - boxW - 6;
-      x = Math.max(minX, Math.min(maxX, x));
-
-      const minY = 6;
-      y = Math.max(minY, y);
-
-      roundRect(x, y, boxW, boxH, 14);
-      ctx.fillStyle = gunmetal;
-      ctx.globalAlpha = 0.92;
-      ctx.fill();
-
-      ctx.globalAlpha = 1;
-      ctx.strokeStyle = copper;
-      ctx.lineWidth = 2;
-      ctx.stroke();
-
-      ctx.fillStyle = "#ffffff";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText(text, x + boxW / 2, y + boxH / 2);
-
-      ctx.restore();
-    }
-
-    const first = coords[0];
-    drawCallout(bubbleText(first.entry), first.x, first.y, "left");
-
-    drawCallout(bubbleText(last.entry), last.x, last.y, "right");
-  }
-
-  function drawChart(canvas, ex) {
-    drawExerciseChart(canvas, ex);
-  }
-
-  return {
-    init,
-    refresh,
-    drawChart,
-  };
-})();
-
-// ======================================================
-// Templates module (routines screen + share + backup)
-// ======================================================
-const Templates = (() => {
-  const ROUTINE_SHARE_PREFIX = "C1:";
-  const LEGACY_SHARE_PREFIX = "CIROUTINEv1:";
-
-  let templates = Storage.loadTemplates();
-
-  let templateNameInput;
-  let saveTemplateBtn;
-  let savedTemplatesList;
-  let backToLoggerBtn;
-
-  // Backup UI
-  let backupText;
-  let exportBackupBtn;
-  let importBackupBtn;
-
-  function init({
-    nameInputSelector,
-    saveButtonSelector,
-    listSelector,
-    backButtonSelector,
-    backupTextSelector,
-    exportButtonSelector,
-    importButtonSelector,
-  }) {
-    templateNameInput = $(nameInputSelector);
-    saveTemplateBtn = $(saveButtonSelector);
-    savedTemplatesList = $(listSelector);
-    backToLoggerBtn = $(backButtonSelector);
-
-    backupText = $(backupTextSelector);
-    exportBackupBtn = $(exportButtonSelector);
-    importBackupBtn = $(importButtonSelector);
-
-    if (saveTemplateBtn) {
-      saveTemplateBtn.addEventListener("click", onSaveTemplateClicked);
-    }
-
-    if (backToLoggerBtn) {
-      backToLoggerBtn.addEventListener("click", () => {
-        App.showScreen("home");
-      });
-    }
-
-    // Backup handlers
-    if (exportBackupBtn && backupText) {
-      exportBackupBtn.addEventListener("click", () => {
-        const backupString = createBackupString();
-        if (!backupString) return;
-        backupText.value = backupString;
-
-        if (typeof showToast === "function") {
-          showToast("Backup code generated. Copy & save it!");
-        } else {
-          alert("Backup code generated. Copy it and save it somewhere safe.");
-        }
-      });
-    }
-
-    if (importBackupBtn && backupText) {
-      importBackupBtn.addEventListener("click", () => {
-        const str = backupText.value.trim();
-        if (!str) {
-          alert("Paste a backup code first.");
-          return;
-        }
-
-        const ok = window.confirm(
-          "Restoring from backup will overwrite your current routines and progress " +
-            "with the data in the box.\n\n" +
-            "Are you sure you want to restore from backup?"
-        );
-        if (!ok) {
-          return;
-        }
-
-        restoreFromBackupString(str);
-      });
-    }
-
-    renderTemplatesList();
-  }
-
-  function getTemplates() {
-    return templates;
-  }
-
-  // ---------- Share codes ----------
-
-  function makeShareCode(tpl) {
-    const payload = {
-      n: tpl.name || "Shared routine",
-      w: (tpl.workouts || []).map((ex) => ({
-        n: ex.name || "",
-        s: (ex.sets || []).map((set) => ({
-          w: set.weight ?? "",
-          r: set.reps ?? "",
-        })),
-      })),
-    };
-
-    return ROUTINE_SHARE_PREFIX + btoa(JSON.stringify(payload));
-  }
-
-  function tryImportShareCode(rawCode) {
-    try {
-      if (rawCode.startsWith(ROUTINE_SHARE_PREFIX)) {
-        const encoded = rawCode.slice(ROUTINE_SHARE_PREFIX.length);
-        const payload = JSON.parse(atob(encoded));
-
-        const workouts = (payload.w || []).map((ex) => ({
-          name: ex.n || "",
-          sets: (ex.s || []).map((set) => ({
-            weight: set.w ?? "",
-            reps: set.r ?? "",
-          })),
-        }));
-
-        return {
-          name: payload.n || "Shared routine",
-          workouts:
-            workouts && workouts.length
-              ? workouts
-              : [{ name: "", sets: [{ weight: "", reps: "" }] }],
-        };
-      }
-
-      if (rawCode.startsWith(LEGACY_SHARE_PREFIX)) {
-        const encoded = rawCode.slice(LEGACY_SHARE_PREFIX.length);
-        const payload = JSON.parse(atob(encoded));
-
-        const safeWorkouts =
-          payload.workouts && payload.workouts.length
-            ? payload.workouts
-            : [{ name: "", sets: [{ weight: "", reps: "" }] }];
-
-        return {
-          name: payload.name || "Shared routine",
-          workouts: safeWorkouts,
-        };
-      }
-
-      return null;
-    } catch (e) {
-      console.error("Bad share code", e);
-      return null;
-    }
-  }
-
-  // ---------- Backup & restore (templates + progress) ----------
-  function getBackupObject() {
-    const progressData = Progress.getData ? Progress.getData() : {};
-    return {
-      templates,
-      progressData,
-      version: 1,
-    };
-  }
-
-  function createBackupString() {
-    try {
-      return JSON.stringify(getBackupObject());
-    } catch (e) {
-      console.error("Error creating backup", e);
-      alert("Could not create backup.");
-      return "";
-    }
-  }
-
-  function restoreFromBackupString(str) {
-    try {
-      const parsed = JSON.parse(str);
-
-      if (parsed.templates && Array.isArray(parsed.templates)) {
-        templates = parsed.templates;
-        Storage.saveTemplates(templates);
-        renderTemplatesList();
-      }
-
-      if (parsed.progressData && typeof parsed.progressData === "object") {
-        // Save to storage
-        Storage.saveProgress(parsed.progressData);
-        // NEW: update Progress module's in-memory state
-        if (Progress.setData) {
-          Progress.setData(parsed.progressData);
-        }
-        // Refresh UI for Progress
-        Progress.refreshUI();
-        // NEW: keep charts in sync with restored backup
-        if (typeof Charts !== "undefined" && Charts.refresh) {
-          Charts.refresh();
-        }
-      }
-
-      if (typeof showToast === "function") {
-        showToast("Backup restored!");
-      } else {
-        alert("Backup restored!");
-      }
-    } catch (e) {
-      console.error("Error restoring backup", e);
-      alert(
-        "That backup code was invalid. Make sure you pasted the whole thing."
-      );
-    }
-  }
-
-  // ---------- Templates UI ----------
-
-  function buildEditorPanel(panel, tpl) {
-    panel.innerHTML = "";
-    panel.classList.add("open");
-
-    const innerContainer = document.createElement("div");
-    innerContainer.className = "workouts-container";
-    panel.appendChild(innerContainer);
-
-    const data =
-      tpl.workouts && tpl.workouts.length
-        ? tpl.workouts
-        : [{ name: "", sets: [{ weight: "", reps: "" }] }];
-
-    // use Logger's card factory so the UI matches the main logger screen
-    data.forEach((w) => Logger.createCard(innerContainer, w));
-  }
-
-  function closePanelAndSave(panel) {
-    const index = parseInt(panel.dataset.index, 10);
-    if (!isNaN(index) && templates[index]) {
-      const inner = panel.querySelector(".workouts-container");
-      if (inner) {
-        // read layout from the panel using Logger helper
-        const workouts = Logger.getLayoutFromContainer(inner);
-        templates[index].workouts = workouts;
-        Storage.saveTemplates(templates);
-      }
-    }
-    panel.classList.remove("open");
-    panel.innerHTML = "";
-  }
-
-  function renderTemplatesList() {
-    if (!savedTemplatesList) return;
-
-    savedTemplatesList.innerHTML = "";
-    if (!templates.length) return;
-
-    templates.forEach((tpl, index) => {
-      const wrapper = document.createElement("div");
-      wrapper.className = "saved-wrapper";
-
-      const row = document.createElement("div");
-      row.className = "saved-item";
-
-      const name = document.createElement("div");
-      name.className = "saved-name";
-      name.textContent = tpl.name || "Untitled routine";
-      name.title = tpl.name || "Untitled routine";
-      row.appendChild(name);
-
-      const btnWrap = document.createElement("div");
-      btnWrap.className = "saved-buttons";
-
-      const shareBtn = document.createElement("button");
-      shareBtn.className = "small-btn share";
-      shareBtn.type = "button";
-      shareBtn.textContent = "Share";
-      shareBtn.addEventListener("click", () => {
-        const code = makeShareCode(tpl);
-        if (templateNameInput) {
-          templateNameInput.value = code;
-        }
-        alert(
-          "Share code generated and placed in the 'New routine name' box.\n\n" +
-            "Copy it and send it to your friend. They can paste it into the same box " +
-            "and tap Create to import this routine."
-        );
-      });
-      btnWrap.appendChild(shareBtn);
-
-      const loadBtn = document.createElement("button");
-      loadBtn.className = "small-btn load";
-      loadBtn.type = "button";
-      loadBtn.textContent = "Load";
-      loadBtn.addEventListener("click", () => {
-        Logger.applyTemplateToHome(tpl.workouts || []);
-        App.showScreen("home");
-      });
-      btnWrap.appendChild(loadBtn);
-
-      const openBtn = document.createElement("button");
-      openBtn.className = "small-btn open";
-      openBtn.type = "button";
-      openBtn.textContent = "Open";
-      btnWrap.appendChild(openBtn);
-
-      const delBtn = document.createElement("button");
-      delBtn.className = "small-btn delete";
-      delBtn.type = "button";
-      delBtn.textContent = "Delete";
-
-      delBtn.addEventListener("click", () => {
-        const routineName = tpl.name || "this routine";
-
-        const ok = window.confirm(
-          `Delete "${routineName}"?\n\n` +
-            "This will remove the routine from your saved workouts, " +
-            "but it will NOT delete any past progress."
-        );
-        if (!ok) return;
-
-        const panel = savedTemplatesList.querySelector(
-          `.open-panel[data-index="${index}"]`
-        );
-        if (panel && panel.classList.contains("open")) {
-          closePanelAndSave(panel);
-        }
-
-        templates.splice(index, 1);
-        Storage.saveTemplates(templates);
-        renderTemplatesList();
-        Progress.refreshUI();
-
-        if (typeof showToast === "function") {
-          showToast("Routine deleted.");
-        }
-      });
-
-      btnWrap.appendChild(delBtn);
-
-      row.appendChild(btnWrap);
-      wrapper.appendChild(row);
-
-      const panel = document.createElement("div");
-      panel.className = "open-panel";
-      panel.dataset.index = index.toString();
-      wrapper.appendChild(panel);
-
-      openBtn.addEventListener("click", () => {
-        // If panel is already open → close & save
-        if (panel.classList.contains("open")) {
-          closePanelAndSave(panel);
-          openBtn.textContent = "Open";
-          return;
-        }
-
-        // Reset all "Open" button labels
-        $$(".saved-wrapper .small-btn.open", savedTemplatesList).forEach(
-          (btn) => {
-            btn.textContent = "Open";
-          }
-        );
-
-        // Close any other open panels first, saving their data
-        openSinglePanel(savedTemplatesList, panel, {
-          onClose: closePanelAndSave,
-        });
-
-        // Build the editor UI inside this panel
-        buildEditorPanel(panel, tpl);
-        openBtn.textContent = "Close";
-      });
-
-      savedTemplatesList.appendChild(wrapper);
-    });
-  }
-
-  // Save template button handler
-  function onSaveTemplateClicked() {
-    if (!templateNameInput) return;
-
-    const raw = templateNameInput.value.trim();
-    if (!raw) {
-      alert("Give this routine a name first, or paste a share code.");
-      return;
-    }
-
-    const imported = tryImportShareCode(raw);
-    if (imported) {
-      templates.push({
-        id: Date.now(),
-        name: imported.name,
-        workouts: JSON.parse(JSON.stringify(imported.workouts)),
-      });
-      Storage.saveTemplates(templates);
-      renderTemplatesList();
-      templateNameInput.value = "";
-
-      if (typeof showToast === "function") {
-        showToast(`Imported "${imported.name}".`);
-      } else {
-        alert(`Shared routine imported as "${imported.name}".`);
-      }
-      return;
-    }
-
-    const name = raw;
-    const workoutsData = Logger.getCurrentWorkoutLayout();
-
-    const safeWorkouts =
-      workoutsData && workoutsData.length
-        ? workoutsData
-        : [{ name: "", sets: [{ weight: "", reps: "" }] }];
-
-    templates.push({
-      id: Date.now(),
-      name,
-      workouts: JSON.parse(JSON.stringify(safeWorkouts)),
-    });
-
-    Storage.saveTemplates(templates);
-    renderTemplatesList();
-    templateNameInput.value = "";
-  }
-
-  return {
-    init,
-    getTemplates,
-  };
-})();
-
-// ======================================================
-// Tutorial module (overlay + menu item)
-// ======================================================
-const Tutorial = (() => {
-  const TUTORIAL_KEY = "codeAndIronTutorialSeen_v1";
-
-  let overlay;
-  let menuReopenItem;
-
-  function init({ overlaySelector, menuItemSelector }) {
-    overlay = $(overlaySelector);
-    menuReopenItem = $(menuItemSelector);
-
-    if (menuReopenItem) {
-      menuReopenItem.addEventListener("click", () => {
-        localStorage.removeItem(TUTORIAL_KEY);
-        startTutorial();
-        App.closeMenu();
-      });
-    }
-
-    startTutorial();
-  }
-
-  function startTutorial() {
-    if (!overlay) return;
-
-    const seen = localStorage.getItem(TUTORIAL_KEY);
-    if (seen === "true") {
-      overlay.classList.remove("visible");
-      return;
-    }
-
-    const screens = Array.from(overlay.querySelectorAll(".tutorial-screen"));
-    if (!screens.length) return;
-
-    let currentIndex = 0;
-
-    function showStep(index) {
-      screens.forEach((el, i) => {
-        el.classList.toggle("active", i === index);
-      });
-    }
-
-    function finishTutorial() {
-      localStorage.setItem(TUTORIAL_KEY, "true");
-      overlay.classList.remove("visible");
-    }
-
-    overlay.classList.add("visible");
-    showStep(currentIndex);
-
-    const skipBtn = $("#tutorialSkipBtn");
-    const startBtn = $("#tutorialStartBtn");
-
-    if (skipBtn) {
-      skipBtn.addEventListener("click", () => {
-        finishTutorial();
-      });
-    }
-
-    if (startBtn) {
-      startBtn.addEventListener("click", () => {
-        currentIndex = 1;
-        showStep(currentIndex);
-      });
-    }
-
-    overlay.querySelectorAll("[data-tutorial-next]").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        if (currentIndex < screens.length - 1) {
-          currentIndex++;
-          showStep(currentIndex);
-        } else {
-          finishTutorial();
-        }
-      });
-    });
-
-    overlay.querySelectorAll("[data-tutorial-back]").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        if (currentIndex > 0) {
-          currentIndex--;
-          showStep(currentIndex);
-        }
-      });
-    });
-
-    overlay.querySelectorAll("[data-tutorial-done]").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        finishTutorial();
-      });
-    });
-  }
-
-  return {
-    init,
-  };
-})();
-
-// ======================================================
-// QuickAdd module (weight chips)
-// ======================================================
-const QuickAdd = (() => {
-  let lastFocusedWeightInput = null;
-
-  function init() {
-    // Track last-focused weight input anywhere in the app
-    document.addEventListener("focusin", (e) => {
-      const input = e.target.closest('.set-input[data-field="weight"]');
-      if (input) {
-        lastFocusedWeightInput = input;
-      }
-    });
-
-    // Delegate chip clicks
-    document.addEventListener("click", (e) => {
-      const chip = e.target.closest(".quick-add-chip");
-      if (!chip) return;
-
-      const delta = Number(chip.dataset.quick) || 0;
-      if (!delta) return;
-
-      // Prefer last focused weight input
-      let targetInput = lastFocusedWeightInput;
-
-      // Fallback: first weight input in this workout card
-      if (!targetInput) {
-        const card = chip.closest(".workout-card");
-        if (card) {
-          targetInput = card.querySelector('.set-input[data-field="weight"]');
-        }
-      }
-
-      if (!targetInput) return;
-
-      const raw = (targetInput.value || "").trim();
-      const current = raw === "" ? 0 : Number(raw) || 0;
-      const next = current + delta;
-      targetInput.value = next;
-    });
-  }
-
-  return {
-    init,
-  };
-})();
-
-// ======================================================
-// App orchestrator (navigation, wiring everything)
-// ======================================================
-const App = (() => {
-  let menuButton;
-  let menuDropdown;
-  let homeScreen;
-  let workoutsScreen;
-  let progressScreen;
-  let chartsScreen;
-  let settingsScreen;
-
-  function handleVersionChange() {
-    try {
-      const lastSeen = localStorage.getItem(VERSION_STORAGE_KEY);
-      if (lastSeen !== APP_VERSION) {
-        // Store new version
-        localStorage.setItem(VERSION_STORAGE_KEY, APP_VERSION);
-        // Force the tutorial / "What's new" overlay to show once per version
-        localStorage.removeItem("codeAndIronTutorialSeen_v1");
-      }
-    } catch (e) {
-      console.error("Error checking app version", e);
-    }
-  }
-
-  function sanitizeWorkoutsForSave(workouts) {
-    if (!Array.isArray(workouts)) return [];
-
-    const result = [];
-
-    workouts.forEach((w) => {
-      const name = (w.name || "").trim();
-      const sets = Array.isArray(w.sets) ? w.sets : [];
-
-      const filteredSets = sets.filter((set) => {
-        const wRaw = (set.weight ?? "").toString().trim();
-        const rRaw = (set.reps ?? "").toString().trim();
-
-        const wNum = wRaw === "" ? 0 : Number(wRaw) || 0;
-        const rNum = rRaw === "" ? 0 : Number(rRaw) || 0;
-
-        const weightEmptyOrZero = wRaw === "" || wNum === 0;
-        const repsEmptyOrZero = rRaw === "" || rNum === 0;
-
-        // if BOTH are empty/zero, ignore this set
-        if (weightEmptyOrZero && repsEmptyOrZero) {
-          return false;
-        }
-        return true;
-      });
-
-      // If no name OR no meaningful sets, skip this workout entirely
-      if (!name || filteredSets.length === 0) return;
-
-      result.push({
-        name,
-        sets: filteredSets,
-      });
-    });
-
-    return result;
-  }
-
-  function init() {
-    // Privacy footer toggle
-    const togglePrivacy = $("#toggle-privacy");
-    const privacyPanel = $("#privacy-panel");
-    if (togglePrivacy && privacyPanel) {
-      togglePrivacy.addEventListener("click", () => {
-        privacyPanel.classList.toggle("hidden");
-      });
-    }
-
-    // Screens & nav
-    menuButton = $("#menuButton");
-    menuDropdown = $("#menuDropdown");
-    homeScreen = $("#homeScreen");
-    workoutsScreen = $("#workoutsScreen");
-    progressScreen = $("#progressScreen");
-    settingsScreen = $("#settingsScreen");
-    chartsScreen = $("#chartsScreen");
-
-    if (menuButton) {
-      menuButton.setAttribute("aria-haspopup", "true");
-      menuButton.setAttribute("aria-expanded", "false");
-    }
-
-    const chartsBackBtn = $("#backToLoggerFromCharts");
-    if (chartsBackBtn) {
-      chartsBackBtn.addEventListener("click", () => showScreen("home"));
-    }
-
-    const progressBackBtn = $("#backToLoggerFromProgress");
-    if (progressBackBtn) {
-      progressBackBtn.addEventListener("click", () => showScreen("home"));
-    }
-
-    const settingsBackBtn = $("#backToLoggerFromSettings");
-    if (settingsBackBtn) {
-      settingsBackBtn.addEventListener("click", () => showScreen("home"));
-    }
-
-    if (menuButton && menuDropdown) {
-      menuButton.addEventListener("click", () => {
-        const isOpen = menuDropdown.classList.toggle("open");
-        menuButton.setAttribute("aria-expanded", isOpen ? "true" : "false");
-      });
-
-      document.addEventListener("click", (e) => {
-        if (
-          !menuButton.contains(e.target) &&
-          !menuDropdown.contains(e.target)
-        ) {
-          closeMenu();
-        }
-      });
-
-      $$(".menu-item[data-nav]").forEach((item) => {
-        item.addEventListener("click", () => {
-          const nav = item.dataset.nav;
-
-          if (
-            nav === "workouts" ||
-            nav === "progress" ||
-            nav === "charts" ||
-            nav === "settings"
-          ) {
-            showScreen(nav);
-
-            if (nav === "progress") {
-              Progress.refreshUI();
-            } else if (nav === "charts") {
-              if (typeof Charts !== "undefined" && Charts.refresh) {
-                Charts.refresh();
-              }
-            }
-          }
-
-          closeMenu();
-        });
-      });
-    }
-
-    // Init modules
-    Logger.init({
-      containerSelector: "#workoutsContainer",
-      saveButtonSelector: "#saveProgressBtn",
-      onSave: (rawWorkouts) => {
-        const workouts = sanitizeWorkoutsForSave(rawWorkouts);
-
-        if (!workouts.length) {
-          alert(
-            "Nothing to save yet.\n\nAdd at least one set with weight and/or reps before saving."
-          );
-          return;
-        }
-
-        Progress.saveFromWorkouts(workouts);
-
-        if (typeof showToast === "function") {
-          showToast("Progress saved!");
-        } else {
-          alert("Progress saved!");
-        }
-      },
-    });
-
-    Progress.init({
-      gridSelector: "#progressLetterGrid",
-      listSelector: "#progressList",
-      detailSelector: "#progressDetail",
-    });
-
-    Templates.init({
-      nameInputSelector: "#templateNameInput",
-      saveButtonSelector: "#saveTemplateBtn",
-      listSelector: "#savedTemplatesList",
-      backButtonSelector: "#backToLogger",
-      backupTextSelector: "#backupText",
-      exportButtonSelector: "#exportBackupBtn",
-      importButtonSelector: "#importBackupBtn",
-    });
-
-    handleVersionChange();
-
-    Tutorial.init({
-      overlaySelector: "#tutorialOverlay",
-      menuItemSelector: "#menuTutorial",
-    });
-
-    QuickAdd.init();
-
-    Settings.init({
-      unitSelectSelector: "#settingsUnitSelect",
-      highContrastSelector: "#settingsHighContrast",
-      exportButtonSelector: "#settingsExportBackupBtn",
-      resetButtonSelector: "#resetAllDataBtn",
-    });
-
-    Charts.init({
-      listSelector: "#chartsExerciseList",
-      chartsContainerSelector: "#chartsContainer",
-    });
-
-    showScreen("home");
-  }
-
-  function showScreen(which) {
-    if (
-      !homeScreen ||
-      !workoutsScreen ||
-      !progressScreen ||
-      !chartsScreen ||
-      !settingsScreen
-    ) {
-      return;
-    }
-
-    homeScreen.classList.remove("active");
-    workoutsScreen.classList.remove("active");
-    progressScreen.classList.remove("active");
-    chartsScreen.classList.remove("active");
-    settingsScreen.classList.remove("active");
-
-    if (which === "home") {
-      homeScreen.classList.add("active");
-    } else if (which === "workouts") {
-      workoutsScreen.classList.add("active");
-    } else if (which === "progress") {
-      progressScreen.classList.add("active");
-    } else if (which === "charts") {
-      chartsScreen.classList.add("active");
-    } else if (which === "settings") {
-      settingsScreen.classList.add("active");
-    }
-  }
-
-  function closeMenu() {
-    if (menuDropdown) {
-      menuDropdown.classList.remove("open");
-    }
-    if (menuButton) {
-      menuButton.setAttribute("aria-expanded", "false");
-    }
-  }
-
-  return {
-    init,
-    showScreen,
-    closeMenu,
-  };
-})();
-
-// ======================================================
-// Boot
-// ======================================================
-document.addEventListener("DOMContentLoaded", () => {
-  App.init();
-});
+  </script>
+</body>
+</html>
