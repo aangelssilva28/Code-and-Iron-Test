@@ -2276,7 +2276,7 @@ const Charts = (() => {
     });
   }
 
-  // Simple line chart (copper line + green under-fill + last-dot only + START/PR labels)
+  // Simple line chart (COPPER line + green under-fill + last-dot only + START/PR labels)
   function drawExerciseChart(canvas, ex) {
     const ctx = canvas.getContext("2d");
 
@@ -2359,7 +2359,6 @@ const Charts = (() => {
 
     function wrsText(entry) {
       const { w, r, s } = pickWRS(entry);
-      // Always show W×R×S (as requested) even if some are 0 — keeps it consistent
       return `${w}×${r}×${s}`;
     }
 
@@ -2395,7 +2394,6 @@ const Charts = (() => {
         best = v;
         lastPrDate = pickDate(ordered[i]);
       } else if (v === best && v > 0) {
-        // same PR value later → update to most recent PR date
         const d = pickDate(ordered[i]);
         if (d) lastPrDate = d;
       }
@@ -2405,7 +2403,7 @@ const Charts = (() => {
     // Tactical padding + plot area
     const paddingLeft = 16;
     const paddingRight = 10;
-    const paddingTop = 22;  // leave room for labels inside canvas
+    const paddingTop = 22;
     const paddingBottom = 14;
 
     const plotX = paddingLeft;
@@ -2487,11 +2485,38 @@ const Charts = (() => {
     ctx.fill();
     ctx.restore();
 
-    // --- Copper line (use your accent if available) ---
+    // --- FORCE COPPER line (do NOT pull a green accent) ---
     const rootStyles = getComputedStyle(document.documentElement);
-    const accentRaw = (rootStyles.getPropertyValue("--accent") || "").trim();
     const fallbackCopper = "#c07a2b";
-    const copper = accentRaw || fallbackCopper;
+
+    // Try common copper vars first; only use --accent if it isn't your neon green
+    const tryVars = [
+      "--copper",
+      "--copper-accent",
+      "--copperAccent",
+      "--accent-copper",
+      "--accent2",
+      "--accent"
+    ];
+
+    function looksLikeNeonGreen(str) {
+      const s = (str || "").toLowerCase().replace(/\s+/g, "");
+      return (
+        s.includes("#39ff14") ||
+        s.includes("rgb(57,255,20)") ||
+        s.includes("rgba(57,255,20")
+      );
+    }
+
+    let copper = "";
+    for (const v of tryVars) {
+      const val = (rootStyles.getPropertyValue(v) || "").trim();
+      if (!val) continue;
+      if (v === "--accent" && looksLikeNeonGreen(val)) continue; // skip green accent
+      copper = val;
+      break;
+    }
+    if (!copper || looksLikeNeonGreen(copper)) copper = fallbackCopper;
 
     function toRgba(color, a) {
       const c = (color || "").trim();
@@ -2511,12 +2536,11 @@ const Charts = (() => {
         const nums = c.replace("rgb(", "").replace(")", "").split(",").map((x) => x.trim());
         return `rgba(${nums[0]},${nums[1]},${nums[2]},${a})`;
       }
-      // unknown format → fallback copper rgba
       return `rgba(192,122,43,${a})`;
     }
 
     const lineGrad = ctx.createLinearGradient(plotX, 0, plotX + plotW, 0);
-    lineGrad.addColorStop(0, toRgba(copper, 0.65));
+    lineGrad.addColorStop(0, toRgba(copper, 0.70));
     lineGrad.addColorStop(1, toRgba(copper, 1));
 
     ctx.save();
@@ -2554,22 +2578,19 @@ const Charts = (() => {
       ctx.save();
       ctx.font = "10px system-ui, -apple-system, BlinkMacSystemFont, sans-serif";
       ctx.textBaseline = "bottom";
-      ctx.fillStyle = "rgba(187,187,187,0.95)";
 
       const padX = 6;
       const padY = 4;
-      const w = ctx.measureText(text).width;
-      const boxW = w + padX * 2;
+      const tw = ctx.measureText(text).width;
+      const boxW = tw + padX * 2;
       const boxH = 16;
 
-      // keep label inside canvas
       let bx = x - boxW / 2;
       bx = Math.max(4, Math.min(bx, cssW - boxW - 4));
 
-      let by = y - 10; // above point
+      let by = y - 10;
       by = Math.max(boxH + 2, by);
 
-      // subtle backing so it’s readable
       ctx.fillStyle = "rgba(10,10,10,0.55)";
       ctx.strokeStyle = "rgba(255,255,255,0.10)";
       ctx.lineWidth = 1;
@@ -2595,18 +2616,15 @@ const Charts = (() => {
       ctx.restore();
     }
 
-    // START over first plotted entry
     const firstPt = coords[0];
     drawLabel("START", firstPt.x, firstPt.y);
 
-    // Prior point label (if exists)
     if (coords.length >= 2) {
       const prior = coords[coords.length - 2];
       const priorDate = fmtDate(pickDate(prior.entry));
       drawLabel(`${priorDate} • ${wrsText(prior.entry)}`, prior.x, prior.y);
     }
 
-    // Newest point: PR date + newest entry W×R×S
     const newestEntry = coords[coords.length - 1].entry;
     drawLabel(`${prDateText} • ${wrsText(newestEntry)}`, last.x, last.y);
   }
