@@ -2357,9 +2357,9 @@ const Charts = (() => {
       return 0;
     }
 
-    function wrsText(entry) {
-      const { w, r, s } = pickWRS(entry);
-      return `${w}×${r}×${s}`;
+    function wrText(entry) {
+      const { w, r } = pickWRS(entry);
+      return `${w}×${r}`;
     }
 
     // --- Build points: FIRST entry (START) + LAST 5 entries ---
@@ -2572,8 +2572,8 @@ const Charts = (() => {
     ctx.fill();
     ctx.restore();
 
-    function drawInfoBox(titleLine, dateLine, wrsLine, x, y) {
-      const lines = [titleLine, dateLine, wrsLine];
+    function drawInfoBox(titleLine, dateLine, wrLine, x, y) {
+      const lines = [titleLine, dateLine, wrLine];
 
       const bgRaw =
         (rootStyles.getPropertyValue("--card") || "").trim() ||
@@ -2642,7 +2642,7 @@ const Charts = (() => {
     drawInfoBox(
       "Start",
       fmtDate(pickDate(firstEntry)),
-      wrsText(firstEntry),
+      wrText(firstEntry),
       firstPt.x,
       firstPt.y
     );
@@ -2652,7 +2652,7 @@ const Charts = (() => {
     drawInfoBox(
       "PR",
       prDateText,
-      wrsText(newestEntry),
+      wrText(newestEntry),
       last.x,
       last.y
     );
