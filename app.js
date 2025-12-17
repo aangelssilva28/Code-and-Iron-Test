@@ -2279,7 +2279,22 @@ const Charts = (() => {
   // Simple line chart: prefers volume, then weight, then reps
   function drawExerciseChart(canvas, ex) {
     const ctx = canvas.getContext("2d");
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // --- Retina crisp: keep CSS size, scale internal buffer ---
+    const cssW = canvas.clientWidth || 320;
+    const cssH = canvas.clientHeight || 90;
+    const dpr = window.devicePixelRatio || 1;
+
+    const targetW = Math.max(1, Math.round(cssW * dpr));
+    const targetH = Math.max(1, Math.round(cssH * dpr));
+    if (canvas.width !== targetW || canvas.height !== targetH) {
+      canvas.width = targetW;
+      canvas.height = targetH;
+    }
+
+    // Draw using CSS pixels
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, cssW, cssH);
 
     const history = Array.isArray(ex.history) ? ex.history.slice() : [];
     if (!history.length) {
@@ -2327,60 +2342,139 @@ const Charts = (() => {
       return;
     }
 
-    const paddingLeft = 30;
-    const paddingRight = 8;
-    const paddingTop = 12;
-    const paddingBottom = 20;
-    const chartW = canvas.width - paddingLeft - paddingRight;
-    const chartH = canvas.height - paddingTop - paddingBottom;
+    const minVal = points.reduce((min, p) => Math.min(min, p.value), points[0].value);
+
+    // Tactical padding + plot area (in CSS pixels)
+    const paddingLeft = 16;
+    const paddingRight = 10;
+    const paddingTop = 18;
+    const paddingBottom = 16;
+
+    const plotX = paddingLeft;
+    const plotY = paddingTop;
+    const plotW = cssW - paddingLeft - paddingRight;
+    const plotH = cssH - paddingTop - paddingBottom;
 
     const n = points.length;
-    const bottomY = canvas.height - paddingBottom;
+    const bottomY = plotY + plotH;
 
-    // Axes
-    ctx.strokeStyle = "#444";
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(paddingLeft, paddingTop);
-    ctx.lineTo(paddingLeft, bottomY);
-    ctx.lineTo(canvas.width - paddingRight, bottomY);
-    ctx.stroke();
+    // Headroom + stable scaling (looks good even if flat data)
+    const rawRange = Math.max(0.000001, maxVal - minVal);
+    const headroom = rawRange * 0.12;
+    const floorroom = rawRange * 0.06;
 
-    // Compute x/y for each point
+    const maxPlot = maxVal + headroom;
+    const minPlot = Math.max(0, minVal - floorroom);
+    const denom = Math.max(0.000001, maxPlot - minPlot);
+
+    // Compute x/y for each point (CSS pixels)
     const coords = points.map((p, i) => {
-      const ratio = p.value / maxVal;
-      const y = bottomY - ratio * chartH;
+      const ratio = (p.value - minPlot) / denom;
+      const y = bottomY - ratio * plotH;
 
       let x;
       if (n === 1) {
-        // single point → center it
-        x = paddingLeft + chartW / 2;
+        x = plotX + plotW / 2;
       } else {
-        const step = chartW / (n - 1);
-        x = paddingLeft + step * i;
+        const step = plotW / (n - 1);
+        x = plotX + step * i;
       }
       return { x, y, value: p.value, mode: p.mode };
     });
 
-    // Line
-    ctx.beginPath();
-    coords.forEach((pt, i) => {
-      if (i === 0) ctx.moveTo(pt.x, pt.y);
-      else ctx.lineTo(pt.x, pt.y);
-    });
-    ctx.strokeStyle = "#39ff14"; // neon line
-    ctx.lineWidth = 2;
-    ctx.stroke();
-
-    // Points (little circles)
-    ctx.fillStyle = "#39ff14";
-    coords.forEach((pt) => {
+    // --- Subtle grid (tactical) ---
+    ctx.save();
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = "rgba(255,255,255,0.06)";
+    for (let i = 1; i <= 4; i++) {
+      const y = plotY + (plotH / 4) * i;
       ctx.beginPath();
-      ctx.arc(pt.x, pt.y, 3, 0, Math.PI * 2);
-      ctx.fill();
-    });
+      ctx.moveTo(plotX, y);
+      ctx.lineTo(plotX + plotW, y);
+      ctx.stroke();
+    }
 
-    // Label: what we're plotting + max value
+    // Frame
+    ctx.strokeStyle = "rgba(255,255,255,0.10)";
+    ctx.strokeRect(plotX, plotY, plotW, plotH);
+    ctx.restore();
+
+    // Smooth path helper (quadratic through midpoints)
+    function traceSmoothLine(pts) {
+      if (!pts.length) return;
+      if (pts.length === 1) {
+        ctx.moveTo(pts[0].x, pts[0].y);
+        ctx.lineTo(pts[0].x, pts[0].y);
+        return;
+      }
+
+      ctx.moveTo(pts[0].x, pts[0].y);
+      for (let i = 0; i < pts.length - 2; i++) {
+        const xMid = (pts[i].x + pts[i + 1].x) / 2;
+        const yMid = (pts[i].y + pts[i + 1].y) / 2;
+        ctx.quadraticCurveTo(pts[i].x, pts[i].y, xMid, yMid);
+      }
+      ctx.quadraticCurveTo(
+        pts[pts.length - 2].x,
+        pts[pts.length - 2].y,
+        pts[pts.length - 1].x,
+        pts[pts.length - 1].y
+      );
+    }
+
+    // --- Fill under line (subtle neon fade) ---
+    const fillGrad = ctx.createLinearGradient(0, plotY, 0, bottomY);
+    fillGrad.addColorStop(0, "rgba(57,255,20,0.18)");
+    fillGrad.addColorStop(1, "rgba(57,255,20,0)");
+
+    ctx.save();
+    ctx.beginPath();
+    traceSmoothLine(coords);
+    ctx.lineTo(coords[coords.length - 1].x, bottomY);
+    ctx.lineTo(coords[0].x, bottomY);
+    ctx.closePath();
+    ctx.fillStyle = fillGrad;
+    ctx.fill();
+    ctx.restore();
+
+    // --- Neon line (gradient + light glow) ---
+    const lineGrad = ctx.createLinearGradient(plotX, 0, plotX + plotW, 0);
+    lineGrad.addColorStop(0, "rgba(57,255,20,0.55)");
+    lineGrad.addColorStop(1, "rgba(57,255,20,1)");
+
+    ctx.save();
+    ctx.beginPath();
+    traceSmoothLine(coords);
+    ctx.strokeStyle = lineGrad;
+    ctx.lineWidth = 2.4;
+    ctx.lineJoin = "round";
+    ctx.lineCap = "round";
+    ctx.shadowColor = "rgba(57,255,20,0.45)";
+    ctx.shadowBlur = 6;
+    ctx.stroke();
+    ctx.restore();
+
+    // --- Last dot only (newest point glow) ---
+    const last = coords[coords.length - 1];
+    ctx.save();
+    ctx.shadowColor = "rgba(57,255,20,0.60)";
+    ctx.shadowBlur = 10;
+
+    // outer glow blob
+    ctx.fillStyle = "rgba(57,255,20,0.22)";
+    ctx.beginPath();
+    ctx.arc(last.x, last.y, 7, 0, Math.PI * 2);
+    ctx.fill();
+
+    // solid dot
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = "#39ff14";
+    ctx.beginPath();
+    ctx.arc(last.x, last.y, 3.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+
+    // Label: what we're plotting + max value (kept, but cleaner)
     const lastMode = points[points.length - 1].mode;
     let label;
     if (lastMode === "volume") {
@@ -2391,12 +2485,12 @@ const Charts = (() => {
       label = "Best reps";
     }
 
-    ctx.fillStyle = "#bbbbbb";
+    ctx.fillStyle = "rgba(187,187,187,0.95)";
     ctx.font =
       "10px system-ui, -apple-system, BlinkMacSystemFont, sans-serif";
     ctx.textAlign = "left";
     ctx.textBaseline = "top";
-    ctx.fillText(`${label} — max ${maxVal}`, paddingLeft, 2);
+    ctx.fillText(`${label} — max ${maxVal.toLocaleString()}`, plotX, 2);
   }
 
   // Public API for Charts
