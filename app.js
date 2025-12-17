@@ -2572,9 +2572,8 @@ const Charts = (() => {
     ctx.fill();
     ctx.restore();
 
-    function drawInfoBox(titleLine, dateLine, wrLine, x, y) {
-      const lines = [titleLine, dateLine, wrLine];
-
+    // --- Compact WR box (gunmetal + copper outline) ---
+    function drawWRBox(textLine, x, y) {
       const bgRaw =
         (rootStyles.getPropertyValue("--card") || "").trim() ||
         (rootStyles.getPropertyValue("--bg") || "").trim() ||
@@ -2582,24 +2581,24 @@ const Charts = (() => {
         "#161a1e";
 
       ctx.save();
-      ctx.font = "9.5px system-ui, -apple-system, BlinkMacSystemFont, sans-serif";
-      ctx.textBaseline = "top";
+      ctx.font = "10px system-ui, -apple-system, BlinkMacSystemFont, sans-serif";
+      ctx.textBaseline = "middle";
 
-      const padX = 8;
-      const padY = 6;
-      const lineH = 12;
+      const padX = 10;
+      const padY = 8;
 
-      const maxW = Math.max(...lines.map((t) => ctx.measureText(String(t)).width));
-      const boxW = Math.ceil(maxW + padX * 2);
-      const boxH = Math.ceil(padY * 2 + lineH * lines.length);
+      const tw = ctx.measureText(String(textLine)).width;
+      const boxW = Math.ceil(tw + padX * 2);
+      const boxH = Math.ceil(20 + padY * 0); // single-line height
 
+      // position: same anchor as before (centered above point)
       let bx = x - boxW / 2;
       bx = Math.max(4, Math.min(bx, cssW - boxW - 4));
 
       const gap = 10;
-      let boxBottom = y - gap;
-      let by = boxBottom - boxH;
+      let by = (y - gap) - boxH; // top of box
 
+      // keep inside canvas
       by = Math.max(2, Math.min(by, cssH - boxH - 2));
 
       const r = 10;
@@ -2623,39 +2622,19 @@ const Charts = (() => {
       ctx.stroke();
 
       ctx.fillStyle = "rgba(235,235,235,0.92)";
-      ctx.font = "10px system-ui, -apple-system, BlinkMacSystemFont, sans-serif";
-      ctx.fillText(String(lines[0]), bx + padX, by + padY);
-
-      ctx.font = "9.5px system-ui, -apple-system, BlinkMacSystemFont, sans-serif";
-      ctx.fillStyle = "rgba(210,210,210,0.92)";
-      ctx.fillText(String(lines[1]), bx + padX, by + padY + lineH * 1);
-
-      ctx.fillStyle = "rgba(235,235,235,0.92)";
-      ctx.fillText(String(lines[2]), bx + padX, by + padY + lineH * 2);
+      ctx.fillText(String(textLine), bx + padX, by + boxH / 2);
 
       ctx.restore();
     }
 
-    // START box
+    // START position box (but only WR text)
     const firstPt = coords[0];
     const firstEntry = coords[0].entry;
-    drawInfoBox(
-      "Start",
-      fmtDate(pickDate(firstEntry)),
-      wrText(firstEntry),
-      firstPt.x,
-      firstPt.y
-    );
+    drawWRBox(wrText(firstEntry), firstPt.x, firstPt.y);
 
-    // NEWEST box
+    // NEWEST position box (but only WR text)
     const newestEntry = coords[coords.length - 1].entry;
-    drawInfoBox(
-      "PR",
-      prDateText,
-      wrText(newestEntry),
-      last.x,
-      last.y
-    );
+    drawWRBox(wrText(newestEntry), last.x, last.y);
   }
 
   // Public API for Charts
