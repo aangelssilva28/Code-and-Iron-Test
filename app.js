@@ -1841,12 +1841,6 @@ const Progress = (() => {
     Storage.saveProgress(progressData);
     renderProgressList();
 
-    // NEW: keep charts in sync when saving
-    if (typeof Charts !== "undefined" && Charts.refresh) {
-      Charts.refresh();
-    }
-  }
-
   // ---------- Progress list (A–Z grid + per-letter list) ----------
   function renderProgressList() {
     const grid = progressLetterGrid;
@@ -1938,15 +1932,10 @@ const Progress = (() => {
 
     list.innerHTML = "";
 
-    if (
-      !activeProgressLetter ||
-      !progressByLetter[activeProgressLetter] ||
-      !progressByLetter[activeProgressLetter].length
-    ) {
+    if (!activeProgressLetter || !progressByLetter[activeProgressLetter]) {
       const empty = document.createElement("div");
       empty.className = "card-subtitle";
-      empty.textContent =
-        "No exercises saved under this letter yet. Log a workout and save progress.";
+      empty.textContent = "Select a letter above to see exercises.";
       list.appendChild(empty);
 
       if (progressDetailEl) {
@@ -1955,8 +1944,6 @@ const Progress = (() => {
       }
       return;
     }
-
-    const today = new Date().toISOString().split("T")[0];
 
     const exList = [...progressByLetter[activeProgressLetter]];
     exList.sort((a, b) => a.name.localeCompare(b.name));
@@ -1969,25 +1956,6 @@ const Progress = (() => {
       nameDiv.className = "saved-name";
       nameDiv.textContent = ex.name;
       row.appendChild(nameDiv);
-
-      const detail = document.createElement("div");
-      detail.className = "progress-detail-meta";
-
-      let prText = "";
-      if (ex.bestRepsDate && ex.bestRepsDate.startsWith(today)) {
-        prText += " (NEW REP PR!)";
-      }
-      if (ex.bestWeightDate && ex.bestWeightDate.startsWith(today)) {
-        prText += " (NEW WEIGHT PR!)";
-      }
-
-      if (ex.bestWeight !== null) {
-        detail.textContent = `Best: ${ex.bestWeight} x ${ex.bestWeightReps} • Max reps: ${ex.bestReps}${prText}`;
-      } else {
-        detail.textContent = `Best: ${ex.bestReps} reps${prText}`;
-      }
-
-      row.appendChild(detail);
 
       row.addEventListener("click", () => {
         openProgressDetail(ex);
@@ -2018,6 +1986,24 @@ const Progress = (() => {
     title.className = "card-subtitle progress-detail-title";
     title.textContent = ex.name + " — last sessions";
     progressDetailEl.appendChild(title);
+
+    // ✅ Chart goes inside this same open-panel (above PR + sessions)
+    const chartWrap = document.createElement("div");
+    chartWrap.style.marginTop = "10px";
+    chartWrap.style.marginBottom = "10px";
+
+    const canvas = document.createElement("canvas");
+    canvas.width = 320;
+    canvas.height = 140;
+    canvas.style.width = "100%";
+    canvas.style.height = "110px";
+    chartWrap.appendChild(canvas);
+
+    progressDetailEl.appendChild(chartWrap);
+
+    if (typeof Charts !== "undefined" && Charts.drawChart) {
+      Charts.drawChart(canvas, ex);
+    }
 
     if (ex.bestRepsDate || ex.bestWeightDate) {
       const prInfo = document.createElement("div");
@@ -2134,169 +2120,34 @@ const Progress = (() => {
 })();
 
 // ======================================================
-// Charts module (select exercises + show progress charts)
+// Charts module (renderer-only; used inside Progress detail)
 // ======================================================
 const Charts = (() => {
-  const CHARTS_KEY = "codeAndIronCharts_v1";
+  // Keep these so any old calls won't crash (no charts screen anymore)
+  function init() {}
+  function refresh() {}
 
-  let selectedKeys = [];
-  let listEl = null;
-  let chartsContainer = null;
-
-  function loadSelected() {
+  function getCssVar(name, fallback) {
     try {
-      const raw = localStorage.getItem(CHARTS_KEY);
-      if (!raw) return [];
-      const parsed = JSON.parse(raw);
-      return Array.isArray(parsed) ? parsed : [];
-    } catch (e) {
-      console.error("Error loading charts selection", e);
-      return [];
+      const v = getComputedStyle(document.documentElement)
+        .getPropertyValue(name)
+        .trim();
+      return v || fallback;
+    } catch {
+      return fallback;
     }
   }
 
-  function saveSelected() {
-    try {
-      localStorage.setItem(CHARTS_KEY, JSON.stringify(selectedKeys));
-    } catch (e) {
-      console.error("Error saving charts selection", e);
-    }
-  }
-
-  function getProgressData() {
-    return typeof Progress !== "undefined" && Progress.getData
-      ? Progress.getData()
-      : {};
-  }
-
-  function init({ listSelector, chartsContainerSelector }) {
-    selectedKeys = loadSelected();
-    listEl = $(listSelector);
-    chartsContainer = $(chartsContainerSelector);
-    renderAll();
-  }
-
-  function refresh() {
-    renderAll();
-  }
-
-  function renderAll() {
-    if (listEl) renderExerciseList();
-    if (chartsContainer) renderCharts();
-  }
-
-  function renderExerciseList() {
-    const data = getProgressData();
-    listEl.innerHTML = "";
-
-    const entries = Object.entries(data || {});
-    if (!entries.length) {
-      const note = document.createElement("div");
-      note.className = "settings-note";
-      note.textContent =
-        "No exercises yet. Log a workout and save progress to see them here.";
-      listEl.appendChild(note);
-      return;
-    }
-
-    entries
-      .sort((a, b) => {
-        const nameA = (a[1].name || a[0]).toLowerCase();
-        const nameB = (b[1].name || b[0]).toLowerCase();
-        return nameA.localeCompare(nameB);
-      })
-      .forEach(([key, ex]) => {
-        const row = document.createElement("label");
-        row.className = "settings-row";
-
-        const nameSpan = document.createElement("span");
-        nameSpan.textContent = ex.name || key;
-
-        const box = document.createElement("input");
-        box.type = "checkbox";
-        box.className = "settings-checkbox";
-        box.checked = selectedKeys.includes(key);
-
-        box.addEventListener("change", () => {
-          if (box.checked) {
-            if (!selectedKeys.includes(key)) selectedKeys.push(key);
-          } else {
-            selectedKeys = selectedKeys.filter((k) => k !== key);
-          }
-          saveSelected();
-          renderCharts();
-        });
-
-        row.appendChild(nameSpan);
-        row.appendChild(box);
-        listEl.appendChild(row);
-      });
-  }
-
-  function renderCharts() {
-    chartsContainer.innerHTML = "";
-
-    const data = getProgressData();
-    const activeKeys = selectedKeys.filter((k) => !!data[k]);
-
-    if (!activeKeys.length) {
-      const note = document.createElement("div");
-      note.className = "card-subtitle";
-      note.textContent =
-        "No charts yet. Select one or more exercises above.";
-      chartsContainer.appendChild(note);
-      return;
-    }
-
-    activeKeys.forEach((key) => {
-      const ex = data[key];
-      const card = document.createElement("div");
-      card.className = "chart-card";
-
-      const title = document.createElement("div");
-      title.className = "chart-card-title";
-      title.textContent = ex.name || key;
-      card.appendChild(title);
-
-      const sub = document.createElement("div");
-      sub.className = "chart-card-sub";
-      sub.textContent = "Newest sessions are on the right.";
-      card.appendChild(sub);
-
-      const canvas = document.createElement("canvas");
-      canvas.width = 320;
-      canvas.height = 140;
-      canvas.style.width = "100%";
-      canvas.style.height = "90px";
-      card.appendChild(canvas);
-
-      chartsContainer.appendChild(card);
-
-      drawExerciseChart(canvas, ex);
-    });
-  }
-
-  // Simple line chart (COPPER line + green under-fill + last-dot only + START/PR labels)
+  // Style B:
+  // - Copper line
+  // - Green under-fill
+  // - Green last dot only
+  // - Callout boxes show ONLY best weight×reps (no date, no "Start", no "PR")
   function drawExerciseChart(canvas, ex) {
     const ctx = canvas.getContext("2d");
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // --- Retina crisp: keep CSS size, scale internal buffer ---
-    const cssW = canvas.clientWidth || 320;
-    const cssH = canvas.clientHeight || 90;
-    const dpr = window.devicePixelRatio || 1;
-
-    const targetW = Math.max(1, Math.round(cssW * dpr));
-    const targetH = Math.max(1, Math.round(cssH * dpr));
-    if (canvas.width !== targetW || canvas.height !== targetH) {
-      canvas.width = targetW;
-      canvas.height = targetH;
-    }
-
-    // Draw using CSS pixels
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.clearRect(0, 0, cssW, cssH);
-
-    const history = Array.isArray(ex.history) ? ex.history.slice() : [];
+    const history = Array.isArray(ex?.history) ? ex.history.slice() : [];
     if (!history.length) {
       ctx.fillStyle = "#bbbbbb";
       ctx.font = "11px system-ui, -apple-system, BlinkMacSystemFont, sans-serif";
@@ -2307,44 +2158,36 @@ const Charts = (() => {
     // Oldest → newest
     const ordered = history.slice().reverse();
 
-    // Helpers
     const toNum = (v) => (typeof v === "number" ? v : Number(v) || 0);
 
-    function pickDate(entry) {
-      const raw =
-        entry?.date ??
-        entry?.sessionDate ??
-        entry?.performedOn ??
-        entry?.createdAt ??
-        entry?.timestamp ??
-        entry?.time;
+    function pickBestWR(entry) {
+      // Prefer stored bestWeight/bestWeightReps
+      const w = toNum(entry?.bestWeight);
+      const r = toNum(entry?.bestWeightReps || entry?.bestReps || entry?.reps);
 
-      const d = raw instanceof Date ? raw : new Date(raw);
-      return isNaN(d.getTime()) ? null : d;
+      // If we have per-set details, find the best (heaviest) set as a fallback
+      if ((!w || !r) && Array.isArray(entry?.sets) && entry.sets.length) {
+        let bestW = 0;
+        let bestR = 0;
+        entry.sets.forEach((s) => {
+          const sw = toNum(s?.weight);
+          const sr = toNum(s?.reps);
+          if (sw > bestW || (sw === bestW && sr > bestR)) {
+            bestW = sw;
+            bestR = sr;
+          }
+        });
+        return { w: bestW, r: bestR };
+      }
+
+      return { w, r };
     }
 
-    function fmtDate(d) {
-      if (!d) return "--/--/----";
-      const mm = String(d.getMonth() + 1).padStart(2, "0");
-      const dd = String(d.getDate()).padStart(2, "0");
-      const yy = String(d.getFullYear());
-      return `${mm}/${dd}/${yy}`;
-    }
+    function metric(entry) {
+      const { w, r } = pickBestWR(entry);
+      const wr = w * r;
+      if (wr > 0) return wr;
 
-    function pickWRS(entry) {
-      const w = toNum(entry?.bestWeight ?? entry?.weight ?? entry?.topWeight ?? entry?.heaviestWeight);
-      const r = toNum(entry?.bestReps ?? entry?.reps ?? entry?.topReps ?? entry?.maxReps);
-      const s = Math.max(1, toNum(entry?.sets ?? entry?.bestSets ?? entry?.setCount ?? entry?.totalSets ?? 1));
-      return { w, r, s };
-    }
-
-    // Metric for PR + plotting (W×R×S). If missing, it falls back gracefully.
-    function sessionMetric(entry) {
-      const { w, r, s } = pickWRS(entry);
-      const wrs = w * r * s;
-      if (wrs > 0) return wrs;
-
-      // fallbacks so we still draw something
       const bw = toNum(entry?.bestWeight);
       if (bw > 0) return bw;
 
@@ -2357,26 +2200,27 @@ const Charts = (() => {
       return 0;
     }
 
-    function wrText(entry) {
-      const { w, r } = pickWRS(entry);
-      return `${w}×${r}`;
+    function bubbleText(entry) {
+      const { w, r } = pickBestWR(entry);
+      // ✅ ONLY weight×reps
+      if (w > 0 && r > 0) return `${w}×${r}`;
+      if (w > 0) return `${w}`;
+      if (r > 0) return `${r}`;
+      return "--";
     }
 
-    // --- Build points: FIRST entry (START) + LAST 5 entries ---
+    // FIRST entry + LAST 5 entries (6 points total)
     let entriesToPlot;
-    if (ordered.length <= 6) {
-      entriesToPlot = ordered.slice();
-    } else {
-      entriesToPlot = [ordered[0], ...ordered.slice(-5)];
-    }
+    if (ordered.length <= 6) entriesToPlot = ordered.slice();
+    else entriesToPlot = [ordered[0], ...ordered.slice(-5)];
 
     const points = entriesToPlot.map((entry) => ({
       entry,
-      value: sessionMetric(entry),
+      value: metric(entry),
     }));
 
-    const maxVal = points.reduce((max, p) => Math.max(max, p.value), 0);
-    const minVal = points.reduce((min, p) => Math.min(min, p.value), points[0].value);
+    const maxVal = points.reduce((m, p) => Math.max(m, p.value), 0);
+    const minVal = points.reduce((m, p) => Math.min(m, p.value), points[0].value);
 
     if (!maxVal) {
       ctx.fillStyle = "#bbbbbb";
@@ -2385,176 +2229,75 @@ const Charts = (() => {
       return;
     }
 
-    // Find LAST PR date across ALL history (based on the same W×R×S metric)
-    let best = -Infinity;
-    let lastPrDate = null;
-    for (let i = 0; i < ordered.length; i++) {
-      const v = sessionMetric(ordered[i]);
-      if (v > best) {
-        best = v;
-        lastPrDate = pickDate(ordered[i]);
-      } else if (v === best && v > 0) {
-        const d = pickDate(ordered[i]);
-        if (d) lastPrDate = d;
-      }
-    }
-    const prDateText = fmtDate(lastPrDate);
-
-    // Tactical padding + plot area
-    const paddingLeft = 16;
+    const paddingLeft = 26;
     const paddingRight = 10;
-    const paddingTop = 22;
-    const paddingBottom = 14;
+    const paddingTop = 18;
+    const paddingBottom = 22;
 
-    const plotX = paddingLeft;
-    const plotY = paddingTop;
-    const plotW = cssW - paddingLeft - paddingRight;
-    const plotH = cssH - paddingTop - paddingBottom;
-    const bottomY = plotY + plotH;
-
-    const rawRange = Math.max(0.000001, maxVal - minVal);
-    const headroom = rawRange * 0.12;
-    const floorroom = rawRange * 0.06;
-
-    const maxPlot = maxVal + headroom;
-    const minPlot = Math.max(0, minVal - floorroom);
-    const denom = Math.max(0.000001, maxPlot - minPlot);
+    const chartW = canvas.width - paddingLeft - paddingRight;
+    const chartH = canvas.height - paddingTop - paddingBottom;
 
     const n = points.length;
+    const bottomY = canvas.height - paddingBottom;
 
-    // Compute x/y for each point
-    const coords = points.map((p, i) => {
-      const ratio = (p.value - minPlot) / denom;
-      const y = bottomY - ratio * plotH;
-
-      let x;
-      if (n === 1) x = plotX + plotW / 2;
-      else x = plotX + (plotW / (n - 1)) * i;
-
-      return { x, y, value: p.value, entry: p.entry };
-    });
-
-    // --- Subtle grid + frame ---
-    ctx.save();
+    // Frame + subtle grid
+    ctx.strokeStyle = "rgba(255,255,255,0.10)";
     ctx.lineWidth = 1;
+    ctx.strokeRect(paddingLeft, paddingTop, chartW, chartH);
+
     ctx.strokeStyle = "rgba(255,255,255,0.06)";
-    for (let i = 1; i <= 4; i++) {
-      const y = plotY + (plotH / 4) * i;
+    for (let i = 1; i <= 3; i++) {
+      const y = paddingTop + (chartH * i) / 4;
       ctx.beginPath();
-      ctx.moveTo(plotX, y);
-      ctx.lineTo(plotX + plotW, y);
+      ctx.moveTo(paddingLeft, y);
+      ctx.lineTo(paddingLeft + chartW, y);
       ctx.stroke();
     }
-    ctx.strokeStyle = "rgba(255,255,255,0.10)";
-    ctx.strokeRect(plotX, plotY, plotW, plotH);
-    ctx.restore();
 
-    // Smooth path helper
-    function traceSmoothLine(pts) {
-      if (!pts.length) return;
-      if (pts.length === 1) {
-        ctx.moveTo(pts[0].x, pts[0].y);
-        ctx.lineTo(pts[0].x, pts[0].y);
-        return;
-      }
-      ctx.moveTo(pts[0].x, pts[0].y);
-      for (let i = 0; i < pts.length - 2; i++) {
-        const xMid = (pts[i].x + pts[i + 1].x) / 2;
-        const yMid = (pts[i].y + pts[i + 1].y) / 2;
-        ctx.quadraticCurveTo(pts[i].x, pts[i].y, xMid, yMid);
-      }
-      ctx.quadraticCurveTo(
-        pts[pts.length - 2].x,
-        pts[pts.length - 2].y,
-        pts[pts.length - 1].x,
-        pts[pts.length - 1].y
-      );
-    }
+    // coords
+    const range = Math.max(1, maxVal - minVal);
+    const coords = points.map((p, i) => {
+      const norm = (p.value - minVal) / range;
+      const y = bottomY - norm * chartH;
 
-    // --- Green under-fill (keep) ---
-    const fillGrad = ctx.createLinearGradient(0, plotY, 0, bottomY);
-    fillGrad.addColorStop(0, "rgba(57,255,20,0.18)");
-    fillGrad.addColorStop(1, "rgba(57,255,20,0)");
-    ctx.save();
+      const x =
+        n === 1 ? paddingLeft + chartW / 2 : paddingLeft + (chartW * i) / (n - 1);
+
+      return { x, y, entry: p.entry };
+    });
+
+    const copper = getCssVar("--copper", "#b87333");
+    const gunmetal = getCssVar("--gunmetal", "#1A1E2C");
+
+    // Fill under line (green)
+    const grad = ctx.createLinearGradient(0, paddingTop, 0, bottomY);
+    grad.addColorStop(0, "rgba(57,255,20,0.22)");
+    grad.addColorStop(1, "rgba(57,255,20,0.02)");
+
     ctx.beginPath();
-    traceSmoothLine(coords);
+    coords.forEach((pt, i) => {
+      if (i === 0) ctx.moveTo(pt.x, pt.y);
+      else ctx.lineTo(pt.x, pt.y);
+    });
     ctx.lineTo(coords[coords.length - 1].x, bottomY);
     ctx.lineTo(coords[0].x, bottomY);
     ctx.closePath();
-    ctx.fillStyle = fillGrad;
+    ctx.fillStyle = grad;
     ctx.fill();
-    ctx.restore();
 
-    // --- FORCE COPPER line (do NOT pull a green accent) ---
-    const rootStyles = getComputedStyle(document.documentElement);
-    const fallbackCopper = "#c07a2b";
-
-    const tryVars = [
-      "--copper",
-      "--copper-accent",
-      "--copperAccent",
-      "--accent-copper",
-      "--accent2",
-      "--accent"
-    ];
-
-    function looksLikeNeonGreen(str) {
-      const s = (str || "").toLowerCase().replace(/\s+/g, "");
-      return (
-        s.includes("#39ff14") ||
-        s.includes("rgb(57,255,20)") ||
-        s.includes("rgba(57,255,20")
-      );
-    }
-
-    let copper = "";
-    for (const v of tryVars) {
-      const val = (rootStyles.getPropertyValue(v) || "").trim();
-      if (!val) continue;
-      if (v === "--accent" && looksLikeNeonGreen(val)) continue;
-      copper = val;
-      break;
-    }
-    if (!copper || looksLikeNeonGreen(copper)) copper = fallbackCopper;
-
-    function toRgba(color, a) {
-      const c = (color || "").trim();
-      if (c.startsWith("#")) {
-        let hex = c.slice(1);
-        if (hex.length === 3) hex = hex.split("").map((ch) => ch + ch).join("");
-        const r = parseInt(hex.slice(0, 2), 16);
-        const g = parseInt(hex.slice(2, 4), 16);
-        const b = parseInt(hex.slice(4, 6), 16);
-        return `rgba(${r},${g},${b},${a})`;
-      }
-      if (c.startsWith("rgba(")) {
-        const nums = c.replace("rgba(", "").replace(")", "").split(",").map((x) => x.trim());
-        return `rgba(${nums[0]},${nums[1]},${nums[2]},${a})`;
-      }
-      if (c.startsWith("rgb(")) {
-        const nums = c.replace("rgb(", "").replace(")", "").split(",").map((x) => x.trim());
-        return `rgba(${nums[0]},${nums[1]},${nums[2]},${a})`;
-      }
-      return `rgba(192,122,43,${a})`;
-    }
-
-    const lineGrad = ctx.createLinearGradient(plotX, 0, plotX + plotW, 0);
-    lineGrad.addColorStop(0, toRgba(copper, 0.70));
-    lineGrad.addColorStop(1, toRgba(copper, 1));
-
-    ctx.save();
+    // Copper line
     ctx.beginPath();
-    traceSmoothLine(coords);
-    ctx.strokeStyle = lineGrad;
-    ctx.lineWidth = 2.6;
-    ctx.lineJoin = "round";
+    coords.forEach((pt, i) => {
+      if (i === 0) ctx.moveTo(pt.x, pt.y);
+      else ctx.lineTo(pt.x, pt.y);
+    });
+    ctx.strokeStyle = copper;
+    ctx.lineWidth = 3;
     ctx.lineCap = "round";
-    ctx.shadowColor = toRgba(copper, 0.35);
-    ctx.shadowBlur = 6;
+    ctx.lineJoin = "round";
     ctx.stroke();
-    ctx.restore();
 
-    // --- Last dot only (keep dot green) ---
+    // Last dot only (green)
     const last = coords[coords.length - 1];
     ctx.save();
     ctx.shadowColor = "rgba(57,255,20,0.60)";
@@ -2572,75 +2315,74 @@ const Charts = (() => {
     ctx.fill();
     ctx.restore();
 
-    // --- Compact WR box (gunmetal + copper outline) ---
-    function drawWRBox(textLine, x, y) {
-      const bgRaw =
-        (rootStyles.getPropertyValue("--card") || "").trim() ||
-        (rootStyles.getPropertyValue("--bg") || "").trim() ||
-        (rootStyles.getPropertyValue("--panel") || "").trim() ||
-        "#161a1e";
+    // Callout boxes: FIRST + LAST only (weight×reps only)
+    function roundRect(x, y, w, h, r) {
+      const rr = Math.min(r, w / 2, h / 2);
+      ctx.beginPath();
+      ctx.moveTo(x + rr, y);
+      ctx.arcTo(x + w, y, x + w, y + h, rr);
+      ctx.arcTo(x + w, y + h, x, y + h, rr);
+      ctx.arcTo(x, y + h, x, y, rr);
+      ctx.arcTo(x, y, x + w, y, rr);
+      ctx.closePath();
+    }
+
+    function drawCallout(text, anchorX, anchorY, side /* "left"|"right" */) {
+      if (!text) return;
 
       ctx.save();
-      ctx.font = "10px system-ui, -apple-system, BlinkMacSystemFont, sans-serif";
-      ctx.textBaseline = "middle";
 
-      const padX = 10;
+      const padX = 12;
       const padY = 8;
 
-      const tw = ctx.measureText(String(textLine)).width;
-      const boxW = Math.ceil(tw + padX * 2);
-      const boxH = Math.ceil(20 + padY * 0); // single-line height
+      ctx.font = '18px "Germania One", system-ui, -apple-system, BlinkMacSystemFont, sans-serif';
+      const textW = Math.ceil(ctx.measureText(text).width);
+      const boxW = textW + padX * 2;
+      const boxH = 34;
 
-      // position: same anchor as before (centered above point)
-      let bx = x - boxW / 2;
-      bx = Math.max(4, Math.min(bx, cssW - boxW - 4));
+      let x = side === "right" ? anchorX - boxW : anchorX;
+      let y = anchorY - boxH - 12;
 
-      const gap = 10;
-      let by = (y - gap) - boxH; // top of box
+      // clamp into chart area
+      const minX = 6;
+      const maxX = canvas.width - boxW - 6;
+      x = Math.max(minX, Math.min(maxX, x));
 
-      // keep inside canvas
-      by = Math.max(2, Math.min(by, cssH - boxH - 2));
+      const minY = 6;
+      y = Math.max(minY, y);
 
-      const r = 10;
-
-      ctx.fillStyle = bgRaw;
-      ctx.strokeStyle = toRgba(copper, 0.95);
-      ctx.lineWidth = 1.2;
-
-      ctx.beginPath();
-      ctx.moveTo(bx + r, by);
-      ctx.lineTo(bx + boxW - r, by);
-      ctx.quadraticCurveTo(bx + boxW, by, bx + boxW, by + r);
-      ctx.lineTo(bx + boxW, by + boxH - r);
-      ctx.quadraticCurveTo(bx + boxW, by + boxH, bx + boxW - r, by + boxH);
-      ctx.lineTo(bx + r, by + boxH);
-      ctx.quadraticCurveTo(bx, by + boxH, bx, by + boxH - r);
-      ctx.lineTo(bx, by + r);
-      ctx.quadraticCurveTo(bx, by, bx + r, by);
-      ctx.closePath();
+      roundRect(x, y, boxW, boxH, 14);
+      ctx.fillStyle = gunmetal;
+      ctx.globalAlpha = 0.92;
       ctx.fill();
+
+      ctx.globalAlpha = 1;
+      ctx.strokeStyle = copper;
+      ctx.lineWidth = 2;
       ctx.stroke();
 
-      ctx.fillStyle = "rgba(235,235,235,0.92)";
-      ctx.fillText(String(textLine), bx + padX, by + boxH / 2);
+      ctx.fillStyle = "#ffffff";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(text, x + boxW / 2, y + boxH / 2);
 
       ctx.restore();
     }
 
-    // START position box (but only WR text)
-    const firstPt = coords[0];
-    const firstEntry = coords[0].entry;
-    drawWRBox(wrText(firstEntry), firstPt.x, firstPt.y);
+    const first = coords[0];
+    drawCallout(bubbleText(first.entry), first.x, first.y, "left");
 
-    // NEWEST position box (but only WR text)
-    const newestEntry = coords[coords.length - 1].entry;
-    drawWRBox(wrText(newestEntry), last.x, last.y);
+    drawCallout(bubbleText(last.entry), last.x, last.y, "right");
   }
 
-  // Public API for Charts
+  function drawChart(canvas, ex) {
+    drawExerciseChart(canvas, ex);
+  }
+
   return {
     init,
     refresh,
+    drawChart,
   };
 })();
 
