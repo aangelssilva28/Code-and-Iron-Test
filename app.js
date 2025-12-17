@@ -2573,7 +2573,7 @@ const Charts = (() => {
     ctx.fill();
     ctx.restore();
 
-    // --- Labels: START (first), PR date above newest, prior entry label ---
+    // --- Labels: START (box), NEWEST (box), prior entry label ---
     function drawLabel(text, x, y) {
       ctx.save();
       ctx.font = "10px system-ui, -apple-system, BlinkMacSystemFont, sans-serif";
@@ -2616,17 +2616,103 @@ const Charts = (() => {
       ctx.restore();
     }
 
-    const firstPt = coords[0];
-    drawLabel("START", firstPt.x, firstPt.y);
+    function drawInfoBox(titleLine, dateLine, wrsLine, x, y) {
+      const lines = [titleLine, dateLine, wrsLine];
 
+      // gunmetal background: try your theme vars, fallback to a solid gunmetal
+      const bgRaw =
+        (rootStyles.getPropertyValue("--card") || "").trim() ||
+        (rootStyles.getPropertyValue("--bg") || "").trim() ||
+        (rootStyles.getPropertyValue("--panel") || "").trim() ||
+        "#161a1e";
+
+      ctx.save();
+      ctx.font = "9.5px system-ui, -apple-system, BlinkMacSystemFont, sans-serif";
+      ctx.textBaseline = "top";
+
+      const padX = 8;
+      const padY = 6;
+      const lineH = 12;
+
+      const maxW = Math.max(...lines.map((t) => ctx.measureText(String(t)).width));
+      const boxW = Math.ceil(maxW + padX * 2);
+      const boxH = Math.ceil(padY * 2 + lineH * lines.length);
+
+      // position: same anchor as before (centered above point)
+      let bx = x - boxW / 2;
+      bx = Math.max(4, Math.min(bx, cssW - boxW - 4));
+
+      const gap = 10; // distance above point
+      let boxBottom = y - gap;
+      let by = boxBottom - boxH;
+
+      // keep inside canvas
+      by = Math.max(2, Math.min(by, cssH - boxH - 2));
+
+      // draw rounded rect
+      const r = 10;
+
+      ctx.fillStyle = bgRaw;
+      ctx.strokeStyle = toRgba(copper, 0.95);
+      ctx.lineWidth = 1.2;
+
+      ctx.beginPath();
+      ctx.moveTo(bx + r, by);
+      ctx.lineTo(bx + boxW - r, by);
+      ctx.quadraticCurveTo(bx + boxW, by, bx + boxW, by + r);
+      ctx.lineTo(bx + boxW, by + boxH - r);
+      ctx.quadraticCurveTo(bx + boxW, by + boxH, bx + boxW - r, by + boxH);
+      ctx.lineTo(bx + r, by + boxH);
+      ctx.quadraticCurveTo(bx, by + boxH, bx, by + boxH - r);
+      ctx.lineTo(bx, by + r);
+      ctx.quadraticCurveTo(bx, by, bx + r, by);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      // text
+      ctx.fillStyle = "rgba(235,235,235,0.92)";
+      // title slightly bolder
+      ctx.font = "10px system-ui, -apple-system, BlinkMacSystemFont, sans-serif";
+      ctx.fillText(String(lines[0]), bx + padX, by + padY);
+
+      ctx.font = "9.5px system-ui, -apple-system, BlinkMacSystemFont, sans-serif";
+      ctx.fillStyle = "rgba(210,210,210,0.92)";
+      ctx.fillText(String(lines[1]), bx + padX, by + padY + lineH * 1);
+
+      ctx.fillStyle = "rgba(235,235,235,0.92)";
+      ctx.fillText(String(lines[2]), bx + padX, by + padY + lineH * 2);
+
+      ctx.restore();
+    }
+
+    // START box over first plotted entry
+    const firstPt = coords[0];
+    const firstEntry = coords[0].entry;
+    drawInfoBox(
+      "Start",
+      fmtDate(pickDate(firstEntry)),
+      wrsText(firstEntry),
+      firstPt.x,
+      firstPt.y
+    );
+
+    // Prior point label (keep as-is)
     if (coords.length >= 2) {
       const prior = coords[coords.length - 2];
       const priorDate = fmtDate(pickDate(prior.entry));
       drawLabel(`${priorDate} • ${wrsText(prior.entry)}`, prior.x, prior.y);
     }
 
+    // NEWEST box (PR date + newest W×R×S)
     const newestEntry = coords[coords.length - 1].entry;
-    drawLabel(`${prDateText} • ${wrsText(newestEntry)}`, last.x, last.y);
+    drawInfoBox(
+      "PR",
+      prDateText,
+      wrsText(newestEntry),
+      last.x,
+      last.y
+    );
   }
 
   // Public API for Charts
