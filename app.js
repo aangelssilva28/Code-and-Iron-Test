@@ -1595,9 +1595,64 @@ function createAftCard(parent) {
     return Object.values(byName);
   }
 
+  // NEW: read layout in AFT mode (save event scores + total score)
+  // We store "score" into the existing { weight, reps } shape so the current Progress saver works.
+  function getAftLayoutFromContainer(container) {
+    const card = container.querySelector(".workout-card.aft-card");
+    if (!card) return [];
+
+    const labelMap = {
+      MDL: "AFT - MDL",
+      HRP: "AFT - HRP",
+      SDC: "AFT - SDC",
+      PLK: "AFT - PLK",
+      "2MR": "AFT - 2MR",
+    };
+
+    const workouts = [];
+
+    // Event score boxes are read-only inputs with:
+    // data-aft-role="score" and data-aft-event="MDL|HRP|SDC|PLK|2MR"
+    const scoreInputs = card.querySelectorAll(
+      '.set-input[data-aft-role="score"][data-aft-event]'
+    );
+
+    scoreInputs.forEach((input) => {
+      const eventKey = (input.dataset.aftEvent || "").trim();
+      if (!eventKey) return;
+
+      const raw = (input.value || "").toString().trim();
+      const score = raw === "" ? null : Number(raw);
+      if (!Number.isFinite(score)) return;
+
+      workouts.push({
+        name: labelMap[eventKey] || `AFT - ${eventKey}`,
+        sets: [{ weight: String(score), reps: "" }],
+      });
+    });
+
+    // Total score box at the bottom
+    const totalInput = card.querySelector(".aft-total-input");
+    if (totalInput) {
+      const rawTotal = (totalInput.value || "").toString().trim();
+      const total = rawTotal === "" ? null : Number(rawTotal);
+      if (Number.isFinite(total)) {
+        workouts.push({
+          name: "AFT - Total Score",
+          sets: [{ weight: String(total), reps: "" }],
+        });
+      }
+    }
+
+    return workouts;
+  }
+
   function getCurrentWorkoutLayout() {
     if (!workoutsContainer) return [];
-    if (mode === "complex" || mode === "aft") {
+    if (mode === "aft") {
+      return getAftLayoutFromContainer(workoutsContainer);
+    }
+    if (mode === "complex") {
       return getComplexLayoutFromContainer(workoutsContainer);
     }
     return getWorkoutLayoutFrom(workoutsContainer);
