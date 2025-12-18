@@ -620,6 +620,7 @@
       margin-bottom: 6px;
     }
 
+    /* --- Progress detail (legacy rows kept for compatibility) --- */
     .progress-detail-row {
       display: flex;
       justify-content: space-between;
@@ -634,6 +635,160 @@
     .progress-detail-title { margin-bottom: 8px; }
     .progress-detail-pr { font-size: 13px; color: #bbbbbb; margin-bottom: 8px; }
     .progress-detail-empty { font-size: 13px; color: #bbbbbb; }
+
+    /* --- NEW: nicer “session box” layout for the Progress detail panel only --- */
+    #progressDetail.open-panel {
+      padding: 14px 14px 16px;
+      background: linear-gradient(180deg, #121212 0%, #0b0b0b 100%);
+      border: 1px solid #2a2a2a;
+      box-shadow:
+        inset 0 0 0 1px rgba(255, 255, 255, 0.02),
+        0 10px 26px rgba(0, 0, 0, 0.65);
+    }
+
+    #progressDetail .chart-card { margin-top: 10px; }
+
+    .pd-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .pd-title-wrap { min-width: 0; }
+
+    .pd-title {
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--accent);
+      letter-spacing: 0.2px;
+      line-height: 1.1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .pd-subtitle {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .pd-close {
+      -webkit-appearance: none;
+      appearance: none;
+      -webkit-tap-highlight-color: transparent;
+      width: 34px;
+      height: 34px;
+      border-radius: 12px;
+      border: 1px solid var(--copper);
+      background-color: #000;
+      color: #fff;
+      font-size: 20px;
+      font-weight: 800;
+      line-height: 30px;
+      box-shadow:
+        0 0 0 1px #754d27,
+        0 3px 0 #000;
+      flex: 0 0 auto;
+    }
+
+    .pd-close:active {
+      transform: translateY(1px);
+      outline: 1px solid var(--copper);
+      box-shadow: none;
+    }
+
+    .pd-pr-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .pd-pill {
+      display: inline-flex;
+      gap: 6px;
+      align-items: center;
+      border: 1px solid #2a2a2a;
+      background: #0d0d0d;
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 12px;
+      color: #d8d8d8;
+    }
+
+    .pd-pill strong { color: #ffffff; font-weight: 800; }
+
+    .pd-section-title {
+      margin-top: 12px;
+      margin-bottom: 6px;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.8px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+
+    .pd-session-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .pd-session-card {
+      border-radius: 16px;
+      padding: 10px 12px;
+      background: #0d0d0d;
+      border: 1px solid #262626;
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
+    }
+
+    .pd-session-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: baseline;
+    }
+
+    .pd-session-date { font-size: 12px; color: #bbbbbb; }
+
+    .pd-session-primary {
+      font-size: 14px;
+      color: #ffffff;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .pd-chip-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .pd-chip {
+      font-size: 12px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      border: 1px solid #262626;
+      background: #000;
+      color: #d8d8d8;
+    }
+
+    .pd-session-sets {
+      margin-top: 8px;
+      font-size: 12px;
+      color: #bbbbbb;
+      line-height: 1.35;
+    }
+
+    .pd-chart {
+      width: 100%;
+      height: 160px;
+      display: block;
+    }
 
     .progress-letter-grid {
       margin-top: 12px;
