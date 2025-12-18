@@ -1595,56 +1595,77 @@ function createAftCard(parent) {
     return Object.values(byName);
   }
 
-  // NEW: read layout in AFT mode (save event scores + total score)
-  // We store "score" into the existing { weight, reps } shape so the current Progress saver works.
+  // NEW: read layout in AFT mode (save the entire AFT as ONE entry: "AFT")
   function getAftLayoutFromContainer(container) {
     const card = container.querySelector(".workout-card.aft-card");
     if (!card) return [];
 
-    const labelMap = {
-      MDL: "AFT - MDL",
-      HRP: "AFT - HRP",
-      SDC: "AFT - SDC",
-      PLK: "AFT - PLK",
-      "2MR": "AFT - 2MR",
-    };
+    const eventKeys = ["MDL", "HRP", "SDC", "PLK", "2MR"];
 
-    const workouts = [];
+    // Try to read pass/fail from the UI
+    const passFailEl = card.querySelector(".aft-passfail-box");
+    const passFailText = (passFailEl ? passFailEl.textContent : "").trim().toLowerCase();
+    const pass =
+      passFailText === "pass" ? true : passFailText === "fail" ? false : null;
 
-    // Event score boxes are read-only inputs with:
-    // data-aft-role="score" and data-aft-event="MDL|HRP|SDC|PLK|2MR"
-    const scoreInputs = card.querySelectorAll(
-      '.set-input[data-aft-role="score"][data-aft-event]'
-    );
+    // Total score
+    const totalInput = card.querySelector(".aft-total-input");
+    const rawTotal = (totalInput ? totalInput.value : "").toString().trim();
+    const totalScore = rawTotal === "" ? null : Number(rawTotal);
 
-    scoreInputs.forEach((input) => {
-      const eventKey = (input.dataset.aftEvent || "").trim();
-      if (!eventKey) return;
+    // Pull each event’s PRIMARY performance input (weight / reps / time)
+    const events = {};
 
-      const raw = (input.value || "").toString().trim();
-      const score = raw === "" ? null : Number(raw);
-      if (!Number.isFinite(score)) return;
+    eventKeys.forEach((k) => {
+      // Preferred: explicit data role
+      let primary = card.querySelector(
+        `.set-input[data-aft-role="primary"][data-aft-event="${k}"]`
+      );
 
-      workouts.push({
-        name: labelMap[eventKey] || `AFT - ${eventKey}`,
-        sets: [{ weight: String(score), reps: "" }],
-      });
+      // Fallback: find the score input for this event, then grab the sibling input
+      if (!primary) {
+        const scoreEl = card.querySelector(
+          `.set-input[data-aft-role="score"][data-aft-event="${k}"]`
+        );
+        if (scoreEl) {
+          const row = scoreEl.closest(".set-box") || scoreEl.parentElement;
+          if (row) {
+            const candidates = Array.from(
+              row.querySelectorAll(`.set-input[data-aft-event="${k}"]`)
+            );
+            primary = candidates.find((el) => el !== scoreEl) || null;
+          }
+        }
+      }
+
+      // Last fallback: any input tagged with this event (first one)
+      if (!primary) {
+        primary = card.querySelector(`.set-input[data-aft-event="${k}"]`);
+      }
+
+      events[k] = {
+        primaryRaw: (primary ? primary.value : "").toString().trim(),
+      };
     });
 
-    // Total score box at the bottom
-    const totalInput = card.querySelector(".aft-total-input");
-    if (totalInput) {
-      const rawTotal = (totalInput.value || "").toString().trim();
-      const total = rawTotal === "" ? null : Number(rawTotal);
-      if (Number.isFinite(total)) {
-        workouts.push({
-          name: "AFT - Total Score",
-          sets: [{ weight: String(total), reps: "" }],
-        });
-      }
-    }
+    // Only save if we have something meaningful (any primary or a total score)
+    const hasAnyPrimary = Object.values(events).some((e) => !!e.primaryRaw);
+    const hasTotal = Number.isFinite(totalScore);
 
-    return workouts;
+    if (!hasAnyPrimary && !hasTotal) return [];
+
+    return [
+      {
+        name: "AFT",
+        type: "aft",
+        aft: {
+          totalScore: Number.isFinite(totalScore) ? totalScore : null,
+          pass,
+          events,
+        },
+        sets: [], // not used for AFT saving
+      },
+    ];
   }
 
   function getCurrentWorkoutLayout() {
@@ -1718,6 +1739,215 @@ const Progress = (() => {
     progressData = migrateProgressKeys(newData || {});
   }
 
+  // ---------- AFT helpers (Progress) ----------
+  function aftToNum(raw) {
+    const n = Number(raw);
+    return Number.isFinite(n) ? n : null;
+  }
+
+  // Accept formats: "m:ss", "mm:ss", "h:mm:ss"
+  function aftParseTimeToSeconds(s) {
+    if (s === null || s === undefined) return null;
+    const str = String(s).trim();
+    if (!str) return null;
+
+    // If AFTScoring is available, prefer the shared parser
+    if (typeof AFTScoring !== "undefined" && AFTScoring.parseTimeToSeconds) {
+      const v = AFTScoring.parseTimeToSeconds(str);
+      return typeof v === "number" && Number.isFinite(v) ? v : null;
+    }
+
+    const parts = str.split(":").map((p) => p.trim());
+    if (parts.length === 1) {
+      const num = Number(parts[0]);
+      return Number.isFinite(num) ? num : null;
+    }
+    if (parts.length === 2) {
+      const m = Number(parts[0]);
+      const sec = Number(parts[1]);
+      if (!Number.isFinite(m) || !Number.isFinite(sec)) return null;
+      return m * 60 + sec;
+    }
+    if (parts.length === 3) {
+      const h = Number(parts[0]);
+      const m = Number(parts[1]);
+      const sec = Number(parts[2]);
+      if (!Number.isFinite(h) || !Number.isFinite(m) || !Number.isFinite(sec)) return null;
+      return h * 3600 + m * 60 + sec;
+    }
+    return null;
+  }
+
+  function aftFormatSeconds(sec) {
+    if (!Number.isFinite(sec) || sec === null) return "";
+    const s = Math.max(0, Math.round(sec));
+    const m = Math.floor(s / 60);
+    const r = s % 60;
+    return `${m}:${String(r).padStart(2, "0")}`;
+  }
+
+  function saveAftWorkoutToProgress(updated, w, now, today) {
+    const key = normalizeExerciseKey("AFT");
+    const payload = (w && w.aft) ? w.aft : null;
+    if (!payload) return false;
+
+    const eventsRaw = payload.events || {};
+    const totalScore = aftToNum(payload.totalScore);
+    const pass = payload.pass === true ? true : payload.pass === false ? false : null;
+
+    // Parse event performances
+    const mdlWeight = aftToNum(eventsRaw.MDL && eventsRaw.MDL.primaryRaw);
+    const hrpReps = aftToNum(eventsRaw.HRP && eventsRaw.HRP.primaryRaw);
+
+    const sdcSec = aftParseTimeToSeconds(eventsRaw.SDC && eventsRaw.SDC.primaryRaw);
+    const plkSec = aftParseTimeToSeconds(eventsRaw.PLK && eventsRaw.PLK.primaryRaw);
+    const twoMrSec = aftParseTimeToSeconds(eventsRaw["2MR"] && eventsRaw["2MR"].primaryRaw);
+
+    const anyMeaningful =
+      totalScore !== null ||
+      mdlWeight !== null ||
+      hrpReps !== null ||
+      sdcSec !== null ||
+      plkSec !== null ||
+      twoMrSec !== null;
+
+    if (!anyMeaningful) return false;
+
+    const existing =
+      updated[key] || {
+        name: "AFT",
+        type: "aft",
+        aft: {
+          bestTotal: null,
+          bestTotalDate: null,
+          bestTotalPass: null,
+          lastTotal: null,
+          lastPass: null,
+          lastDate: null,
+          events: {
+            MDL: { bestWeight: null, date: null },
+            HRP: { bestReps: null, date: null },
+            SDC: { bestTimeSec: null, date: null }, // lower is better
+            PLK: { bestTimeSec: null, date: null }, // higher is better
+            "2MR": { bestTimeSec: null, date: null }, // lower is better
+          },
+        },
+        history: [],
+        lastUpdated: null,
+      };
+
+    existing.name = "AFT";
+    existing.type = "aft";
+    if (!existing.aft) existing.aft = {};
+    if (!existing.aft.events) existing.aft.events = {};
+
+    // Ensure event buckets exist
+    if (!existing.aft.events.MDL) existing.aft.events.MDL = { bestWeight: null, date: null };
+    if (!existing.aft.events.HRP) existing.aft.events.HRP = { bestReps: null, date: null };
+    if (!existing.aft.events.SDC) existing.aft.events.SDC = { bestTimeSec: null, date: null };
+    if (!existing.aft.events.PLK) existing.aft.events.PLK = { bestTimeSec: null, date: null };
+    if (!existing.aft.events["2MR"]) existing.aft.events["2MR"] = { bestTimeSec: null, date: null };
+
+    // Update LAST
+    if (totalScore !== null) existing.aft.lastTotal = totalScore;
+    if (pass !== null) existing.aft.lastPass = pass;
+    existing.aft.lastDate = now;
+
+    // Update TOTAL PR
+    if (totalScore !== null) {
+      if (existing.aft.bestTotal === null || totalScore > existing.aft.bestTotal) {
+        existing.aft.bestTotal = totalScore;
+        existing.aft.bestTotalDate = now;
+        existing.aft.bestTotalPass = pass;
+      }
+    }
+
+    // MDL PR (higher is better)
+    if (mdlWeight !== null) {
+      const cur = existing.aft.events.MDL.bestWeight;
+      if (cur === null || mdlWeight > cur) {
+        existing.aft.events.MDL.bestWeight = mdlWeight;
+        existing.aft.events.MDL.date = now;
+      }
+    }
+
+    // HRP PR (higher is better)
+    if (hrpReps !== null) {
+      const cur = existing.aft.events.HRP.bestReps;
+      if (cur === null || hrpReps > cur) {
+        existing.aft.events.HRP.bestReps = hrpReps;
+        existing.aft.events.HRP.date = now;
+      }
+    }
+
+    // SDC PR (lower is better)
+    if (sdcSec !== null) {
+      const cur = existing.aft.events.SDC.bestTimeSec;
+      if (cur === null || sdcSec < cur) {
+        existing.aft.events.SDC.bestTimeSec = sdcSec;
+        existing.aft.events.SDC.date = now;
+      }
+    }
+
+    // PLK PR (higher is better)
+    if (plkSec !== null) {
+      const cur = existing.aft.events.PLK.bestTimeSec;
+      if (cur === null || plkSec > cur) {
+        existing.aft.events.PLK.bestTimeSec = plkSec;
+        existing.aft.events.PLK.date = now;
+      }
+    }
+
+    // 2MR PR (lower is better)
+    if (twoMrSec !== null) {
+      const cur = existing.aft.events["2MR"].bestTimeSec;
+      if (cur === null || twoMrSec < cur) {
+        existing.aft.events["2MR"].bestTimeSec = twoMrSec;
+        existing.aft.events["2MR"].date = now;
+      }
+    }
+
+    // Update / insert today's history entry (newest-first)
+    const session = {
+      date: today,
+      totalScore: totalScore,
+      pass: pass,
+      events: {
+        MDL: { weight: mdlWeight },
+        HRP: { reps: hrpReps },
+        SDC: { timeSec: sdcSec, time: (eventsRaw.SDC && eventsRaw.SDC.primaryRaw) || "" },
+        PLK: { timeSec: plkSec, time: (eventsRaw.PLK && eventsRaw.PLK.primaryRaw) || "" },
+        "2MR": { timeSec: twoMrSec, time: (eventsRaw["2MR"] && eventsRaw["2MR"].primaryRaw) || "" },
+      },
+    };
+
+    const hist = Array.isArray(existing.history) ? existing.history : [];
+    if (hist.length && hist[0] && hist[0].date === today) {
+      hist[0] = session;
+    } else {
+      hist.unshift(session);
+    }
+    existing.history = hist.slice(0, 60);
+    existing.lastUpdated = now;
+
+    updated[key] = existing;
+
+    // Clean up the old split AFT entries if they exist
+    [
+      "AFT - MDL",
+      "AFT - HRP",
+      "AFT - SDC",
+      "AFT - PLK",
+      "AFT - 2MR",
+      "AFT - Total Score",
+    ].forEach((n) => {
+      const k = normalizeExerciseKey(n);
+      if (k && updated[k]) delete updated[k];
+    });
+
+    return true;
+  }
+
   // ---------- Save current workout into progress ----------
   function saveFromWorkouts(workouts) {
     if (!workouts || !workouts.length) return;
@@ -1734,7 +1964,33 @@ const Progress = (() => {
     const keyMapping = {};
     const sessionData = {}; // key -> { rawName, maxReps, bestWeight, bestWeightReps, sets: [] }
 
+    // NEW: Save AFT as a single entry under "AFT"
+    let didAftSave = false;
     workouts.forEach((w) => {
+      if (!w) return;
+      const rawName = (w.name || "").trim();
+      const isAft = w.type === "aft" || normalizeExerciseKey(rawName) === "aft";
+      if (!isAft) return;
+      if (saveAftWorkoutToProgress(updated, w, now, today)) didAftSave = true;
+    });
+
+    const nonAftWorkouts = workouts.filter((w) => {
+      if (!w) return false;
+      const rawName = (w.name || "").trim();
+      const isAft = w.type === "aft" || normalizeExerciseKey(rawName) === "aft";
+      return !isAft;
+    });
+
+    // If this save was ONLY AFT, commit and exit now.
+    if (didAftSave && (!nonAftWorkouts || nonAftWorkouts.length === 0)) {
+      progressData = updated;
+      Storage.saveProgress(progressData);
+      renderProgressList();
+      if (typeof showToast === "function") showToast("AFT saved.");
+      return;
+    }
+
+    nonAftWorkouts.forEach((w) => {
       const rawName = (w.name || "").trim();
       if (!rawName) return;
 
@@ -2032,18 +2288,47 @@ const Progress = (() => {
       const detail = document.createElement("div");
       detail.className = "progress-detail-meta";
 
-      let prText = "";
-      if (ex.bestRepsDate && ex.bestRepsDate.startsWith(today)) {
-        prText += " (NEW REP PR!)";
-      }
-      if (ex.bestWeightDate && ex.bestWeightDate.startsWith(today)) {
-        prText += " (NEW WEIGHT PR!)";
-      }
+      // NEW: AFT shows total score + P/F (not weight/reps)
+      if (ex && ex.type === "aft") {
+        const bestTotal =
+          ex.aft && typeof ex.aft.bestTotal === "number" ? ex.aft.bestTotal : null;
+        const bestPF =
+          ex.aft && typeof ex.aft.bestTotalPass === "boolean"
+            ? (ex.aft.bestTotalPass ? "P" : "F")
+            : "";
 
-      if (ex.bestWeight !== null) {
-        detail.textContent = `Best: ${ex.bestWeight} x ${ex.bestWeightReps} • Max reps: ${ex.bestReps}${prText}`;
+        const lastTotal =
+          ex.aft && typeof ex.aft.lastTotal === "number" ? ex.aft.lastTotal : null;
+        const lastPF =
+          ex.aft && typeof ex.aft.lastPass === "boolean" ? (ex.aft.lastPass ? "P" : "F") : "";
+
+        let prText = "";
+        if (ex.aft && ex.aft.bestTotalDate && ex.aft.bestTotalDate.startsWith(today)) {
+          prText = " (NEW TOTAL PR!)";
+        }
+
+        if (bestTotal !== null) {
+          detail.textContent =
+            `Best total: ${bestTotal}${bestPF ? ` (${bestPF})` : ""}` +
+            (lastTotal !== null ? ` • Last: ${lastTotal}${lastPF ? ` (${lastPF})` : ""}` : "") +
+            prText;
+        } else {
+          detail.textContent = "Tap to view sessions";
+        }
       } else {
-        detail.textContent = `Best: ${ex.bestReps} reps${prText}`;
+        let prText = "";
+        if (ex.bestRepsDate && ex.bestRepsDate.startsWith(today)) {
+          prText += " (NEW REP PR!)";
+        }
+        if (ex.bestWeightDate && ex.bestWeightDate.startsWith(today)) {
+          prText += " (NEW WEIGHT PR!)";
+        }
+
+        if (ex.bestWeight !== null) {
+          detail.textContent = `Best: ${ex.bestWeight} x ${ex.bestWeightReps} • Max reps: ${ex.bestReps}${prText}`;
+        } else {
+          detail.textContent = `Best: ${ex.bestReps} reps${prText}`;
+        }
       }
 
       row.appendChild(detail);
@@ -2101,44 +2386,101 @@ function openProgressDetail(ex) {
     header.appendChild(closeBtn);
     progressDetailEl.appendChild(header);
 
-    // PR pills
-    if (ex.bestRepsDate || ex.bestWeightDate) {
+    // NEW: AFT detail uses event PR pills + total PR
+    if (ex && ex.type === "aft") {
       const prGrid = document.createElement("div");
       prGrid.className = "pd-pr-grid";
 
-      if (ex.bestRepsDate) {
+      const makePill = (label, value, dateIso) => {
+        if (!value) return null;
         const pill = document.createElement("div");
         pill.className = "pd-pill";
 
         const strong = document.createElement("strong");
-        strong.textContent = "Rep PR:";
+        strong.textContent = label;
         pill.appendChild(strong);
 
-        pill.append(
-          ` ${ex.bestReps} reps • ${formatDateLabel(ex.bestRepsDate.split("T")[0])}`
-        );
+        const d = dateIso ? formatDateLabel(dateIso.split("T")[0]) : "";
+        pill.append(` ${value}${d ? ` • ${d}` : ""}`);
+        return pill;
+      };
 
-        prGrid.appendChild(pill);
+      const fmtSec = (sec) => {
+        if (!Number.isFinite(sec) || sec === null) return "";
+        const s = Math.max(0, Math.round(sec));
+        const m = Math.floor(s / 60);
+        const r = s % 60;
+        return `${m}:${String(r).padStart(2, "0")}`;
+      };
+
+      // Total PR
+      if (ex.aft && typeof ex.aft.bestTotal === "number") {
+        const pf =
+          typeof ex.aft.bestTotalPass === "boolean" ? (ex.aft.bestTotalPass ? "P" : "F") : "";
+        const pill = makePill(
+          "TOTAL-PR-Score:",
+          `${ex.aft.bestTotal}${pf ? ` (${pf})` : ""}`,
+          ex.aft.bestTotalDate
+        );
+        if (pill) prGrid.appendChild(pill);
       }
 
-      if (ex.bestWeightDate && ex.bestWeight !== null) {
-        const pill = document.createElement("div");
-        pill.className = "pd-pill";
+      // Event PRs
+      const mdl = ex.aft && ex.aft.events && ex.aft.events.MDL;
+      const hrp = ex.aft && ex.aft.events && ex.aft.events.HRP;
+      const sdc = ex.aft && ex.aft.events && ex.aft.events.SDC;
+      const plk = ex.aft && ex.aft.events && ex.aft.events.PLK;
+      const two = ex.aft && ex.aft.events && ex.aft.events["2MR"];
 
-        const strong = document.createElement("strong");
-        strong.textContent = "Weight PR:";
-        pill.appendChild(strong);
+      const p1 = makePill("MDL-PR-Weight:", mdl && typeof mdl.bestWeight === "number" ? `${mdl.bestWeight}` : "", mdl && mdl.date);
+      const p2 = makePill("HRP-PR-Rep:", hrp && typeof hrp.bestReps === "number" ? `${hrp.bestReps} reps` : "", hrp && hrp.date);
+      const p3 = makePill("SDC-PR-Time:", sdc && typeof sdc.bestTimeSec === "number" ? fmtSec(sdc.bestTimeSec) : "", sdc && sdc.date);
+      const p4 = makePill("PLK-PR-Time:", plk && typeof plk.bestTimeSec === "number" ? fmtSec(plk.bestTimeSec) : "", plk && plk.date);
+      const p5 = makePill("2MR-PR-Time:", two && typeof two.bestTimeSec === "number" ? fmtSec(two.bestTimeSec) : "", two && two.date);
 
-        pill.append(
-          ` ${ex.bestWeight} x ${ex.bestWeightReps} • ${formatDateLabel(
-            ex.bestWeightDate.split("T")[0]
-          )}`
-        );
+      [p1, p2, p3, p4, p5].forEach((p) => p && prGrid.appendChild(p));
 
-        prGrid.appendChild(pill);
+      if (prGrid.childNodes.length) progressDetailEl.appendChild(prGrid);
+    } else {
+      // PR pills (normal exercises)
+      if (ex.bestRepsDate || ex.bestWeightDate) {
+        const prGrid = document.createElement("div");
+        prGrid.className = "pd-pr-grid";
+
+        if (ex.bestRepsDate) {
+          const pill = document.createElement("div");
+          pill.className = "pd-pill";
+
+          const strong = document.createElement("strong");
+          strong.textContent = "Rep PR:";
+          pill.appendChild(strong);
+
+          pill.append(
+            ` ${ex.bestReps} reps • ${formatDateLabel(ex.bestRepsDate.split("T")[0])}`
+          );
+
+          prGrid.appendChild(pill);
+        }
+
+        if (ex.bestWeightDate && ex.bestWeight !== null) {
+          const pill = document.createElement("div");
+          pill.className = "pd-pill";
+
+          const strong = document.createElement("strong");
+          strong.textContent = "Weight PR:";
+          pill.appendChild(strong);
+
+          pill.append(
+            ` ${ex.bestWeight} x ${ex.bestWeightReps} • ${formatDateLabel(
+              ex.bestWeightDate.split("T")[0]
+            )}`
+          );
+
+          prGrid.appendChild(pill);
+        }
+
+        progressDetailEl.appendChild(prGrid);
       }
-
-      progressDetailEl.appendChild(prGrid);
     }
 
     // Inline chart
@@ -2457,7 +2799,102 @@ const Charts = (() => {
       return;
     }
 
-    // Oldest → newest
+    // NEW: AFT chart = total score only + P/F labels
+    if (ex && ex.type === "aft") {
+      const ordered = history.slice().reverse(); // oldest → newest
+
+      // Plot: first + last 5 (same pattern as your other charts)
+      let entriesToPlot;
+      if (ordered.length <= 6) {
+        entriesToPlot = ordered.slice();
+      } else {
+        entriesToPlot = [ordered[0], ...ordered.slice(-5)];
+      }
+
+      const points = entriesToPlot
+        .map((e) => ({
+          entry: e,
+          value: typeof e.totalScore === "number" ? e.totalScore : Number(e.totalScore) || 0,
+          pass: typeof e.pass === "boolean" ? e.pass : null,
+        }))
+        .filter((p) => Number.isFinite(p.value) && p.value > 0);
+
+      if (!points.length) {
+        ctx.fillStyle = "#bbbbbb";
+        ctx.font = "11px system-ui, -apple-system, BlinkMacSystemFont, sans-serif";
+        ctx.fillText("No numeric data yet.", 10, 20);
+        return;
+      }
+
+      const maxVal = points.reduce((m, p) => Math.max(m, p.value), 0);
+      const minVal = points.reduce((m, p) => Math.min(m, p.value), points[0].value);
+
+      const paddingLeft = 16;
+      const paddingRight = 10;
+      const paddingTop = 14;
+      const paddingBottom = 14;
+
+      const plotX = paddingLeft;
+      const plotY = paddingTop;
+      const plotW = cssW - paddingLeft - paddingRight;
+      const plotH = cssH - paddingTop - paddingBottom;
+      const bottomY = plotY + plotH;
+
+      const range = Math.max(1, maxVal - minVal);
+      const maxPlot = maxVal + range * 0.12;
+      const minPlot = Math.max(0, minVal - range * 0.06);
+      const denom = Math.max(1, maxPlot - minPlot);
+
+      const n = points.length;
+      const coords = points.map((p, i) => {
+        const ratio = (p.value - minPlot) / denom;
+        const x = plotX + (n === 1 ? plotW / 2 : (i / (n - 1)) * plotW);
+        const y = bottomY - ratio * plotH;
+        return { ...p, x, y };
+      });
+
+      const copper =
+        (getComputedStyle(document.documentElement).getPropertyValue("--copper") || "").trim() ||
+        "#c47b3a";
+
+      // line
+      ctx.strokeStyle = copper;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      coords.forEach((c, i) => {
+        if (i === 0) ctx.moveTo(c.x, c.y);
+        else ctx.lineTo(c.x, c.y);
+      });
+      ctx.stroke();
+
+      // dots + P/F
+      ctx.font = "10px system-ui, -apple-system, BlinkMacSystemFont, sans-serif";
+      ctx.textBaseline = "middle";
+      ctx.textAlign = "center";
+
+      coords.forEach((c) => {
+        ctx.fillStyle = "#39ff14";
+        ctx.beginPath();
+        ctx.arc(c.x, c.y, 3.5, 0, Math.PI * 2);
+        ctx.fill();
+
+        const pf = c.pass === true ? "P" : c.pass === false ? "F" : "";
+        if (pf) {
+          ctx.fillStyle = "rgba(235,235,235,0.92)";
+          ctx.fillText(pf, c.x, c.y - 10);
+        }
+      });
+
+      // label newest total at last point
+      const last = coords[coords.length - 1];
+      ctx.fillStyle = "rgba(235,235,235,0.92)";
+      ctx.textAlign = "center";
+      ctx.fillText(String(Math.round(last.value)), last.x, last.y - 22);
+
+      return;
+    }
+
+    // Oldest → newest (normal exercises)
     const ordered = history.slice().reverse();
 
     // Helpers
