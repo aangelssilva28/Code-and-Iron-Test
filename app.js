@@ -2009,42 +2009,81 @@ const Progress = (() => {
     });
   }
 
-  function openProgressDetail(ex) {
+function openProgressDetail(ex) {
     if (!progressDetailEl) return;
 
     progressDetailEl.classList.add("open");
     progressDetailEl.innerHTML = "";
 
+    // Header (title + close button)
+    const header = document.createElement("div");
+    header.className = "pd-header";
+
+    const titleWrap = document.createElement("div");
+    titleWrap.className = "pd-title-wrap";
+
     const title = document.createElement("div");
-    title.className = "card-subtitle progress-detail-title";
-    title.textContent = ex.name + " — last sessions";
-    progressDetailEl.appendChild(title);
+    title.className = "pd-title";
+    title.textContent = (ex && ex.name) ? ex.name : "Exercise";
+    titleWrap.appendChild(title);
 
+    const sub = document.createElement("div");
+    sub.className = "pd-subtitle";
+    sub.textContent = "last sessions";
+    titleWrap.appendChild(sub);
+
+    const closeBtn = document.createElement("button");
+    closeBtn.className = "pd-close";
+    closeBtn.type = "button";
+    closeBtn.setAttribute("aria-label", "Close");
+    closeBtn.textContent = "×";
+    closeBtn.addEventListener("click", closeDetail);
+
+    header.appendChild(titleWrap);
+    header.appendChild(closeBtn);
+    progressDetailEl.appendChild(header);
+
+    // PR pills
     if (ex.bestRepsDate || ex.bestWeightDate) {
-      const prInfo = document.createElement("div");
-      prInfo.className = "progress-detail-pr";
+      const prGrid = document.createElement("div");
+      prGrid.className = "pd-pr-grid";
 
-      const parts = [];
       if (ex.bestRepsDate) {
-        parts.push(
-          `Rep PR: ${ex.bestReps} reps on ${formatDateLabel(
-            ex.bestRepsDate.split("T")[0]
-          )}`
+        const pill = document.createElement("div");
+        pill.className = "pd-pill";
+
+        const strong = document.createElement("strong");
+        strong.textContent = "Rep PR:";
+        pill.appendChild(strong);
+
+        pill.append(
+          ` ${ex.bestReps} reps • ${formatDateLabel(ex.bestRepsDate.split("T")[0])}`
         );
+
+        prGrid.appendChild(pill);
       }
+
       if (ex.bestWeightDate && ex.bestWeight !== null) {
-        parts.push(
-          `Weight PR: ${ex.bestWeight} x ${ex.bestWeightReps} on ${formatDateLabel(
+        const pill = document.createElement("div");
+        pill.className = "pd-pill";
+
+        const strong = document.createElement("strong");
+        strong.textContent = "Weight PR:";
+        pill.appendChild(strong);
+
+        pill.append(
+          ` ${ex.bestWeight} x ${ex.bestWeightReps} • ${formatDateLabel(
             ex.bestWeightDate.split("T")[0]
           )}`
         );
+
+        prGrid.appendChild(pill);
       }
 
-      prInfo.textContent = parts.join(" • ");
-      progressDetailEl.appendChild(prInfo);
+      progressDetailEl.appendChild(prGrid);
     }
 
-    // NEW: inline chart (replaces the separate Charts screen)
+    // Inline chart
     const chartCard = document.createElement("div");
     chartCard.className = "chart-card";
 
@@ -2059,8 +2098,7 @@ const Progress = (() => {
     chartCard.appendChild(chartSub);
 
     const chartCanvas = document.createElement("canvas");
-    chartCanvas.style.width = "100%";
-    chartCanvas.style.height = "140px";
+    chartCanvas.className = "pd-chart";
     chartCard.appendChild(chartCanvas);
 
     progressDetailEl.appendChild(chartCard);
@@ -2086,24 +2124,62 @@ const Progress = (() => {
       return;
     }
 
+    const sectionTitle = document.createElement("div");
+    sectionTitle.className = "pd-section-title";
+    sectionTitle.textContent = "Sessions";
+    progressDetailEl.appendChild(sectionTitle);
+
+    const list = document.createElement("div");
+    list.className = "pd-session-list";
+    progressDetailEl.appendChild(list);
+
+    const makeChip = (text) => {
+      const chip = document.createElement("div");
+      chip.className = "pd-chip";
+      chip.textContent = text;
+      return chip;
+    };
+
     history.forEach((entry) => {
-      const row = document.createElement("div");
-      row.className = "progress-detail-row";
+      const card = document.createElement("div");
+      card.className = "pd-session-card";
 
-      const left = document.createElement("span");
-      left.textContent = formatDateLabel(entry.date);
+      const top = document.createElement("div");
+      top.className = "pd-session-top";
 
-      const right = document.createElement("span");
+      const date = document.createElement("div");
+      date.className = "pd-session-date";
+      date.textContent = formatDateLabel(entry.date);
 
       const hasWeight =
         typeof entry.bestWeight === "number" && entry.bestWeight !== null;
       const bestReps = entry.bestReps || 0;
 
-      // NEW: if we have per-set info, show volume + a small sets preview
+      const primary = document.createElement("div");
+      primary.className = "pd-session-primary";
+      primary.textContent = hasWeight
+        ? `${entry.bestWeight}×${entry.bestWeightReps}`
+        : `${bestReps} reps`;
+
+      top.appendChild(date);
+      top.appendChild(primary);
+      card.appendChild(top);
+
+      // badges row
+      const chips = document.createElement("div");
+      chips.className = "pd-chip-row";
+
       const hasSets = Array.isArray(entry.sets) && entry.sets.length > 0;
       const hasVolume =
         typeof entry.totalVolume === "number" && entry.totalVolume > 0;
 
+      if (hasWeight && bestReps) chips.appendChild(makeChip(`Max reps: ${bestReps}`));
+      if (hasVolume) chips.appendChild(makeChip(`Volume: ${entry.totalVolume}`));
+      if (hasSets) chips.appendChild(makeChip(`Sets: ${entry.sets.length}`));
+
+      if (chips.childNodes.length) card.appendChild(chips);
+
+      // sets preview line
       if (hasSets) {
         const preview = entry.sets
           .filter(
@@ -2120,29 +2196,15 @@ const Progress = (() => {
         const more =
           entry.sets.length > 3 ? `, … (+${entry.sets.length - 3} more)` : "";
 
-        const base =
-          hasWeight && bestReps
-            ? `${entry.bestWeight} x ${entry.bestWeightReps} • Max reps: ${bestReps}`
-            : hasWeight
-            ? `${entry.bestWeight} x ${entry.bestWeightReps}`
-            : `Best: ${bestReps} reps`;
-
-        const volText = hasVolume ? ` • Volume: ${entry.totalVolume}` : "";
-        const setsText = preview ? ` • Sets: ${preview}${more}` : "";
-
-        right.textContent = base + volText + setsText;
-      } else {
-        // Backwards compatible: old entries without per-set data
-        if (hasWeight) {
-          right.textContent = `${entry.bestWeight} x ${entry.bestWeightReps} • Max reps: ${bestReps}`;
-        } else {
-          right.textContent = `Best: ${bestReps} reps`;
+        if (preview) {
+          const setsLine = document.createElement("div");
+          setsLine.className = "pd-session-sets";
+          setsLine.textContent = `Sets: ${preview}${more}`;
+          card.appendChild(setsLine);
         }
       }
 
-      row.appendChild(left);
-      row.appendChild(right);
-      progressDetailEl.appendChild(row);
+      list.appendChild(card);
     });
   }
 
