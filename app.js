@@ -1160,7 +1160,7 @@ function createComplexCard(parent, complexData) {
   nameLabel.textContent = labelText;
   nameLabel.setAttribute("aria-label", labelText);
 
-  // Controls row: +C, -C, +S, -S (same style/size as weight box)
+  // Controls row: -S, +S, -E, +E (same style/size as weight box)
   const controls = document.createElement("div");
   controls.className = "complex-header-controls";
 
@@ -1174,12 +1174,15 @@ function createComplexCard(parent, complexData) {
     return btn;
   }
 
-  const addCardBtn    = makeCtl("+C", "add-card",    "Add complex card");
-  const removeCardBtn = makeCtl("-C", "remove-card", "Remove complex card");
-  const addRowBtn     = makeCtl("+S", "add-row",     "Add set");
-  const removeRowBtn  = makeCtl("-S", "remove-row",  "Remove set");
+  // -S/+S = remove/add complex cards
+  const removeCardBtn = makeCtl("-S", "remove-card", "Remove complex card");
+  const addCardBtn    = makeCtl("+S", "add-card",    "Add complex card");
 
-  controls.append(addCardBtn, removeCardBtn, addRowBtn, removeRowBtn);
+  // -E/+E = remove/add exercise rows (sets inside the complex card)
+  const removeRowBtn  = makeCtl("-E", "remove-row",  "Remove exercise row");
+  const addRowBtn     = makeCtl("+E", "add-row",     "Add exercise row");
+
+  controls.append(removeCardBtn, addCardBtn, removeRowBtn, addRowBtn);
 
   header.appendChild(nameLabel);
   header.appendChild(controls);
