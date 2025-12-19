@@ -301,6 +301,17 @@
       color: #fff;
     }
 
+    .create-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 8px;
+    }
+    .create-buttons .primary-btn {
+      margin-top: 0;
+    }
+
+
     .primary-btn:active {
       outline: 1px solid var(--copper);
       transform: translateY(1px);
@@ -570,7 +581,7 @@
       color: #fff;
     }
 
-.saved-name {
+    .saved-name {
       flex: 1;
       margin-right: 10px;
       white-space: nowrap;
@@ -1258,9 +1269,15 @@
           />
         </div>
 
-        <button id="saveTemplateBtn" class="primary-btn" type="button">
-          Create
-        </button>
+        <div class="create-buttons">
+          <button id="createStandardBtn" class="primary-btn" type="button">
+            Create Standard
+          </button>
+
+          <button id="createComplexBtn" class="primary-btn" type="button">
+            Create Complex
+          </button>
+        </div>
 
         <h3 class="card-subtitle" style="margin-top:18px;margin-bottom:4px;">
           Saved workouts
