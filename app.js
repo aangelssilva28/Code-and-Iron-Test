@@ -2977,18 +2977,7 @@ const Progress = (() => {
       const actions = document.createElement("div");
       actions.className = "progress-row-actions";
 
-      const delBtn = document.createElement("button");
-      delBtn.className = "progress-delete-btn";
-      delBtn.type = "button";
-      delBtn.textContent = "Delete";
-      delBtn.addEventListener("click", (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        requestDeleteProgressExercise(ex);
-      });
-
       actions.appendChild(detail);
-      actions.appendChild(delBtn);
 
       row.appendChild(actions);
 
@@ -3046,6 +3035,20 @@ function openProgressDetail(ex) {
 
     const deleteBtn = document.createElement("button");
     deleteBtn.className = "progress-delete-btn pd-delete-btn";
+    deleteBtn.type = "button";
+    deleteBtn.textContent = "Delete";
+    deleteBtn.addEventListener("click", () => requestDeleteProgressExercise(ex));
+
+    headerActions.appendChild(deleteBtn);
+    headerActions.appendChild(closeBtn);
+
+    const headerActions = document.createElement("div");
+    headerActions.style.display = "flex";
+    headerActions.style.alignItems = "center";
+    headerActions.style.gap = "10px";
+
+    const deleteBtn = document.createElement("button");
+    deleteBtn.className = "progress-delete-btn";
     deleteBtn.type = "button";
     deleteBtn.textContent = "Delete";
     deleteBtn.addEventListener("click", () => requestDeleteProgressExercise(ex));
