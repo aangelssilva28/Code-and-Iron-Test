@@ -681,10 +681,6 @@ const Logger = (() => {
   let exerciseSuggestActiveInput = null;
   let exerciseSuggestActiveContext = null;
 
-  // NEW: exercise name autocomplete (pulls from Progress)
-  let exerciseSuggestEl = null;
-  let exerciseSuggestActiveInput = null;
-  let exerciseSuggestActiveContext = null;
 
 
   function updateFooterVisibility() {
