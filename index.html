@@ -570,7 +570,7 @@
       color: #fff;
     }
 
-    .saved-name {
+.saved-name {
       flex: 1;
       margin-right: 10px;
       white-space: nowrap;
@@ -579,7 +579,44 @@
       min-width: 0;
     }
 
+    /* Routines screen: allow routine names to wrap so they don't get cut off */
+    .saved-name--wrap {
+      white-space: normal;
+      overflow: visible;
+      text-overflow: clip;
+      word-break: break-word;
+    }
+
     .saved-buttons { display: flex; gap: 6px; }
+
+    /* Routines screen: "Options" dropdown */
+    .options-wrap { position: relative; display: inline-flex; }
+
+    .options-menu {
+      position: absolute;
+      right: 0;
+      top: calc(100% + 6px);
+      display: none;
+      flex-direction: column;
+      gap: 6px;
+      padding: 8px;
+      border-radius: 14px;
+      background-color: #000;
+      border: 1px solid var(--copper);
+      box-shadow:
+        0 0 0 1px #754d27,
+        0 10px 24px rgba(0, 0, 0, 0.8);
+      z-index: 30;
+      min-width: 140px;
+    }
+
+    .options-menu.open { display: flex; }
+
+    .options-menu .small-btn {
+      width: 100%;
+      justify-content: center;
+      padding: 8px 10px;
+    }
 
     .small-btn {
       -webkit-appearance: none;
