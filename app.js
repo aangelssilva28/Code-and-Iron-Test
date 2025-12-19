@@ -2906,6 +2906,58 @@ const Progress = (() => {
     if (typeof showToast === "function") showToast(`Deleted "${name}"`);
   }
 
+  // ---------- Delete an exercise + its saved progress ----------
+  function getProgressKeyForExercise(ex) {
+    if (!ex) return "";
+    const name = (ex.name || "").trim();
+    const wantedKey = normalizeExerciseKey(name);
+
+    // Normal path: key exists directly
+    if (wantedKey && progressData && progressData[wantedKey]) return wantedKey;
+
+    // Fallback: scan by reference or normalized-name match
+    for (const [k, v] of Object.entries(progressData || {})) {
+      if (v === ex) return k;
+      const nm = v && v.name ? String(v.name).trim() : "";
+      if (wantedKey && normalizeExerciseKey(nm) === wantedKey) return k;
+    }
+
+    return wantedKey || "";
+  }
+
+  function requestDeleteProgressExercise(ex) {
+    if (!ex) return;
+
+    const name = (ex.name || "this exercise").trim() || "this exercise";
+    const ok = window.confirm(
+      `Delete "${name}" and all saved progress? This cannot be undone.`
+    );
+    if (!ok) return;
+
+    const key = getProgressKeyForExercise(ex);
+    if (!key || !progressData || !progressData[key]) {
+      showToast("Could not find that exercise in saved progress.");
+      return;
+    }
+
+    delete progressData[key];
+    Storage.saveProgress(progressData);
+
+    // Close detail panel (if open)
+    closeDetail();
+
+    // Re-render grid + list (handles letters changing)
+    renderProgressList();
+
+    // Keep charts in sync
+    if (typeof Charts !== "undefined" && Charts.refresh) {
+      Charts.refresh();
+    }
+
+    showToast(`Deleted "${name}"`);
+  }
+
+
   function updateProgressExerciseList() {
     const list = progressListEl;
     if (!list) return;
