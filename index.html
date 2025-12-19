@@ -756,11 +756,6 @@
       box-shadow: none;
     }
 
-    /* Hide Delete button in the Progress detail header (keep it in the list rows) */
-    #progressDetail .pd-header .progress-delete-btn {
-      display: none !important;
-    }
-
     /* Ensure meta text can shrink without pushing Delete off-screen */
     .progress-row-actions .progress-detail-meta {
       white-space: nowrap;
@@ -836,25 +831,6 @@
       transform: translateY(1px);
       outline: 1px solid var(--copper);
       box-shadow: none;
-    }
-
-    .pd-header-actions {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      flex: 0 0 auto;
-    }
-
-    /* Make the Progress "Delete" button fit nicely in the detail header */
-    .pd-header .progress-delete-btn {
-      height: 34px;
-      min-width: 110px;
-      padding: 0 14px;
-      font-size: 16px;
-      border-radius: 18px;
-      box-shadow:
-        0 0 0 1px #754d27,
-        0 3px 0 #000;
     }
 
     .pd-pr-grid {
