@@ -639,6 +639,54 @@
 
     .saved-buttons { display: flex; gap: 6px; }
 
+    /* Progress rows: meta + Delete button */
+    .progress-row-actions {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 10px;
+      flex-shrink: 0;
+      min-width: 0;
+      max-width: 62%;
+    }
+
+    .progress-row-actions .progress-detail-meta {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      text-align: right;
+      min-width: 0;
+    }
+
+    /* "Delete" button used on Progress rows */
+    .progress-delete-btn {
+      -webkit-appearance: none;
+      appearance: none;
+      -webkit-tap-highlight-color: transparent;
+      height: 40px;
+      min-width: 110px;
+      border-radius: var(--radius-pill);
+      border: 1px solid var(--copper);
+      padding: 0 18px;
+      font-size: 18px;
+      font-weight: 700;
+      color: #ffffff;
+      background-color: #000;
+      box-shadow:
+        0 0 0 1px #754d27,
+        0 4px 0 #000;
+      flex: 0 0 auto;
+      line-height: 1;
+    }
+
+    .progress-delete-btn:active {
+      transform: translateY(1px);
+      opacity: 0.9;
+      background-color: #111;
+      outline: 1px solid var(--copper);
+      box-shadow: none;
+    }
+
     /* Routines screen: "Options" dropdown */
     .options-wrap { position: relative; display: inline-flex; }
 
