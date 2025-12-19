@@ -681,7 +681,10 @@ const Logger = (() => {
   let exerciseSuggestActiveInput = null;
   let exerciseSuggestActiveContext = null;
 
-
+  // NEW: exercise name autocomplete (pulls from Progress)
+  let exerciseSuggestEl = null;
+  let exerciseSuggestActiveInput = null;
+  let exerciseSuggestActiveContext = null;
 
 
   function updateFooterVisibility() {
@@ -718,7 +721,23 @@ const Logger = (() => {
     complexAddRowBtn = $("#complexAddRowBtn");
     complexRemoveRowBtn = $("#complexRemoveRowBtn");
 
+    // Exercise autocomplete suggestions container
+    exerciseSuggestEl = $("#exerciseSuggest");
 
+    // Close suggestions when tapping/clicking anywhere else
+    document.addEventListener("click", (e) => {
+      if (!exerciseSuggestEl || exerciseSuggestEl.classList.contains("hidden")) return;
+
+      const target = e.target;
+      const clickedInsideSuggest = exerciseSuggestEl.contains(target);
+      const clickedActiveInput =
+        exerciseSuggestActiveInput &&
+        (target === exerciseSuggestActiveInput ||
+          (exerciseSuggestActiveInput.contains && exerciseSuggestActiveInput.contains(target)));
+
+      if (clickedInsideSuggest || clickedActiveInput) return;
+      hideExerciseSuggestions();
+    });
 
     // Exercise autocomplete suggestions container
     exerciseSuggestEl = $("#exerciseSuggest");
@@ -3044,24 +3063,6 @@ function openProgressDetail(ex) {
       e.stopPropagation();
       requestDeleteProgressExercise(ex);
     });
-
-    headerActions.appendChild(deleteBtn);
-    headerActions.appendChild(closeBtn);
-
-    header.appendChild(titleWrap);
-    header.appendChild(headerActions);
-    progressDetailEl.appendChild(header);
-
-    const headerActions = document.createElement("div");
-    headerActions.style.display = "flex";
-    headerActions.style.alignItems = "center";
-    headerActions.style.gap = "10px";
-
-    const deleteBtn = document.createElement("button");
-    deleteBtn.className = "progress-delete-btn";
-    deleteBtn.type = "button";
-    deleteBtn.textContent = "Delete";
-    deleteBtn.addEventListener("click", () => requestDeleteProgressExercise(ex));
 
     headerActions.appendChild(deleteBtn);
     headerActions.appendChild(closeBtn);
