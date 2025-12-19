@@ -3031,16 +3031,26 @@ function openProgressDetail(ex) {
     closeBtn.addEventListener("click", closeDetail);
 
     const headerActions = document.createElement("div");
-    headerActions.className = "pd-header-actions";
+    headerActions.style.display = "flex";
+    headerActions.style.alignItems = "center";
+    headerActions.style.gap = "10px";
 
     const deleteBtn = document.createElement("button");
-    deleteBtn.className = "progress-delete-btn pd-delete-btn";
+    deleteBtn.className = "progress-delete-btn";
     deleteBtn.type = "button";
     deleteBtn.textContent = "Delete";
-    deleteBtn.addEventListener("click", () => requestDeleteProgressExercise(ex));
+    deleteBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      requestDeleteProgressExercise(ex);
+    });
 
     headerActions.appendChild(deleteBtn);
     headerActions.appendChild(closeBtn);
+
+    header.appendChild(titleWrap);
+    header.appendChild(headerActions);
+    progressDetailEl.appendChild(header);
 
     const headerActions = document.createElement("div");
     headerActions.style.display = "flex";
