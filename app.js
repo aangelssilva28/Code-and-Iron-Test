@@ -681,6 +681,11 @@ const Logger = (() => {
   let exerciseSuggestActiveInput = null;
   let exerciseSuggestActiveContext = null;
 
+  // NEW: exercise name autocomplete (pulls from Progress)
+  let exerciseSuggestEl = null;
+  let exerciseSuggestActiveInput = null;
+  let exerciseSuggestActiveContext = null;
+
 
   function updateFooterVisibility() {
     const show = mode === "complex";
@@ -715,6 +720,24 @@ const Logger = (() => {
     complexRemoveCardBtn = $("#complexRemoveCardBtn");
     complexAddRowBtn = $("#complexAddRowBtn");
     complexRemoveRowBtn = $("#complexRemoveRowBtn");
+
+    // Exercise autocomplete suggestions container
+    exerciseSuggestEl = $("#exerciseSuggest");
+
+    // Close suggestions when tapping/clicking anywhere else
+    document.addEventListener("click", (e) => {
+      if (!exerciseSuggestEl || exerciseSuggestEl.classList.contains("hidden")) return;
+
+      const target = e.target;
+      const clickedInsideSuggest = exerciseSuggestEl.contains(target);
+      const clickedActiveInput =
+        exerciseSuggestActiveInput &&
+        (target === exerciseSuggestActiveInput ||
+          (exerciseSuggestActiveInput.contains && exerciseSuggestActiveInput.contains(target)));
+
+      if (clickedInsideSuggest || clickedActiveInput) return;
+      hideExerciseSuggestions();
+    });
 
     // Exercise autocomplete suggestions container
     exerciseSuggestEl = $("#exerciseSuggest");
@@ -1104,6 +1127,245 @@ setMode("standard");
     }
   }
 
+    // ---------- Exercise autocomplete (Standard + Complex) ----------
+  function getSavedExerciseNameList() {
+    if (typeof Progress === "undefined" || !Progress.getData) return [];
+    const data = Progress.getData() || {};
+    const names = Object.values(data)
+      .map((v) => (v && v.name ? String(v.name).trim() : ""))
+      .filter(Boolean);
+
+    // Unique (case-insensitive)
+    const seen = new Set();
+    const out = [];
+    names.forEach((n) => {
+      const k = normalizeExerciseKey(n);
+      if (!k || seen.has(k)) return;
+      seen.add(k);
+      out.push(n);
+    });
+
+    out.sort((a, b) => a.localeCompare(b));
+    return out;
+  }
+
+  function findProgressEntryByName(rawName) {
+    if (!rawName) return null;
+    if (typeof Progress === "undefined" || !Progress.getData) return null;
+
+    const data = Progress.getData() || {};
+    const wantedKey = normalizeExerciseKey(rawName);
+    if (!wantedKey) return null;
+
+    if (data[wantedKey]) {
+      return { key: wantedKey, entry: data[wantedKey] };
+    }
+
+    // Fallback: try match against stored names
+    for (const [k, v] of Object.entries(data)) {
+      const nm = v && v.name ? String(v.name) : "";
+      if (normalizeExerciseKey(nm) === wantedKey) {
+        return { key: k, entry: v };
+      }
+    }
+
+    return null;
+  }
+
+  function hideExerciseSuggestions() {
+    if (!exerciseSuggestEl) return;
+    exerciseSuggestEl.classList.add("hidden");
+    exerciseSuggestEl.setAttribute("aria-hidden", "true");
+    exerciseSuggestEl.innerHTML = "";
+    exerciseSuggestActiveInput = null;
+    exerciseSuggestActiveContext = null;
+  }
+
+  function showExerciseSuggestions(inputEl, context) {
+    if (!exerciseSuggestEl || !inputEl) return;
+
+    const raw = (inputEl.value || "").toString().trim();
+    const qKey = normalizeExerciseKey(raw);
+
+    if (!qKey) {
+      hideExerciseSuggestions();
+      return;
+    }
+
+    const all = getSavedExerciseNameList();
+    if (!all.length) {
+      hideExerciseSuggestions();
+      return;
+    }
+
+    const matches = all
+      .map((name) => {
+        const k = normalizeExerciseKey(name);
+        let score = 999;
+
+        // best = startsWith, next = includes
+        if (k.startsWith(qKey)) score = 0;
+        else if (k.includes(qKey)) score = 1;
+
+        return { name, score };
+      })
+      .filter((m) => m.score < 999)
+      .sort((a, b) => a.score - b.score || a.name.localeCompare(b.name))
+      .slice(0, 6);
+
+    if (!matches.length) {
+      hideExerciseSuggestions();
+      return;
+    }
+
+    // Position dropdown under the input
+    const rect = inputEl.getBoundingClientRect();
+    exerciseSuggestEl.style.left = `${rect.left + window.scrollX}px`;
+    exerciseSuggestEl.style.top = `${rect.bottom + window.scrollY + 6}px`;
+    exerciseSuggestEl.style.width = `${rect.width}px`;
+
+    exerciseSuggestEl.innerHTML = "";
+
+    matches.forEach((m) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "exercise-suggest-item";
+      btn.setAttribute("role", "option");
+      btn.textContent = m.name;
+
+      const pick = (e) => {
+        if (e && e.preventDefault) e.preventDefault();
+        inputEl.value = m.name;
+        hideExerciseSuggestions();
+        loadExerciseFromProgressIntoUI(m.name, context);
+      };
+
+      // pointerdown selects before the input blurs (click as fallback)
+      btn.addEventListener("pointerdown", pick);
+      btn.addEventListener("click", pick);
+
+      exerciseSuggestEl.appendChild(btn);
+    });
+
+    exerciseSuggestEl.classList.remove("hidden");
+    exerciseSuggestEl.setAttribute("aria-hidden", "false");
+    exerciseSuggestActiveInput = inputEl;
+    exerciseSuggestActiveContext = context || null;
+  }
+
+  function wireExerciseAutocomplete(inputEl, context) {
+    if (!inputEl) return;
+
+    // reduce iOS keyboard “AutoFill” weirdness
+    inputEl.setAttribute("autocomplete", "off");
+    inputEl.setAttribute("autocorrect", "off");
+    inputEl.setAttribute("autocapitalize", "words");
+    inputEl.spellcheck = false;
+
+    inputEl.addEventListener("focus", () => showExerciseSuggestions(inputEl, context));
+    inputEl.addEventListener("input", () => showExerciseSuggestions(inputEl, context));
+
+    inputEl.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        // If there's a visible list, pick the first suggestion
+        if (exerciseSuggestEl && !exerciseSuggestEl.classList.contains("hidden")) {
+          const first = exerciseSuggestEl.querySelector(".exercise-suggest-item");
+          if (first) {
+            const name = (first.textContent || "").trim();
+            if (name) {
+              inputEl.value = name;
+              hideExerciseSuggestions();
+              loadExerciseFromProgressIntoUI(name, context);
+              e.preventDefault();
+              return;
+            }
+          }
+        }
+
+        // Otherwise: try load exact match
+        loadExerciseFromProgressIntoUI(inputEl.value, context);
+      }
+    });
+
+    // On blur: hide dropdown and (if exact match) auto-load
+    inputEl.addEventListener("blur", () => {
+      setTimeout(() => hideExerciseSuggestions(), 140);
+      loadExerciseFromProgressIntoUI(inputEl.value, context);
+    });
+  }
+
+  function applyProgressToStandardCard(card, entry) {
+    if (!card || !entry) return;
+
+    const setsWrapper = card.querySelector(".sets-wrapper");
+    if (!setsWrapper) return;
+
+    // Prefer most recent saved sets (history[0])
+    const hist = Array.isArray(entry.history) ? entry.history : [];
+    const latest = hist.length ? hist[0] : null;
+
+    let sets = [];
+
+    if (latest && Array.isArray(latest.sets) && latest.sets.length) {
+      sets = latest.sets.map((s) => ({
+        weight: s && s.weight != null ? s.weight : "",
+        reps: s && s.reps != null ? s.reps : "",
+      }));
+    } else {
+      const w = typeof entry.bestWeight === "number" ? entry.bestWeight : "";
+      let r = entry.bestWeightReps || "";
+      if (!r && entry.bestReps) r = entry.bestReps;
+      sets = [{ weight: w, reps: r }];
+    }
+
+    setsWrapper.innerHTML = "";
+    sets.forEach((s, idx) => {
+      setsWrapper.appendChild(createSetBox(card, { weight: s.weight, reps: s.reps }, idx + 1));
+    });
+
+    renumberSets(card);
+    setCardCollapsed(card, false);
+  }
+
+  function applyProgressToComplexRow(rowBox, entry) {
+    if (!rowBox || !entry) return;
+
+    const weightInput = rowBox.querySelector('input[data-field="weight"]');
+    const repsInput = rowBox.querySelector('input[data-field="reps"]');
+
+    const w = typeof entry.bestWeight === "number" ? entry.bestWeight : "";
+    let r = entry.bestWeightReps || "";
+    if (!r && entry.bestReps) r = entry.bestReps;
+
+    if (repsInput) repsInput.value = r === null || r === undefined ? "" : String(r);
+    if (weightInput) weightInput.value = w === null || w === undefined ? "" : String(w);
+  }
+
+  function loadExerciseFromProgressIntoUI(rawName, context) {
+    const found = findProgressEntryByName(rawName);
+    if (!found || !found.entry) return;
+
+    const { key, entry } = found;
+
+    // avoid re-loading over and over while user edits the same box
+    const srcInput = (context && context.inputEl) ? context.inputEl : exerciseSuggestActiveInput;
+    if (srcInput && srcInput.dataset) {
+      if (srcInput.dataset.loadedKey === key) return;
+      srcInput.dataset.loadedKey = key;
+    }
+
+    // Don’t auto-load AFT into the normal exercise boxes
+    if ((entry.type || "") === "aft" || key === "aft") return;
+
+    if (context && context.kind === "standard" && context.card) {
+      applyProgressToStandardCard(context.card, entry);
+      if (typeof showToast === "function") showToast(`Loaded "${entry.name}"`);
+    } else if (context && context.kind === "complex" && context.rowBox) {
+      applyProgressToComplexRow(context.rowBox, entry);
+      if (typeof showToast === "function") showToast(`Loaded "${entry.name}"`);
+    }
+  }
+
   // ---------- Set rows (Weight / Reps) for STANDARD mode ----------
   function createSetBox(card, setData, indexOverride) {
     const box = document.createElement("div");
@@ -1214,6 +1476,8 @@ function renumberComplexCards(parent) {
     wireExerciseAutocomplete(exerciseInput, { kind: "complex", rowBox: box, inputEl: exerciseInput });
 
     // Spacer takes the place of the old weight box column so layout stays aligned
+
+    // Spacer takes the place of the old weight box column so layout stays aligned
     const spacer = document.createElement("div");
     spacer.className = "complex-row-spacer";
 
@@ -1319,6 +1583,8 @@ function renumberComplexCards(parent) {
   nameInput.value = (workoutData && workoutData.name) || "";
 
   wireExerciseAutocomplete(nameInput, { kind: "standard", card, inputEl: nameInput });
+
+  // If the card is collapsed, tapping the name expands it
 
   // If the card is collapsed, tapping the name expands it
   nameInput.addEventListener("click", () => {
