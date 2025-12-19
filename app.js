@@ -2858,59 +2858,6 @@ const Progress = (() => {
     updateProgressExerciseList();
   }
 
-  // ---------- Delete progress entry ----------
-  function getProgressKeyForExercise(ex) {
-    if (!ex) return "";
-    const name = (ex.name || "").trim();
-    const wantedKey = normalizeExerciseKey(name);
-
-    // Normal path: key exists directly
-    if (wantedKey && progressData && progressData[wantedKey]) return wantedKey;
-
-    // Fallback: scan by reference or normalized-name match
-    for (const [k, v] of Object.entries(progressData || {})) {
-      if (v === ex) return k;
-      const nm = (v && v.name) ? String(v.name).trim() : "";
-      if (wantedKey && normalizeExerciseKey(nm) === wantedKey) return k;
-    }
-
-    return wantedKey || "";
-  }
-
-  function requestDeleteProgressExercise(ex) {
-    if (!ex) return;
-
-    const name = (ex.name || "this exercise").trim() || "this exercise";
-
-    const ok = window.confirm(
-      `Delete "${name}" and all saved progress? This cannot be undone.`
-    );
-    if (!ok) return;
-
-    const key = getProgressKeyForExercise(ex);
-    if (!key || !progressData || !progressData[key]) {
-      if (typeof showToast === "function") {
-        showToast("Could not find that exercise in saved progress.");
-      }
-      return;
-    }
-
-    delete progressData[key];
-    Storage.saveProgress(progressData);
-
-    // Close panel (in case it's open for the same exercise)
-    closeDetail();
-
-    renderProgressList();
-
-    // Keep charts in sync
-    if (typeof Charts !== "undefined" && Charts.refresh) {
-      Charts.refresh();
-    }
-
-    if (typeof showToast === "function") showToast(`Deleted "${name}"`);
-  }
-
   function updateProgressExerciseList() {
     const list = progressListEl;
     if (!list) return;
@@ -2995,24 +2942,7 @@ const Progress = (() => {
         }
       }
 
-      const actions = document.createElement("div");
-      actions.className = "progress-row-actions";
-
-      const delBtn = document.createElement("button");
-      delBtn.className = "progress-delete-btn";
-      delBtn.type = "button";
-      delBtn.setAttribute("aria-label", `Delete ${ex.name}`);
-      delBtn.textContent = "🗑";
-      delBtn.addEventListener("click", (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        requestDeleteProgressExercise(ex);
-      });
-
-      actions.appendChild(detail);
-      actions.appendChild(delBtn);
-
-      row.appendChild(actions);
+      row.appendChild(detail);
 
       row.addEventListener("click", () => {
         openProgressDetail(ex);
@@ -3066,19 +2996,6 @@ function openProgressDetail(ex) {
     header.appendChild(titleWrap);
     header.appendChild(closeBtn);
     progressDetailEl.appendChild(header);
-
-    // Delete exercise + all progress
-    const actions = document.createElement("div");
-    actions.className = "pd-actions";
-
-    const delBtn = document.createElement("button");
-    delBtn.className = "danger-btn";
-    delBtn.type = "button";
-    delBtn.textContent = "Delete this exercise and progress";
-    delBtn.addEventListener("click", () => requestDeleteProgressExercise(ex));
-
-    actions.appendChild(delBtn);
-    progressDetailEl.appendChild(actions);
 
     // NEW: AFT detail uses event PR pills + total PR
     if (ex && ex.type === "aft") {
@@ -4920,4 +4837,3 @@ const App = (() => {
 document.addEventListener("DOMContentLoaded", () => {
   App.init();
 });
-
