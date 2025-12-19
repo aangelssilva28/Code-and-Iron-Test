@@ -756,6 +756,11 @@
       box-shadow: none;
     }
 
+    /* Hide Delete button in the Progress detail header (keep it in the list rows) */
+    #progressDetail .pd-header .progress-delete-btn {
+      display: none !important;
+    }
+
     /* Ensure meta text can shrink without pushing Delete off-screen */
     .progress-row-actions .progress-detail-meta {
       white-space: nowrap;
