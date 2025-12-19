@@ -1595,6 +1595,37 @@ function createAftCard(parent) {
     return Object.values(byName);
   }
 
+  // NEW: read layout in complex mode, preserving the "Set" (card) structure
+  // Returns: [{ rows: [{name, weight, reps}, ...] }, ...]
+  function getComplexRoundsFromContainer(container) {
+    const cards = container.querySelectorAll(".workout-card");
+    const rounds = [];
+
+    cards.forEach((card) => {
+      const rows = [];
+      card.querySelectorAll(".set-box").forEach((box) => {
+        const exInput = box.querySelector(".complex-exercise-name");
+        const weightInput = box.querySelector('.set-input[data-field="weight"]');
+        const repsInput = box.querySelector('.set-input[data-field="reps"]');
+
+        const name =
+          exInput && typeof exInput.value === "string" ? exInput.value : "";
+        const weight = weightInput ? weightInput.value : "";
+        const reps = repsInput ? repsInput.value : "";
+
+        // Keep rows (even if empty) so the UI stays consistent when reopening
+        rows.push({ name, weight, reps });
+      });
+
+      rounds.push({
+        rows: rows.length ? rows : [{}],
+        collapsed: card.classList.contains("collapsed"),
+      });
+    });
+
+    return rounds.length ? rounds : [{ rows: [{}] }];
+  }
+
   // NEW: read layout in AFT mode (save the entire AFT as ONE entry: "AFT")
   function getAftLayoutFromContainer(container) {
     const card = container.querySelector(".workout-card.aft-card");
@@ -1683,16 +1714,56 @@ function getCurrentWorkoutLayout() {
     return getWorkoutLayoutFrom(workoutsContainer);
   }
 
-  function applyTemplateToHome(workoutDataArray) {
+  function applyTemplateToHome(templateOrWorkouts) {
     if (!workoutsContainer) return;
 
-    // When loading a routine, always go back to Standard mode
-    mode = "standard";
-    if (modeToggleBtn) {
-      modeToggleBtn.textContent = "Standard";
+    const isArray = Array.isArray(templateOrWorkouts);
+    const type = isArray
+      ? "standard"
+      : (templateOrWorkouts && templateOrWorkouts.type) || "standard";
+    const workoutDataArray = isArray
+      ? templateOrWorkouts
+      : (templateOrWorkouts && templateOrWorkouts.workouts) || [];
+
+    // Switch mode (without toast) + reset the screen
+    mode = type === "complex" ? "complex" : "standard";
+    document.body.classList.remove("mode-standard", "mode-complex", "mode-aft");
+    document.body.classList.add(`mode-${mode}`);
+    resetForMode();
+
+    // Now render the routine
+    workoutsContainer.innerHTML = "";
+
+    if (mode === "complex") {
+      const safe = workoutDataArray && workoutDataArray.length ? workoutDataArray : [];
+      const maxSets = Math.max(
+        1,
+        ...safe.map((ex) => (Array.isArray(ex.sets) ? ex.sets.length : 0))
+      );
+
+      if (!safe.length) {
+        createComplexCard(workoutsContainer);
+        return;
+      }
+
+      for (let i = 0; i < maxSets; i++) {
+        const rows = safe.map((ex) => {
+          const set = Array.isArray(ex.sets) ? ex.sets[i] : null;
+          return {
+            name: ex.name || "",
+            weight: set && set.weight != null ? set.weight : "",
+            reps: set && set.reps != null ? set.reps : "",
+          };
+        });
+
+        createComplexCard(workoutsContainer, { rows });
+      }
+
+      renumberComplexCards(workoutsContainer);
+      return;
     }
 
-    workoutsContainer.innerHTML = "";
+    // Standard mode
     if (!workoutDataArray || workoutDataArray.length === 0) {
       createWorkoutCard(workoutsContainer);
       return;
@@ -1708,7 +1779,9 @@ function getCurrentWorkoutLayout() {
     applyTemplateToHome,
     // expose helpers so Templates can use the same card UI in its editor panels
     createCard: createWorkoutCard,
+    createComplexCard,
     getLayoutFromContainer: getWorkoutLayoutFrom,
+    getComplexRoundsFromContainer,
   };
 })();
 
@@ -3251,7 +3324,8 @@ const Templates = (() => {
   let templates = Storage.loadTemplates();
 
   let templateNameInput;
-  let saveTemplateBtn;
+  let createStandardBtn;
+  let createComplexBtn;
   let savedTemplatesList;
   let backToLoggerBtn;
 
@@ -3277,7 +3351,8 @@ const Templates = (() => {
 
   function init({
     nameInputSelector,
-    saveButtonSelector,
+    createStandardButtonSelector,
+    createComplexButtonSelector,
     listSelector,
     backButtonSelector,
     backupTextSelector,
@@ -3285,7 +3360,8 @@ const Templates = (() => {
     importButtonSelector,
   }) {
     templateNameInput = $(nameInputSelector);
-    saveTemplateBtn = $(saveButtonSelector);
+    createStandardBtn = $(createStandardButtonSelector);
+    createComplexBtn = $(createComplexButtonSelector);
     savedTemplatesList = $(listSelector);
     backToLoggerBtn = $(backButtonSelector);
 
@@ -3293,8 +3369,16 @@ const Templates = (() => {
     exportBackupBtn = $(exportButtonSelector);
     importBackupBtn = $(importButtonSelector);
 
-    if (saveTemplateBtn) {
-      saveTemplateBtn.addEventListener("click", onSaveTemplateClicked);
+    if (createStandardBtn) {
+      createStandardBtn.addEventListener("click", () =>
+        onCreateTemplateClicked("standard")
+      );
+    }
+
+    if (createComplexBtn) {
+      createComplexBtn.addEventListener("click", () =>
+        onCreateTemplateClicked("complex")
+      );
     }
 
     if (backToLoggerBtn) {
@@ -3365,6 +3449,7 @@ const Templates = (() => {
   function makeShareCode(tpl) {
     const payload = {
       n: tpl.name || "Shared routine",
+      t: tpl.type || "standard",
       w: (tpl.workouts || []).map((ex) => ({
         n: ex.name || "",
         s: (ex.sets || []).map((set) => ({
@@ -3393,6 +3478,7 @@ const Templates = (() => {
 
         return {
           name: payload.n || "Shared routine",
+          type: payload.t || "standard",
           workouts:
             workouts && workouts.length
               ? workouts
@@ -3411,6 +3497,7 @@ const Templates = (() => {
 
         return {
           name: payload.name || "Shared routine",
+          type: payload.type || "standard",
           workouts: safeWorkouts,
         };
       }
@@ -3482,6 +3569,67 @@ const Templates = (() => {
 
   // ---------- Templates UI ----------
 
+  // Convert between the saved workout shape ({name, sets[]})
+  // and the Complex UI shape ({rows[]} per card = Set 1, Set 2, etc.)
+  function workoutsToComplexRounds(workouts) {
+    const safe = Array.isArray(workouts) ? workouts : [];
+    const maxSets = Math.max(
+      1,
+      ...safe.map((ex) => (Array.isArray(ex.sets) ? ex.sets.length : 0))
+    );
+
+    const rounds = [];
+    for (let i = 0; i < maxSets; i++) {
+      const rows = safe.map((ex) => {
+        const set = Array.isArray(ex.sets) ? ex.sets[i] : null;
+        return {
+          name: ex.name || "",
+          weight: set && set.weight != null ? set.weight : "",
+          reps: set && set.reps != null ? set.reps : "",
+        };
+      });
+
+      rounds.push({ rows });
+    }
+
+    return rounds;
+  }
+
+  function complexRoundsToWorkouts(rounds) {
+    const safeRounds = Array.isArray(rounds) ? rounds : [];
+    const byName = {};
+
+    safeRounds.forEach((round, roundIdx) => {
+      const rows = round && Array.isArray(round.rows) ? round.rows : [];
+      rows.forEach((row) => {
+        const rawName =
+          row && typeof row.name === "string" ? row.name : (row && row.n) || "";
+        const name = rawName.trim();
+        const weight = row && row.weight != null ? row.weight : "";
+        const reps = row && row.reps != null ? row.reps : "";
+
+        // Skip completely empty rows
+        if (!name && !weight && !reps) return;
+        if (!name) return;
+
+        if (!byName[name]) {
+          byName[name] = { name, sets: [] };
+        }
+
+        // Ensure sets array is long enough up to this round index
+        while (byName[name].sets.length < roundIdx) {
+          byName[name].sets.push({ weight: "", reps: "" });
+        }
+
+        byName[name].sets[roundIdx] = { weight, reps };
+      });
+    });
+
+    const out = Object.values(byName);
+
+    return out.length ? out : [{ name: "", sets: [{ weight: "", reps: "" }] }];
+  }
+
   function buildEditorPanel(panel, tpl) {
     panel.innerHTML = "";
     panel.classList.add("open");
@@ -3490,13 +3638,20 @@ const Templates = (() => {
     innerContainer.className = "workouts-container";
     panel.appendChild(innerContainer);
 
-    const data =
-      tpl.workouts && tpl.workouts.length
-        ? tpl.workouts
-        : [{ name: "", sets: [{ weight: "", reps: "" }] }];
+    const type = tpl.type || "standard";
 
-    // use Logger's card factory so the UI matches the main logger screen
-    data.forEach((w) => Logger.createCard(innerContainer, w));
+    if (type === "complex") {
+      const rounds = workoutsToComplexRounds(tpl.workouts || []);
+      rounds.forEach((round) => Logger.createComplexCard(innerContainer, round));
+    } else {
+      const data =
+        tpl.workouts && tpl.workouts.length
+          ? tpl.workouts
+          : [{ name: "", sets: [{ weight: "", reps: "" }] }];
+
+      // use Logger's card factory so the UI matches the main logger screen
+      data.forEach((w) => Logger.createCard(innerContainer, w));
+    }
   }
 
   function closePanelAndSave(panel) {
@@ -3504,9 +3659,17 @@ const Templates = (() => {
     if (!isNaN(index) && templates[index]) {
       const inner = panel.querySelector(".workouts-container");
       if (inner) {
-        // read layout from the panel using Logger helper
-        const workouts = Logger.getLayoutFromContainer(inner);
-        templates[index].workouts = workouts;
+        const type = templates[index].type || "standard";
+
+        if (type === "complex") {
+          const rounds = Logger.getComplexRoundsFromContainer(inner);
+          templates[index].workouts = complexRoundsToWorkouts(rounds);
+        } else {
+          // read layout from the panel using Logger helper
+          const workouts = Logger.getLayoutFromContainer(inner);
+          templates[index].workouts = workouts;
+        }
+
         Storage.saveTemplates(templates);
       }
     }
@@ -3528,7 +3691,7 @@ const Templates = (() => {
       row.className = "saved-item";
 
       const name = document.createElement("div");
-            name.className = "saved-name saved-name--wrap";
+      name.className = "saved-name saved-name--wrap";
       name.textContent = tpl.name || "Untitled routine";
       name.title = tpl.name || "Untitled routine";
       row.appendChild(name);
@@ -3574,7 +3737,7 @@ const Templates = (() => {
         alert(
           "Share code generated and placed in the 'New routine name' box.\n\n" +
             "Copy it and send it to your friend. They can paste it into the same box " +
-            "and tap Create to import this routine."
+            "and tap Create Standard (or Create Complex) to import this routine."
         );
       });
       optionsMenu.appendChild(shareBtn);
@@ -3587,7 +3750,10 @@ const Templates = (() => {
         e.stopPropagation();
         closeAllOptionsMenus();
 
-        Logger.applyTemplateToHome(tpl.workouts || []);
+        Logger.applyTemplateToHome({
+          type: tpl.type || "standard",
+          workouts: tpl.workouts || [],
+        });
         App.showScreen("home");
       });
       optionsMenu.appendChild(loadBtn);
@@ -3679,8 +3845,8 @@ const Templates = (() => {
     });
   }
 
-  // Save template button handler
-  function onSaveTemplateClicked() {
+  // Create routine button handler (Standard / Complex)
+  function onCreateTemplateClicked(createType) {
     if (!templateNameInput) return;
 
     const raw = templateNameInput.value.trim();
@@ -3694,6 +3860,7 @@ const Templates = (() => {
       templates.push({
         id: Date.now(),
         name: imported.name,
+        type: imported.type || "standard",
         workouts: JSON.parse(JSON.stringify(imported.workouts)),
       });
       Storage.saveTemplates(templates);
@@ -3719,6 +3886,7 @@ const Templates = (() => {
     templates.push({
       id: Date.now(),
       name,
+      type: createType === "complex" ? "complex" : "standard",
       workouts: JSON.parse(JSON.stringify(safeWorkouts)),
     });
 
@@ -4056,7 +4224,8 @@ const App = (() => {
 
     Templates.init({
       nameInputSelector: "#templateNameInput",
-      saveButtonSelector: "#saveTemplateBtn",
+      createStandardButtonSelector: "#createStandardBtn",
+      createComplexButtonSelector: "#createComplexBtn",
       listSelector: "#savedTemplatesList",
       backButtonSelector: "#backToLogger",
       backupTextSelector: "#backupText",
