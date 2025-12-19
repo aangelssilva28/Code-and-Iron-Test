@@ -3260,6 +3260,21 @@ const Templates = (() => {
   let exportBackupBtn;
   let importBackupBtn;
 
+  // Options dropdown (Saved routines)
+  let optionsDocListenerAdded = false;
+
+  function closeAllOptionsMenus() {
+    if (!savedTemplatesList) return;
+
+    $$(".options-menu.open", savedTemplatesList).forEach((menu) => {
+      menu.classList.remove("open");
+    });
+
+    $$(".small-btn.options", savedTemplatesList).forEach((btn) => {
+      btn.setAttribute("aria-expanded", "false");
+    });
+  }
+
   function init({
     nameInputSelector,
     saveButtonSelector,
@@ -3322,6 +3337,20 @@ const Templates = (() => {
 
         restoreFromBackupString(str);
       });
+    }
+
+    // Close any open "Options" menus when tapping elsewhere
+    if (!optionsDocListenerAdded) {
+      document.addEventListener("click", (e) => {
+        const wrap =
+          e.target && e.target.closest ? e.target.closest(".options-wrap") : null;
+
+        if (!wrap) {
+          closeAllOptionsMenus();
+        }
+      });
+
+      optionsDocListenerAdded = true;
     }
 
     renderTemplatesList();
@@ -3499,53 +3528,89 @@ const Templates = (() => {
       row.className = "saved-item";
 
       const name = document.createElement("div");
-      name.className = "saved-name";
+            name.className = "saved-name saved-name--wrap";
       name.textContent = tpl.name || "Untitled routine";
       name.title = tpl.name || "Untitled routine";
       row.appendChild(name);
 
-      const btnWrap = document.createElement("div");
-      btnWrap.className = "saved-buttons";
+      const optionsWrap = document.createElement("div");
+      optionsWrap.className = "options-wrap";
+
+      const optionsBtn = document.createElement("button");
+      optionsBtn.className = "small-btn options";
+      optionsBtn.type = "button";
+      optionsBtn.textContent = "Options";
+      optionsBtn.setAttribute("aria-haspopup", "true");
+      optionsBtn.setAttribute("aria-expanded", "false");
+
+      const optionsMenu = document.createElement("div");
+      optionsMenu.className = "options-menu";
+
+      optionsBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const wasOpen = optionsMenu.classList.contains("open");
+
+        closeAllOptionsMenus();
+
+        if (!wasOpen) {
+          optionsMenu.classList.add("open");
+          optionsBtn.setAttribute("aria-expanded", "true");
+        }
+      });
 
       const shareBtn = document.createElement("button");
       shareBtn.className = "small-btn share";
       shareBtn.type = "button";
       shareBtn.textContent = "Share";
-      shareBtn.addEventListener("click", () => {
+      shareBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        closeAllOptionsMenus();
+
         const code = makeShareCode(tpl);
         if (templateNameInput) {
           templateNameInput.value = code;
         }
+
         alert(
           "Share code generated and placed in the 'New routine name' box.\n\n" +
             "Copy it and send it to your friend. They can paste it into the same box " +
             "and tap Create to import this routine."
         );
       });
-      btnWrap.appendChild(shareBtn);
+      optionsMenu.appendChild(shareBtn);
 
       const loadBtn = document.createElement("button");
       loadBtn.className = "small-btn load";
       loadBtn.type = "button";
       loadBtn.textContent = "Load";
-      loadBtn.addEventListener("click", () => {
+      loadBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        closeAllOptionsMenus();
+
         Logger.applyTemplateToHome(tpl.workouts || []);
         App.showScreen("home");
       });
-      btnWrap.appendChild(loadBtn);
+      optionsMenu.appendChild(loadBtn);
 
       const openBtn = document.createElement("button");
       openBtn.className = "small-btn open";
       openBtn.type = "button";
       openBtn.textContent = "Open";
-      btnWrap.appendChild(openBtn);
+      openBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        closeAllOptionsMenus();
+      });
+      optionsMenu.appendChild(openBtn);
 
       const delBtn = document.createElement("button");
       delBtn.className = "small-btn delete";
       delBtn.type = "button";
       delBtn.textContent = "Delete";
 
-      delBtn.addEventListener("click", () => {
+      delBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        closeAllOptionsMenus();
+
         const routineName = tpl.name || "this routine";
 
         const ok = window.confirm(
@@ -3572,9 +3637,12 @@ const Templates = (() => {
         }
       });
 
-      btnWrap.appendChild(delBtn);
+      optionsMenu.appendChild(delBtn);
 
-      row.appendChild(btnWrap);
+      optionsWrap.appendChild(optionsBtn);
+      optionsWrap.appendChild(optionsMenu);
+
+      row.appendChild(optionsWrap);
       wrapper.appendChild(row);
 
       const panel = document.createElement("div");
