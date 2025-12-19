@@ -1668,11 +1668,15 @@ function createAftCard(parent) {
     ];
   }
 
-  function getCurrentWorkoutLayout() {
+function getCurrentWorkoutLayout() {
     if (!workoutsContainer) return [];
-    if (mode === "aft") {
+
+    // If an AFT card exists, always save using the AFT collector.
+    // This prevents the "Nothing to save yet" message if `mode` ever desyncs.
+    if (workoutsContainer.querySelector(".workout-card.aft-card")) {
       return getAftLayoutFromContainer(workoutsContainer);
     }
+
     if (mode === "complex") {
       return getComplexLayoutFromContainer(workoutsContainer);
     }
