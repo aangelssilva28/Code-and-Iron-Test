@@ -3844,7 +3844,22 @@ const App = (() => {
     const result = [];
 
     workouts.forEach((w) => {
+      if (!w) return;
+
       const name = (w.name || "").trim();
+
+      // ✅ Keep AFT workouts even though they don't use "sets"
+      const isAft = w.type === "aft" || !!w.aft || name.toLowerCase() === "aft";
+      if (isAft) {
+        result.push({
+          name: name || "AFT",
+          type: "aft",
+          aft: w.aft || null,
+          sets: Array.isArray(w.sets) ? w.sets : [],
+        });
+        return;
+      }
+
       const sets = Array.isArray(w.sets) ? w.sets : [];
 
       const filteredSets = sets.filter((set) => {
@@ -3950,7 +3965,7 @@ const App = (() => {
 
         if (!workouts.length) {
           alert(
-            "Nothing to save yet.\n\nAdd at least one set with weight and/or reps before saving."
+            "Nothing to save yet.\n\nAdd at least one set with weight and/or reps, OR enter AFT event data / total score before saving."
           );
           return;
         }
