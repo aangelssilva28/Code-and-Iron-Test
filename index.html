@@ -435,13 +435,13 @@
 
     .workout-name { flex: 1; width: 100%; }
 
-    .workout-header {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 0;
-      margin-top: 4px;
-    }
+.workout-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;              /* tighter + matches row spacing */
+  margin-bottom: 0;
+  margin-top: 4px;
+}
 
     .workout-header .workout-name {
       flex: 1;
@@ -474,10 +474,24 @@
 
 .set-box {
   display: grid;
-  grid-template-columns: 75px 1fr auto;  /* <- change this number */
-  column-gap: 10px;
+  grid-template-columns: 75px 1fr auto;
+  column-gap: 8px;      /* tighter spacing */
   align-items: center;
-  margin-top: 12px;
+  margin-top: 10px;     /* slightly tighter vertical rhythm */
+}
+
+/* ✅ Standard mode: force perfectly even spacing across the row
+   Columns: [Set Label] [Weight] [Reps] [–] [+]
+*/
+body.mode-standard .set-box {
+  grid-template-columns: 78px 56px 56px 56px 56px;
+  column-gap: 8px;
+}
+
+/* Let the wrapper divs “disappear” so their children become real grid columns */
+body.mode-standard .set-weight-group,
+body.mode-standard .set-right-group {
+  display: contents;
 }
 
     /* Complex rows: exercise name + spacer + right group */
