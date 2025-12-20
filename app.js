@@ -1373,6 +1373,16 @@ setMode("standard");
     const setNumber = indexOverride || existingCount + 1;
     setLabel.textContent = `Set ${setNumber}`;
 
+    // Tap the set number to collapse/expand the card (replaces the header arrow)
+    setLabel.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const isCollapsed = card.classList.contains("collapsed");
+      setCardCollapsed(card, !isCollapsed);
+    });
+
+    
+
     const weightInput = document.createElement("input");
     weightInput.className = "set-input";
     weightInput.placeholder =
@@ -1614,16 +1624,6 @@ function renumberComplexCards(parent) {
     }
   });
 
-  const collapseBtn = document.createElement("button");
-  collapseBtn.className = "round-btn collapse-btn";
-  collapseBtn.type = "button";
-  collapseBtn.setAttribute("aria-label", "Collapse or expand exercise");
-  collapseBtn.textContent = "▼";
-  collapseBtn.addEventListener("click", () => {
-    const isCollapsed = card.classList.contains("collapsed");
-    setCardCollapsed(card, !isCollapsed);
-  });
-
   const addExerciseBtn = document.createElement("button");
   addExerciseBtn.className = "round-btn plus";
   addExerciseBtn.type = "button";
@@ -1638,7 +1638,6 @@ function renumberComplexCards(parent) {
   });
 
   headerActions.appendChild(removeWorkoutBtn);
-  headerActions.appendChild(collapseBtn);
   headerActions.appendChild(addExerciseBtn);
 
   header.appendChild(nameInput);
