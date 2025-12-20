@@ -1559,7 +1559,7 @@ function renumberComplexCards(parent) {
     quickLabel.textContent = "Quick add:";
     quickAddRow.appendChild(quickLabel);
 
-    [2.5, 5, 10, 25, 35, 45].forEach((val) => {
+    [5, 10, 25, 35, 45].forEach((val) => {
       const chip = document.createElement("button");
       chip.className = "quick-add-chip";
       chip.type = "button";
