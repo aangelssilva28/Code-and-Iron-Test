@@ -438,7 +438,7 @@
 .workout-header {
   display: flex;
   align-items: center;
-  gap: 8px;              /* tighter + matches row spacing */
+  gap: 8px;
   margin-bottom: 0;
   margin-top: 4px;
 }
@@ -475,9 +475,21 @@
 .set-box {
   display: grid;
   grid-template-columns: 75px 1fr auto;
-  column-gap: 8px;      /* tighter spacing */
+  column-gap: 8px;
   align-items: center;
-  margin-top: 10px;     /* slightly tighter vertical rhythm */
+  margin-top: 10px;
+}
+
+/* ✅ Standard mode: Set label fills the left, everything else is equal width */
+body.mode-standard .set-box {
+  grid-template-columns: 1fr 56px 56px 56px 56px;
+  column-gap: 8px;
+}
+
+/* ✅ Make the wrapper divs “not count” as grid columns in Standard mode */
+body.mode-standard .set-weight-group,
+body.mode-standard .set-right-group {
+  display: contents;
 }
 
 /* ✅ Standard mode: force perfectly even spacing across the row
