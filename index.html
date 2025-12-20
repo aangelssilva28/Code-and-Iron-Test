@@ -472,13 +472,13 @@
        SET ROW
     --------------------------- */
 
-    .set-box {
-      display: grid;
-      grid-template-columns: auto 1fr auto;
-      column-gap: 10px;
-      align-items: center;
-      margin-top: 12px;
-    }
+.set-box {
+  display: grid;
+  grid-template-columns: 96px 1fr auto;  /* <- change this number */
+  column-gap: 10px;
+  align-items: center;
+  margin-top: 12px;
+}
 
     /* Complex rows: exercise name + spacer + right group */
     .set-box.complex-row {
@@ -505,7 +505,7 @@
 
 .set-label {
   height: 44px;
-  width: 75px;
+  width: 100%;
   padding: 0 14px;
   margin-left: auto;
   margin-right: auto;
