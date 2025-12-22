@@ -480,9 +480,9 @@
   margin-top: 10px;
 }
 
-/* ✅ Standard mode: flex the Set column so the right side aligns with the header row */
+/* ✅ Standard mode: Set column only grows a LITTLE (not all the way) */
 body.mode-standard .set-box {
-  grid-template-columns: minmax(96px, 1fr) 56px 56px 56px 56px;
+  grid-template-columns: clamp(78px, 22vw, 88px) 56px 56px 56px 56px;
   column-gap: 8px;
   width: 100%;
 }
