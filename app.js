@@ -682,7 +682,7 @@ const Logger = (() => {
   let exerciseSuggestActiveContext = null;
 
   // NEW: shipped exercise directory (loaded once)
-  const EXERCISE_CATALOG_URL = "directory/exerciseDictionary_1000_alphabetical.json";
+  const EXERCISE_CATALOG_URL = "directory.json";
   const EXERCISE_CATALOG_LS_KEY = "codeAndIron_exerciseCatalog_v1";
   let exerciseCatalog = [];
   let exerciseCatalogLoaded = false;
