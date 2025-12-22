@@ -676,14 +676,14 @@ const Logger = (() => {
   let complexAddRowBtn = null;
   let complexRemoveRowBtn = null;
 
-  // NEW: exercise name autocomplete (Progress + shipped directory)
+  // NEW: exercise name autocomplete (Progress + directory.json)
   let exerciseSuggestEl = null;
   let exerciseSuggestActiveInput = null;
   let exerciseSuggestActiveContext = null;
 
-  // NEW: shipped exercise directory (loaded once)
-  const EXERCISE_CATALOG_URL = "directory.json";
-  const EXERCISE_CATALOG_LS_KEY = "codeAndIron_exerciseCatalog_v1";
+  // NEW: shipped exercise directory (directory.json at site root)
+  const EXERCISE_CATALOG_URL = "./directory.json";
+  const EXERCISE_CATALOG_LS_KEY = "codeAndIronExerciseCatalog_v1";
   let exerciseCatalog = [];
   let exerciseCatalogLoaded = false;
   let exerciseCatalogPromise = null;
@@ -692,7 +692,7 @@ const Logger = (() => {
     if (exerciseCatalogPromise) return exerciseCatalogPromise;
 
     exerciseCatalogPromise = (async () => {
-      // 1) local cache (instant)
+      // 1) Try localStorage first
       try {
         const cached = localStorage.getItem(EXERCISE_CATALOG_LS_KEY);
         if (cached) {
@@ -705,7 +705,7 @@ const Logger = (() => {
         }
       } catch (_) {}
 
-      // 2) fetch from /directory (works offline if SW precached it)
+      // 2) Fetch from directory.json
       try {
         const res = await fetch(EXERCISE_CATALOG_URL, { cache: "no-cache" });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -717,9 +717,7 @@ const Logger = (() => {
             localStorage.setItem(EXERCISE_CATALOG_LS_KEY, JSON.stringify(arr));
           } catch (_) {}
         }
-      } catch (_) {
-        // Keep whatever we have (empty array is fine)
-      }
+      } catch (_) {}
 
       return exerciseCatalog;
     })();
@@ -763,9 +761,10 @@ const Logger = (() => {
     complexAddRowBtn = $("#complexAddRowBtn");
     complexRemoveRowBtn = $("#complexRemoveRowBtn");
 
-// Exercise autocomplete suggestions container
+    // Exercise autocomplete suggestions container
     exerciseSuggestEl = $("#exerciseSuggest");
-    // Load the shipped exercise directory once (used by autocomplete)
+
+    // Load the shipped directory once (directory.json)
     loadExerciseCatalogOnce();
 
     // Close suggestions when tapping/clicking anywhere else
@@ -1135,80 +1134,99 @@ setMode("standard");
     exerciseSuggestActiveContext = null;
   }
 
-function showExerciseSuggestions(inputEl, context) {
-    if (!exerciseSuggestEl) return;
-    const termRaw = (inputEl.value || "").trim();
-    const term = termRaw.toLowerCase();
+  function showExerciseSuggestions(inputEl, context) {
+    if (!exerciseSuggestEl || !inputEl) return;
 
-    if (!term) {
+    const raw = (inputEl.value || "").toString().trim();
+    const qKey = normalizeExerciseKey(raw);
+
+    if (!qKey) {
       hideExerciseSuggestions();
       return;
     }
 
-    // Make sure catalog is loaded (async-safe)
+    // Kick off catalog load if not ready yet (don’t block typing)
     if (!exerciseCatalogLoaded) {
-      loadExerciseCatalogOnce();
+      loadExerciseCatalogOnce().then(() => {
+        if (document.activeElement === inputEl) {
+          showExerciseSuggestions(inputEl, context);
+        }
+      });
     }
 
-    // Combine:
-    // A) shipped catalog (1000 list)
-    // B) user's saved exercise names (what you already had)
-    const saved = getSavedExerciseNameList().map((x) => String(x || "").trim()).filter(Boolean);
-    const catalog = (exerciseCatalog || []).map((x) => String(x || "").trim()).filter(Boolean);
+    const saved = getSavedExerciseNameList(); // your current behavior
+    const catalog = exerciseCatalogLoaded ? (exerciseCatalog || []) : [];
 
-    // De-dupe (case-insensitive) while preserving original casing
-    const map = new Map();
-    for (const name of catalog) map.set(name.toLowerCase(), name);
-    for (const name of saved) map.set(name.toLowerCase(), name);
+    // Combine saved + catalog (de-dupe by normalized key)
+    const seen = new Set();
+    const combined = [];
 
-    const all = Array.from(map.values());
+    const pushUnique = (name, isSaved) => {
+      const k = normalizeExerciseKey(name);
+      if (!k || seen.has(k)) return;
+      seen.add(k);
+      combined.push({ name, saved: !!isSaved });
+    };
 
-    // Score matches:
-    // - startsWith > contains
-    // - saved items get a small boost
-    const savedSet = new Set(saved.map((x) => x.toLowerCase()));
+    (saved || []).forEach((n) => pushUnique(n, true));
+    (catalog || []).forEach((n) => pushUnique(n, false));
 
-    const scored = all
-      .map((name) => {
-        const n = name.toLowerCase();
-        let score = 0;
-        if (n.startsWith(term)) score += 3;
-        if (n.includes(term)) score += 1;
-        if (savedSet.has(n)) score += 2;
-        return { name, score };
-      })
-      .filter((x) => x.score > 0)
-      .sort((a, b) => b.score - a.score || a.name.localeCompare(b.name))
-      .slice(0, 10);
-
-    if (!scored.length) {
+    if (!combined.length) {
       hideExerciseSuggestions();
       return;
     }
 
-    const html = scored
-      .map(
-        ({ name }) => `
-        <button type="button" class="exercise-suggest-item" data-exercise="${escapeHtml(name)}">
-          ${escapeHtml(name)}
-        </button>
-      `
-      )
-      .join("");
+    const matches = combined
+      .map((item) => {
+        const k = normalizeExerciseKey(item.name);
+        let score = 999;
 
-    exerciseSuggestEl.innerHTML = html;
-    exerciseSuggestEl.classList.remove("hidden");
+        // best = startsWith, next = includes
+        if (k.startsWith(qKey)) score = 0;
+        else if (k.includes(qKey)) score = 1;
 
-    // Bind clicks
-    exerciseSuggestEl.querySelectorAll(".exercise-suggest-item").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const chosen = btn.getAttribute("data-exercise") || "";
-        inputEl.value = chosen;
+        return { name: item.name, score, saved: item.saved };
+      })
+      .filter((m) => m.score < 999)
+      .sort((a, b) => a.score - b.score || (b.saved - a.saved) || a.name.localeCompare(b.name))
+      .slice(0, 6);
+
+    if (!matches.length) {
+      hideExerciseSuggestions();
+      return;
+    }
+
+    // Position dropdown under the input
+    const rect = inputEl.getBoundingClientRect();
+    exerciseSuggestEl.style.left = `${rect.left + window.scrollX}px`;
+    exerciseSuggestEl.style.top = `${rect.bottom + window.scrollY + 6}px`;
+    exerciseSuggestEl.style.width = `${rect.width}px`;
+
+    exerciseSuggestEl.innerHTML = "";
+
+    matches.forEach((m) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "exercise-suggest-item";
+      btn.setAttribute("role", "option");
+      btn.textContent = m.name;
+
+      const pick = (e) => {
+        if (e && e.preventDefault) e.preventDefault();
+        inputEl.value = m.name;
         hideExerciseSuggestions();
-        inputEl.focus();
-      });
+        // If progress exists for this exercise, it will load. If not, it harmlessly does nothing.
+        loadExerciseFromProgressIntoUI(m.name, context);
+      };
+
+      btn.addEventListener("pointerdown", pick);
+      btn.addEventListener("click", pick);
+
+      exerciseSuggestEl.appendChild(btn);
     });
 
+    exerciseSuggestEl.classList.remove("hidden");
+    exerciseSuggestEl.setAttribute("aria-hidden", "false");
     exerciseSuggestActiveInput = inputEl;
     exerciseSuggestActiveContext = context || null;
   }
