@@ -763,27 +763,7 @@ const Logger = (() => {
     complexAddRowBtn = $("#complexAddRowBtn");
     complexRemoveRowBtn = $("#complexRemoveRowBtn");
 
-    // Exercise autocomplete suggestions container
-    exerciseSuggestEl = $("#exerciseSuggest");
-    // Load the shipped exercise directory once (used by autocomplete)
-    loadExerciseCatalogOnce();
-
-    // Close suggestions when tapping/clicking anywhere else
-    document.addEventListener("click", (e) => {
-      if (!exerciseSuggestEl || exerciseSuggestEl.classList.contains("hidden")) return;
-
-      const target = e.target;
-      const clickedInsideSuggest = exerciseSuggestEl.contains(target);
-      const clickedActiveInput =
-        exerciseSuggestActiveInput &&
-        (target === exerciseSuggestActiveInput ||
-          (exerciseSuggestActiveInput.contains && exerciseSuggestActiveInput.contains(target)));
-
-      if (clickedInsideSuggest || clickedActiveInput) return;
-      hideExerciseSuggestions();
-    });
-
-    // Exercise autocomplete suggestions container
+// Exercise autocomplete suggestions container
     exerciseSuggestEl = $("#exerciseSuggest");
     // Load the shipped exercise directory once (used by autocomplete)
     loadExerciseCatalogOnce();
@@ -988,103 +968,6 @@ setMode("standard");
     exerciseSuggestActiveContext = null;
   }
 
-  function showExerciseSuggestions(inputEl, context) {
-    if (!exerciseSuggestEl || !inputEl) return;
-
-    const raw = (inputEl.value || "").toString().trim();
-    const qKey = normalizeExerciseKey(raw);
-
-    if (!qKey) {
-      hideExerciseSuggestions();
-      return;
-    }
-
-    const saved = getSavedExerciseNameList();
-    const catalog = exerciseCatalogLoaded ? exerciseCatalog : [];
-
-    // If nothing is loaded yet, kick off the directory load and retry once it lands
-    if ((!saved || !saved.length) && !exerciseCatalogLoaded) {
-      loadExerciseCatalogOnce().then(() => {
-        // If the user is still on this input, re-run suggestions with the catalog available
-        if (document.activeElement === inputEl) showExerciseSuggestions(inputEl, context);
-      });
-    }
-
-    const seen = new Set();
-    const source = [];
-
-    const pushUnique = (name, isSaved) => {
-      const k = normalizeExerciseKey(name);
-      if (!k) return;
-      if (seen.has(k)) return;
-      seen.add(k);
-      source.push({ name, saved: !!isSaved });
-    };
-
-    (saved || []).forEach((n) => pushUnique(n, true));
-    (catalog || []).forEach((n) => pushUnique(n, false));
-
-    if (!source.length) {
-      hideExerciseSuggestions();
-      return;
-    }
-
-    const matches = source
-      .map((item) => {
-        const name = item.name;
-        const k = normalizeExerciseKey(name);
-        let score = 999;
-
-        // best = startsWith, next = includes
-        if (k.startsWith(qKey)) score = 0;
-        else if (k.includes(qKey)) score = 1;
-
-        return { name, score, saved: item.saved };
-      })
-      .filter((m) => m.score < 999)
-      .sort((a, b) => a.score - b.score || (b.saved - a.saved) || a.name.localeCompare(b.name))
-      .slice(0, 6);
-
-    if (!matches.length) {
-      hideExerciseSuggestions();
-      return;
-    }
-
-    // Position dropdown under the input
-    const rect = inputEl.getBoundingClientRect();
-    exerciseSuggestEl.style.left = `${rect.left + window.scrollX}px`;
-    exerciseSuggestEl.style.top = `${rect.bottom + window.scrollY + 6}px`;
-    exerciseSuggestEl.style.width = `${rect.width}px`;
-
-    exerciseSuggestEl.innerHTML = "";
-
-    matches.forEach((m) => {
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.className = "exercise-suggest-item";
-      btn.setAttribute("role", "option");
-      btn.textContent = m.name;
-
-      const pick = (e) => {
-        if (e && e.preventDefault) e.preventDefault();
-        inputEl.value = m.name;
-        hideExerciseSuggestions();
-        loadExerciseFromProgressIntoUI(m.name, context);
-      };
-
-      // pointerdown selects before the input blurs (click as fallback)
-      btn.addEventListener("pointerdown", pick);
-      btn.addEventListener("click", pick);
-
-      exerciseSuggestEl.appendChild(btn);
-    });
-
-    exerciseSuggestEl.classList.remove("hidden");
-    exerciseSuggestEl.setAttribute("aria-hidden", "false");
-    exerciseSuggestActiveInput = inputEl;
-    exerciseSuggestActiveContext = context || null;
-  }
-
   function wireExerciseAutocomplete(inputEl, context) {
     if (!inputEl) return;
 
@@ -1252,74 +1135,80 @@ setMode("standard");
     exerciseSuggestActiveContext = null;
   }
 
-  function showExerciseSuggestions(inputEl, context) {
-    if (!exerciseSuggestEl || !inputEl) return;
+function showExerciseSuggestions(inputEl, context) {
+    if (!exerciseSuggestEl) return;
+    const termRaw = (inputEl.value || "").trim();
+    const term = termRaw.toLowerCase();
 
-    const raw = (inputEl.value || "").toString().trim();
-    const qKey = normalizeExerciseKey(raw);
-
-    if (!qKey) {
+    if (!term) {
       hideExerciseSuggestions();
       return;
     }
 
-    const all = getSavedExerciseNameList();
-    if (!all.length) {
-      hideExerciseSuggestions();
-      return;
+    // Make sure catalog is loaded (async-safe)
+    if (!exerciseCatalogLoaded) {
+      loadExerciseCatalogOnce();
     }
 
-    const matches = all
+    // Combine:
+    // A) shipped catalog (1000 list)
+    // B) user's saved exercise names (what you already had)
+    const saved = getSavedExerciseNameList().map((x) => String(x || "").trim()).filter(Boolean);
+    const catalog = (exerciseCatalog || []).map((x) => String(x || "").trim()).filter(Boolean);
+
+    // De-dupe (case-insensitive) while preserving original casing
+    const map = new Map();
+    for (const name of catalog) map.set(name.toLowerCase(), name);
+    for (const name of saved) map.set(name.toLowerCase(), name);
+
+    const all = Array.from(map.values());
+
+    // Score matches:
+    // - startsWith > contains
+    // - saved items get a small boost
+    const savedSet = new Set(saved.map((x) => x.toLowerCase()));
+
+    const scored = all
       .map((name) => {
-        const k = normalizeExerciseKey(name);
-        let score = 999;
-
-        // best = startsWith, next = includes
-        if (k.startsWith(qKey)) score = 0;
-        else if (k.includes(qKey)) score = 1;
-
+        const n = name.toLowerCase();
+        let score = 0;
+        if (n.startsWith(term)) score += 3;
+        if (n.includes(term)) score += 1;
+        if (savedSet.has(n)) score += 2;
         return { name, score };
       })
-      .filter((m) => m.score < 999)
-      .sort((a, b) => a.score - b.score || a.name.localeCompare(b.name))
-      .slice(0, 6);
+      .filter((x) => x.score > 0)
+      .sort((a, b) => b.score - a.score || a.name.localeCompare(b.name))
+      .slice(0, 10);
 
-    if (!matches.length) {
+    if (!scored.length) {
       hideExerciseSuggestions();
       return;
     }
 
-    // Position dropdown under the input
-    const rect = inputEl.getBoundingClientRect();
-    exerciseSuggestEl.style.left = `${rect.left + window.scrollX}px`;
-    exerciseSuggestEl.style.top = `${rect.bottom + window.scrollY + 6}px`;
-    exerciseSuggestEl.style.width = `${rect.width}px`;
+    const html = scored
+      .map(
+        ({ name }) => `
+        <button type="button" class="exercise-suggest-item" data-exercise="${escapeHtml(name)}">
+          ${escapeHtml(name)}
+        </button>
+      `
+      )
+      .join("");
 
-    exerciseSuggestEl.innerHTML = "";
+    exerciseSuggestEl.innerHTML = html;
+    exerciseSuggestEl.classList.remove("hidden");
 
-    matches.forEach((m) => {
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.className = "exercise-suggest-item";
-      btn.setAttribute("role", "option");
-      btn.textContent = m.name;
-
-      const pick = (e) => {
-        if (e && e.preventDefault) e.preventDefault();
-        inputEl.value = m.name;
+    // Bind clicks
+    exerciseSuggestEl.querySelectorAll(".exercise-suggest-item").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const chosen = btn.getAttribute("data-exercise") || "";
+        inputEl.value = chosen;
         hideExerciseSuggestions();
-        loadExerciseFromProgressIntoUI(m.name, context);
-      };
-
-      // pointerdown selects before the input blurs (click as fallback)
-      btn.addEventListener("pointerdown", pick);
-      btn.addEventListener("click", pick);
-
-      exerciseSuggestEl.appendChild(btn);
+        inputEl.focus();
+      });
     });
 
-    exerciseSuggestEl.classList.remove("hidden");
-    exerciseSuggestEl.setAttribute("aria-hidden", "false");
     exerciseSuggestActiveInput = inputEl;
     exerciseSuggestActiveContext = context || null;
   }
