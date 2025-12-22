@@ -52,22 +52,16 @@
        LAYOUT SHELL
     --------------------------- */
 
-    /* Complex-mode Set label in header: same font as .set-label, not selectable */
+    /* Complex-mode Set label in header: match Standard .set-label styling */
     .workout-header .complex-set-label {
-      border: 2px;
-      background: transparent;
-      padding: 0;
-      margin: 0;
       user-select: none;
       cursor: pointer;
     }
 
-    /* Complex mode set label in the header */
+    /* (If you ever re-enable an editable set name in the header) */
     .workout-header .complex-set-name {
-      border: 2px;
-      background: transparent;
-      padding: 0;
-      margin: 0;
+      user-select: none;
+      cursor: pointer;
     }
 
     .workout-header .complex-set-name:focus { outline: none; }
