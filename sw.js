@@ -6,6 +6,7 @@ const URLS_TO_CACHE = [
   "./index.html",
   "./app.js",
   "./manifest.webmanifest",
+  "./exerciseDictionary_1000_alphabetical.json",
   // Add your icons if you have them:
   "./icons/icon-192.png",
   "./icons/icon-512.png"
