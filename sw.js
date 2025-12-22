@@ -8,8 +8,7 @@ const URLS_TO_CACHE = [
   "./manifest.webmanifest",
   "./directory.json",
   "./icon-152.png",
-  "./icon-192.png",
-  "./icon-512.png"
+  "./icon-192.png"
 ];
 
 // Install: cache core assets
@@ -19,28 +18,37 @@ self.addEventListener("install", (event) => {
       return cache.addAll(URLS_TO_CACHE);
     })
   );
+  self.skipWaiting();
 });
 
-// Activate: cleanup old caches
+// Activate: clean up old caches if you bump CACHE_NAME
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
-      Promise.all(keys.map((key) => (key !== CACHE_NAME ? caches.delete(key) : null)))
+      Promise.all(
+        keys.map((key) => {
+          if (key !== CACHE_NAME) {
+            return caches.delete(key);
+          }
+        })
+      )
     )
   );
+  self.clients.claim();
 });
 
-// Fetch: serve from cache first
+// Fetch: cache-first for our core files, network fallback
 self.addEventListener("fetch", (event) => {
   const request = event.request;
+
+  // Only handle GET
+  if (request.method !== "GET") return;
 
   event.respondWith(
     caches.match(request).then((cached) => {
       if (cached) return cached;
 
-      // Otherwise go to the network and (optionally) cache new files
       return fetch(request).then((response) => {
-        // Don’t cache opaque or error responses
         if (!response || response.status !== 200 || response.type === "opaque") {
           return response;
         }
