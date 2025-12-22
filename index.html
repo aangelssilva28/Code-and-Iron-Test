@@ -480,27 +480,14 @@
   margin-top: 10px;
 }
 
-/* ✅ Standard mode: Set label fills the left, everything else is equal width */
+/* ✅ Standard mode: flex the Set column so the right side aligns with the header row */
 body.mode-standard .set-box {
-  grid-template-columns: 1fr 56px 56px 56px 56px;
+  grid-template-columns: minmax(96px, 1fr) 56px 56px 56px 56px;
   column-gap: 8px;
+  width: 100%;
 }
 
 /* ✅ Make the wrapper divs “not count” as grid columns in Standard mode */
-body.mode-standard .set-weight-group,
-body.mode-standard .set-right-group {
-  display: contents;
-}
-
-/* ✅ Standard mode: force perfectly even spacing across the row
-   Columns: [Set Label] [Weight] [Reps] [–] [+]
-*/
-body.mode-standard .set-box {
-  grid-template-columns: 78px 56px 56px 56px 56px;
-  column-gap: 8px;
-}
-
-/* Let the wrapper divs “disappear” so their children become real grid columns */
 body.mode-standard .set-weight-group,
 body.mode-standard .set-right-group {
   display: contents;
