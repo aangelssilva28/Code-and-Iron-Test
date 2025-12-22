@@ -676,10 +676,56 @@ const Logger = (() => {
   let complexAddRowBtn = null;
   let complexRemoveRowBtn = null;
 
-  // NEW: exercise name autocomplete (pulls from Progress)
+  // NEW: exercise name autocomplete (Progress + shipped directory)
   let exerciseSuggestEl = null;
   let exerciseSuggestActiveInput = null;
   let exerciseSuggestActiveContext = null;
+
+  // NEW: shipped exercise directory (loaded once)
+  const EXERCISE_CATALOG_URL = "directory/exerciseDictionary_1000_alphabetical.json";
+  const EXERCISE_CATALOG_LS_KEY = "codeAndIron_exerciseCatalog_v1";
+  let exerciseCatalog = [];
+  let exerciseCatalogLoaded = false;
+  let exerciseCatalogPromise = null;
+
+  async function loadExerciseCatalogOnce() {
+    if (exerciseCatalogPromise) return exerciseCatalogPromise;
+
+    exerciseCatalogPromise = (async () => {
+      // 1) local cache (instant)
+      try {
+        const cached = localStorage.getItem(EXERCISE_CATALOG_LS_KEY);
+        if (cached) {
+          const arr = JSON.parse(cached);
+          if (Array.isArray(arr) && arr.length) {
+            exerciseCatalog = arr;
+            exerciseCatalogLoaded = true;
+            return exerciseCatalog;
+          }
+        }
+      } catch (_) {}
+
+      // 2) fetch from /directory (works offline if SW precached it)
+      try {
+        const res = await fetch(EXERCISE_CATALOG_URL, { cache: "no-cache" });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const arr = await res.json();
+        if (Array.isArray(arr)) {
+          exerciseCatalog = arr;
+          exerciseCatalogLoaded = true;
+          try {
+            localStorage.setItem(EXERCISE_CATALOG_LS_KEY, JSON.stringify(arr));
+          } catch (_) {}
+        }
+      } catch (_) {
+        // Keep whatever we have (empty array is fine)
+      }
+
+      return exerciseCatalog;
+    })();
+
+    return exerciseCatalogPromise;
+  }
 
 
 
@@ -719,6 +765,8 @@ const Logger = (() => {
 
     // Exercise autocomplete suggestions container
     exerciseSuggestEl = $("#exerciseSuggest");
+    // Load the shipped exercise directory once (used by autocomplete)
+    loadExerciseCatalogOnce();
 
     // Close suggestions when tapping/clicking anywhere else
     document.addEventListener("click", (e) => {
@@ -737,6 +785,8 @@ const Logger = (() => {
 
     // Exercise autocomplete suggestions container
     exerciseSuggestEl = $("#exerciseSuggest");
+    // Load the shipped exercise directory once (used by autocomplete)
+    loadExerciseCatalogOnce();
 
     // Close suggestions when tapping/clicking anywhere else
     document.addEventListener("click", (e) => {
@@ -949,14 +999,39 @@ setMode("standard");
       return;
     }
 
-    const all = getSavedExerciseNameList();
-    if (!all.length) {
+    const saved = getSavedExerciseNameList();
+    const catalog = exerciseCatalogLoaded ? exerciseCatalog : [];
+
+    // If nothing is loaded yet, kick off the directory load and retry once it lands
+    if ((!saved || !saved.length) && !exerciseCatalogLoaded) {
+      loadExerciseCatalogOnce().then(() => {
+        // If the user is still on this input, re-run suggestions with the catalog available
+        if (document.activeElement === inputEl) showExerciseSuggestions(inputEl, context);
+      });
+    }
+
+    const seen = new Set();
+    const source = [];
+
+    const pushUnique = (name, isSaved) => {
+      const k = normalizeExerciseKey(name);
+      if (!k) return;
+      if (seen.has(k)) return;
+      seen.add(k);
+      source.push({ name, saved: !!isSaved });
+    };
+
+    (saved || []).forEach((n) => pushUnique(n, true));
+    (catalog || []).forEach((n) => pushUnique(n, false));
+
+    if (!source.length) {
       hideExerciseSuggestions();
       return;
     }
 
-    const matches = all
-      .map((name) => {
+    const matches = source
+      .map((item) => {
+        const name = item.name;
         const k = normalizeExerciseKey(name);
         let score = 999;
 
@@ -964,10 +1039,10 @@ setMode("standard");
         if (k.startsWith(qKey)) score = 0;
         else if (k.includes(qKey)) score = 1;
 
-        return { name, score };
+        return { name, score, saved: item.saved };
       })
       .filter((m) => m.score < 999)
-      .sort((a, b) => a.score - b.score || a.name.localeCompare(b.name))
+      .sort((a, b) => a.score - b.score || (b.saved - a.saved) || a.name.localeCompare(b.name))
       .slice(0, 6);
 
     if (!matches.length) {
